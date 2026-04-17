@@ -1,0 +1,13 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Protocol
+
+from ccprophet.domain.entities import SubsetProfile
+
+
+class SubsetProfileStore(Protocol):
+    def save(self, profile: SubsetProfile) -> None: ...
+    def load(self, name: str) -> SubsetProfile | None: ...
+    def list_all(self) -> Sequence[SubsetProfile]: ...
+    def delete(self, name: str) -> None: ...

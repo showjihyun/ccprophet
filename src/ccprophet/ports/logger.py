@@ -1,0 +1,9 @@
+from __future__ import annotations
+
+from typing import Any, Protocol
+
+
+class Logger(Protocol):
+    def info(self, msg: str, **fields: Any) -> None: ...
+    def warn(self, msg: str, **fields: Any) -> None: ...
+    def error(self, msg: str, exc: BaseException | None = None) -> None: ...

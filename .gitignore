@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# uv / virtualenv
+.venv/
+venv/
+.env
+.env.*
+
+# Type-checker / lint / test caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ccprophet local artifacts
+*.duckdb
+*.duckdb.wal
+*.smoke.duckdb*
+.smoke.duckdb*
+.hooksmoke.duckdb*
+
+# Snapshots / archive (should live outside the repo)
+snapshots/
+archive/
+
+# Parquet exports left around by tests/dogfood
+q.parquet
+*.parquet
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated docs (none yet, but reserve)
+site/
+
+# Claude Code session transcripts — never commit
+.claude/projects/
+
+# User-local Claude Code settings (not for check-in)
+.claude/settings.local.json

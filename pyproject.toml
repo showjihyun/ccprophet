@@ -1,0 +1,103 @@
+[project]
+name = "ccprophet"
+version = "0.1.0"
+description = "Context Efficiency Profiler for Claude Code"
+readme = "docs/PRD.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "ccprophet contributors" }]
+keywords = ["claude-code", "profiler", "context", "efficiency"]
+
+dependencies = [
+    "duckdb>=1.0",
+    "typer>=0.12",
+    "rich>=13.0",
+    "watchdog>=4.0",
+]
+
+[project.optional-dependencies]
+web = ["fastapi>=0.110", "uvicorn[standard]>=0.29"]
+mcp = ["mcp>=1.0"]
+forecast = ["statsmodels>=0.14"]
+
+[project.scripts]
+ccprophet = "ccprophet.harness.cli_main:main"
+ccprophet-hook = "ccprophet.harness.hook_main:main"
+ccprophet-mcp = "ccprophet.harness.mcp_main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ccprophet"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ccprophet"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["ccprophet"]
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "perf: performance benchmarks (deselect with -m 'not perf')",
+]
+
+[tool.coverage.run]
+source = ["ccprophet"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.importlinter]
+root_packages = ["ccprophet"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Clean Architecture layers"
+type = "layers"
+layers = [
+    "ccprophet.harness",
+    "ccprophet.adapters",
+    "ccprophet.use_cases",
+    "ccprophet.ports",
+    "ccprophet.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Domain is framework-free"
+type = "forbidden"
+source_modules = ["ccprophet.domain"]
+forbidden_modules = [
+    "duckdb", "fastapi", "starlette", "typer", "click", "rich",
+    "watchdog", "mcp", "statsmodels", "httpx", "requests",
+]
+
+[[tool.importlinter.contracts]]
+name = "Use cases and ports are framework-free"
+type = "forbidden"
+source_modules = ["ccprophet.use_cases", "ccprophet.ports"]
+forbidden_modules = [
+    "duckdb", "fastapi", "starlette", "typer", "click", "rich",
+    "watchdog", "mcp", "statsmodels", "httpx", "requests",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.152.1",
+    "pytest>=9.0.3",
+    "httpx>=0.27",
+]

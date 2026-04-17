@@ -1,0 +1,53 @@
+from __future__ import annotations
+
+from collections.abc import Iterable, Sequence
+from datetime import datetime
+from typing import Protocol
+
+from ccprophet.domain.entities import (
+    Event,
+    Forecast,
+    Phase,
+    Session,
+    ToolCall,
+    ToolDef,
+)
+from ccprophet.domain.values import RawHash, SessionId
+
+
+class SessionRepository(Protocol):
+    def upsert(self, session: Session) -> None: ...
+    def get(self, sid: SessionId) -> Session | None: ...
+    def latest_active(self) -> Session | None: ...
+    def list_recent(self, limit: int = 10) -> Sequence[Session]: ...
+    def list_in_range(
+        self, start: datetime, end: datetime
+    ) -> Sequence[Session]: ...
+
+
+class EventRepository(Protocol):
+    def append(self, event: Event) -> None: ...
+    def dedup_hash_exists(self, raw_hash: RawHash) -> bool: ...
+    def list_by_session(self, sid: SessionId) -> Iterable[Event]: ...
+
+
+class ToolDefRepository(Protocol):
+    def bulk_add(self, sid: SessionId, defs: Sequence[ToolDef]) -> None: ...
+    def list_for_session(self, sid: SessionId) -> Iterable[ToolDef]: ...
+
+
+class ToolCallRepository(Protocol):
+    def append(self, tc: ToolCall) -> None: ...
+    def list_for_session(self, sid: SessionId) -> Iterable[ToolCall]: ...
+
+
+class PhaseRepository(Protocol):
+    def replace_for_session(
+        self, sid: SessionId, phases: Sequence[Phase]
+    ) -> None: ...
+    def list_for_session(self, sid: SessionId) -> Iterable[Phase]: ...
+
+
+class ForecastRepository(Protocol):
+    def save(self, forecast: Forecast) -> None: ...
+    def list_for_session(self, sid: SessionId) -> Sequence[Forecast]: ...

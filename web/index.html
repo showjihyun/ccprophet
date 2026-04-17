@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
+  <title>ccprophet | Work DAG Viewer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-elev: #141a2e;
+      --panel: #1a2139;
+      --border: #242c48;
+      --fg: #e6eaf5;
+      --fg-dim: #9aa3c7;
+      --accent: #a78bfa;
+      --accent-dim: #7c3aed;
+      --ok: #4ade80;
+      --warn: #f59e0b;
+      --bad: #f87171;
+      --chip-bg: #222b4a;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo,
+        Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.45;
+      overflow: hidden;
+    }
+    header.topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev);
+      height: 48px;
+    }
+    header .brand {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+    }
+    header .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--fg-dim);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    header .meta .chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    header .meta .chip.bad { color: var(--bad); border-color: var(--bad); }
+    header .meta .chip.ok { color: var(--ok); border-color: var(--ok); }
+    button.refresh, .mode-toggle button, .replay-ctrl button {
+      background: var(--panel);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    button.refresh { margin-left: auto; }
+    button.refresh:hover,
+    .mode-toggle button:hover,
+    .replay-ctrl button:hover { border-color: var(--accent); }
+    .mode-toggle { display: flex; gap: 4px; }
+    .mode-toggle button.active {
+      background: var(--accent-dim);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    #second-session-picker {
+      background: var(--panel);
+      color: var(--fg);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      display: none;
+    }
+    #second-session-picker.visible { display: inline-block; }
+    main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: calc(100% - 48px);
+    }
+    main.compare-mode { grid-template-columns: 220px 1fr 1fr; }
+    .stage-pane {
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+      background:
+        radial-gradient(circle at 25% 15%, rgba(124, 58, 237, 0.06), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(34, 211, 238, 0.05), transparent 45%),
+        var(--bg);
+    }
+    .stage-pane:last-child { border-right: none; }
+    .stage-pane .pane-label {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--fg-dim);
+      background: rgba(20, 26, 46, 0.75);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+    section.replay-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 12px;
+      background: rgba(11, 16, 32, 0.92);
+      border-top: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      display: none;
+      z-index: 5;
+      backdrop-filter: blur(4px);
+    }
+    section.replay-bar.visible { display: block; }
+    .replay-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .replay-row + .replay-row { margin-top: 6px; }
+    .replay-ctrl { display: flex; gap: 4px; }
+    .replay-ctrl button.active { border-color: var(--accent); color: var(--accent); }
+    #replay-slider { flex: 1; min-width: 200px; accent-color: var(--accent); }
+    #replay-status {
+      color: var(--fg-dim);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #delta-chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--fg);
+      font-size: 11px;
+    }
+    #delta-chip.bad { border-color: var(--bad); color: var(--bad); }
+    #delta-chip.ok { border-color: var(--ok); color: var(--ok); }
+    label.time-toggle {
+      color: var(--fg-dim);
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+    }
+    aside.sessions {
+      border-right: 1px solid var(--border);
+      background: var(--bg-elev);
+      overflow-y: auto;
+    }
+    aside.sessions h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      padding: 10px 12px 4px;
+      margin: 0;
+      letter-spacing: 0.08em;
+    }
+    .session-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .session-item:hover { background: var(--panel); }
+    .session-item.active { background: var(--panel); border-left: 2px solid var(--accent); padding-left: 10px; }
+    .session-item .id {
+      font-family: var(--font-mono);
+      color: var(--fg);
+      font-size: 12px;
+    }
+    .session-item .sub {
+      color: var(--fg-dim);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    section.stage {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 25% 15%, rgba(124, 58, 237, 0.08), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(34, 211, 238, 0.06), transparent 45%),
+        var(--bg);
+    }
+    svg.dag { display: block; width: 100%; height: 100%; }
+    .edge { stroke: #34406b; stroke-opacity: 0.85; }
+    .node text {
+      fill: var(--fg);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      pointer-events: none;
+      paint-order: stroke;
+      stroke: var(--bg);
+      stroke-width: 3px;
+    }
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--fg-dim);
+      gap: 6px;
+      text-align: center;
+      padding: 24px;
+    }
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 120ms ease;
+      max-width: 260px;
+    }
+    .legend {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      display: flex;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--fg-dim);
+      background: rgba(20, 26, 46, 0.75);
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+    .legend .swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">ccprophet</span>
+    <span class="mode-toggle" role="tablist">
+      <button id="mode-dag" class="active" type="button">DAG</button>
+      <button id="mode-replay" type="button">Replay</button>
+      <button id="mode-compare" type="button">Compare</button>
+    </span>
+    <select id="second-session-picker" aria-label="compare against"></select>
+    <span class="meta" id="session-meta"><span class="chip">select a session</span></span>
+    <button class="refresh" id="refresh-btn" type="button">refresh</button>
+  </header>
+  <main id="main-grid">
+    <aside class="sessions">
+      <h2>recent sessions</h2>
+      <div id="session-list"></div>
+    </aside>
+    <section class="stage stage-pane" id="stage-left">
+      <span class="pane-label" id="pane-label-left" style="display:none">L</span>
+      <svg class="dag" id="dag"></svg>
+      <div class="empty-state" id="empty-state">
+        <div>No session selected.</div>
+        <div>Trigger a Claude Code hook, then refresh.</div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch" style="background:#a78bfa"></span>session</span>
+        <span><span class="swatch" style="background:#22d3ee"></span>planning</span>
+        <span><span class="swatch" style="background:#4ade80"></span>implementation</span>
+        <span><span class="swatch" style="background:#f87171"></span>debugging</span>
+        <span><span class="swatch" style="background:#60a5fa"></span>review</span>
+        <span><span class="swatch" style="background:#94a3b8"></span>unknown</span>
+      </div>
+      <div class="tooltip" id="tooltip"></div>
+    </section>
+    <section class="stage stage-pane" id="stage-right" style="display:none">
+      <span class="pane-label">R</span>
+      <svg class="dag" id="dag-right"></svg>
+      <div class="empty-state" id="empty-state-right">
+        <div>Pick a second session to compare.</div>
+      </div>
+      <div class="tooltip" id="tooltip-right"></div>
+    </section>
+  </main>
+  <section class="replay-bar" id="replay-bar">
+    <div class="replay-row">
+      <span class="replay-ctrl">
+        <button id="replay-play" type="button" aria-label="play/pause">play</button>
+      </span>
+      <span class="replay-ctrl" id="replay-speed">
+        <button data-speed="1" class="active" type="button">1x</button>
+        <button data-speed="2" type="button">2x</button>
+        <button data-speed="5" type="button">5x</button>
+      </span>
+      <input id="replay-slider" type="range" min="0" max="1000" value="0" step="1" />
+      <span id="delta-chip" style="display:none">L: - | R: -</span>
+      <label class="time-toggle" id="time-mode-wrap" style="display:none">
+        <input type="checkbox" id="time-mode-wall" />
+        wall-clock
+      </label>
+    </div>
+    <div class="replay-row">
+      <span id="replay-status">t=+00:00 - ready</span>
+    </div>
+  </section>
+  <script src="./vendor/d3.v7.min.js"></script>
+  <script>
+  // Shared namespace used by replay.js. Defined in index.html so the helpers
+  // that already existed for DAG rendering stay close to the mark-up.
+  window.CCP = window.CCP || {};
+  (function (CCP) {
+    "use strict";
+    CCP.state = { selected: null, mode: "dag", left: null, right: null };
+    CCP.allSessions = [];
+    var listEl = document.getElementById("session-list");
+    var metaEl = document.getElementById("session-meta");
+
+    CCP.fmtInt = function (n) { return (n == null ? "-" : n.toLocaleString()); };
+    CCP.fmtPct = function (n) { return (n == null ? "-" : (n * 100).toFixed(1) + "%"); };
+    CCP.fmtUsd = function (n) { return (n == null ? "-" : "$" + Number(n).toFixed(4)); };
+    CCP.nodeRadius = function (tokens) {
+      var base = 6;
+      if (!tokens || tokens <= 0) return base;
+      return base + 4 * Math.log10(tokens + 1);
+    };
+    CCP.fetchJSON = function (url) {
+      return fetch(url, { credentials: "omit", cache: "no-cache" })
+        .then(function (r) {
+          if (!r.ok) throw new Error(url + " -> " + r.status);
+          return r.json();
+        });
+    };
+
+    function renderSessions(rows) {
+      CCP.allSessions = rows || [];
+      listEl.innerHTML = "";
+      if (!rows || rows.length === 0) {
+        listEl.innerHTML = '<div class="session-item"><div class="sub">no sessions yet</div></div>';
+        return;
+      }
+      rows.forEach(function (s) {
+        var div = document.createElement("div");
+        div.className = "session-item" + (CCP.state.selected === s.session_id ? " active" : "");
+        div.setAttribute("data-sid", s.session_id);
+        div.onclick = function () { CCP.selectSession(s.session_id); };
+        var tokens = (s.total_input_tokens || 0) + (s.total_output_tokens || 0);
+        var started = s.started_at ? s.started_at.replace("T", " ").slice(0, 16) : "-";
+        div.innerHTML =
+          '<div class="id">' + s.session_id.slice(0, 12) + '</div>' +
+          '<div class="sub">' + s.model + ' - ' + CCP.fmtInt(tokens) + ' tok</div>' +
+          '<div class="sub">' + started + (s.is_active ? ' - active' : '') + '</div>';
+        listEl.appendChild(div);
+      });
+      if (CCP.onSessionsRefreshed) CCP.onSessionsRefreshed(CCP.allSessions);
+    }
+
+    function renderMeta(detail) {
+      var s = detail.session;
+      var chips = [];
+      chips.push('<span class="chip">' + s.session_id.slice(0, 12) + '</span>');
+      chips.push('<span class="chip">' + s.model + '</span>');
+      chips.push('<span class="chip">started ' + (s.started_at || "-").slice(0, 16).replace("T", " ") + '</span>');
+      var tokens = (s.total_input_tokens || 0) + (s.total_output_tokens || 0);
+      chips.push('<span class="chip">' + CCP.fmtInt(tokens) + ' tok</span>');
+      if (detail.bloat) {
+        var cls = detail.bloat.bloat_ratio > 0.3 ? 'bad' : (detail.bloat.bloat_ratio > 0.15 ? 'warn' : 'ok');
+        chips.push('<span class="chip ' + cls + '">bloat ' + CCP.fmtPct(detail.bloat.bloat_ratio) + '</span>');
+      }
+      if (detail.cost) {
+        chips.push('<span class="chip">' + CCP.fmtUsd(detail.cost.total_usd) + '</span>');
+      } else {
+        chips.push('<span class="chip">cost: n/a</span>');
+      }
+      metaEl.innerHTML = chips.join("");
+    }
+
+    // DAG renderer, parameterised so both left and right panes can reuse it.
+    CCP.createPane = function (svgSel, tooltipSel, emptyEl) {
+      var svg = d3.select(svgSel);
+      var tooltip = d3.select(tooltipSel);
+      var ctx = { simulation: null, nodeSel: null, linkSel: null, ids: new Set() };
+
+      function clear() {
+        svg.selectAll("*").remove();
+        if (ctx.simulation) { ctx.simulation.stop(); ctx.simulation = null; }
+        ctx.nodeSel = null; ctx.linkSel = null; ctx.ids = new Set();
+      }
+
+      function draw(graph) {
+        clear();
+        if (emptyEl) emptyEl.style.display = "none";
+        var bbox = svg.node().getBoundingClientRect();
+        var width = bbox.width || 800;
+        var height = bbox.height || 600;
+
+        var nodes = graph.nodes.map(function (n) { return Object.assign({}, n); });
+        var edges = graph.edges.map(function (e) { return { source: e.source, target: e.target }; });
+        ctx.ids = new Set(nodes.map(function (n) { return n.id; }));
+
+        var g = svg.append("g");
+        svg.call(d3.zoom().scaleExtent([0.25, 4]).on("zoom", function (ev) {
+          g.attr("transform", ev.transform);
+        }));
+
+        ctx.linkSel = g.append("g").attr("class", "edges")
+          .selectAll("line").data(edges).enter().append("line")
+          .attr("class", "edge").attr("stroke-width", 1.2);
+
+        ctx.nodeSel = g.append("g").attr("class", "nodes")
+          .selectAll("g").data(nodes, function (d) { return d.id; })
+          .enter().append("g").attr("class", "node")
+          .on("mouseover", function (ev, d) {
+            tooltip.style("opacity", 1).html(
+              '<div><b>' + d.label + '</b></div>' +
+              '<div>kind: ' + d.kind + '</div>' +
+              '<div>tokens: ' + CCP.fmtInt(d.tokens) + '</div>' +
+              (d.ts ? '<div>ts: ' + d.ts + '</div>' : '')
+            );
+          })
+          .on("mousemove", function (ev) {
+            tooltip.style("left", (ev.pageX + 12) + "px")
+              .style("top", (ev.pageY + 12) + "px");
+          })
+          .on("mouseout", function () { tooltip.style("opacity", 0); })
+          .call(d3.drag()
+            .on("start", function (ev, d) {
+              if (!ev.active) ctx.simulation.alphaTarget(0.2).restart();
+              d.fx = d.x; d.fy = d.y;
+            })
+            .on("drag", function (ev, d) { d.fx = ev.x; d.fy = ev.y; })
+            .on("end", function (ev, d) {
+              if (!ev.active) ctx.simulation.alphaTarget(0);
+              d.fx = null; d.fy = null;
+            }));
+
+        ctx.nodeSel.append("circle")
+          .attr("r", function (d) { return CCP.nodeRadius(d.tokens); })
+          .attr("fill", function (d) { return d.color || "#94a3b8"; })
+          .attr("stroke", "#0b1020").attr("stroke-width", 1.5);
+
+        ctx.nodeSel.append("text")
+          .text(function (d) { return d.label.length > 24 ? d.label.slice(0, 22) + "..." : d.label; })
+          .attr("dx", function (d) { return CCP.nodeRadius(d.tokens) + 4; })
+          .attr("dy", "0.32em");
+
+        ctx.simulation = d3.forceSimulation(nodes)
+          .force("link", d3.forceLink(edges).id(function (d) { return d.id; }).distance(60).strength(0.6))
+          .force("charge", d3.forceManyBody().strength(-140))
+          .force("center", d3.forceCenter(width / 2, height / 2))
+          .force("collide", d3.forceCollide().radius(function (d) { return CCP.nodeRadius(d.tokens) + 4; }))
+          .on("tick", function () {
+            ctx.linkSel
+              .attr("x1", function (d) { return d.source.x; })
+              .attr("y1", function (d) { return d.source.y; })
+              .attr("x2", function (d) { return d.target.x; })
+              .attr("y2", function (d) { return d.target.y; });
+            ctx.nodeSel.attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+          });
+      }
+
+      // Replay scrubbing — does NOT restart the simulation (per task brief).
+      function setVisibleNodes(visibleIds) {
+        if (!ctx.nodeSel) return;
+        var vset = visibleIds instanceof Set ? visibleIds : new Set(visibleIds);
+        ctx.nodeSel.style("opacity", function (d) { return vset.has(d.id) ? 1 : 0.1; });
+        if (ctx.linkSel) {
+          ctx.linkSel.style("opacity", function (d) {
+            var s = typeof d.source === "object" ? d.source.id : d.source;
+            var t = typeof d.target === "object" ? d.target.id : d.target;
+            return vset.has(s) && vset.has(t) ? 0.85 : 0.05;
+          });
+        }
+      }
+
+      function resetOpacity() { setVisibleNodes(ctx.ids); }
+
+      return { draw: draw, clear: clear, setVisibleNodes: setVisibleNodes, resetOpacity: resetOpacity };
+    };
+
+    CCP.leftPane = CCP.createPane("#dag", "#tooltip", document.getElementById("empty-state"));
+    CCP.rightPane = CCP.createPane("#dag-right", "#tooltip-right", document.getElementById("empty-state-right"));
+
+    CCP.selectSession = function (sid) {
+      CCP.state.selected = sid;
+      Array.prototype.forEach.call(document.querySelectorAll(".session-item"), function (el) {
+        el.classList.toggle("active", el.getAttribute("data-sid") === sid);
+      });
+      return Promise.all([
+        CCP.fetchJSON("/api/sessions/" + encodeURIComponent(sid)),
+        CCP.fetchJSON("/api/sessions/" + encodeURIComponent(sid) + "/dag"),
+      ]).then(function (out) {
+        renderMeta(out[0]);
+        CCP.leftPane.draw(out[1]);
+        CCP.state.left = { sid: sid, detail: out[0], dag: out[1] };
+        if (CCP.onLeftLoaded) CCP.onLeftLoaded();
+      }).catch(function (err) {
+        console.error(err);
+        var empty = document.getElementById("empty-state");
+        empty.style.display = "flex";
+        empty.textContent = "Failed to load session: " + err.message;
+      });
+    };
+
+    CCP.refreshSessionsList = function () {
+      return CCP.fetchJSON("/api/sessions?limit=50").then(renderSessions);
+    };
+
+    document.getElementById("refresh-btn").onclick = function () {
+      CCP.refreshSessionsList();
+      if (CCP.state.selected) CCP.selectSession(CCP.state.selected);
+    };
+
+    CCP.refreshSessionsList().then(function () {
+      var items = document.querySelectorAll(".session-item[data-sid]");
+      if (items.length && !CCP.state.selected) {
+        CCP.selectSession(items[0].getAttribute("data-sid"));
+      }
+    });
+    setInterval(CCP.refreshSessionsList, 30000);
+  })(window.CCP);
+  </script>
+  <script src="./replay.js"></script>
+  <script src="./pattern_diff.js"></script>
+</body>
+</html>
