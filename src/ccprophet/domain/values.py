@@ -152,3 +152,11 @@ class OutcomeLabelValue(str, Enum):
     FAIL = "fail"
     PARTIAL = "partial"
     UNLABELED = "unlabeled"
+
+
+def int_or_zero(value: object) -> int:
+    """Coerce a loosely-typed value to int, returning 0 on None or parse error."""
+    try:
+        return int(value) if value is not None else 0  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0

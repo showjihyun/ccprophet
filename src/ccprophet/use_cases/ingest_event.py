@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 
 from ccprophet.domain.entities import Event, Session, ToolCall
-from ccprophet.domain.values import EventId, RawHash, SessionId, TokenCount
+from ccprophet.domain.values import EventId, RawHash, SessionId, TokenCount, int_or_zero
 from ccprophet.ports.clock import Clock
 from ccprophet.ports.repositories import (
     EventRepository,
@@ -101,12 +101,12 @@ class IngestEventUseCase:
         added_cache_creation = 0
         added_cache_read = 0
         if usage is not None:
-            added_input = _int_or_zero(usage.get("input_tokens"))
-            added_output = _int_or_zero(usage.get("output_tokens"))
-            added_cache_creation = _int_or_zero(
+            added_input = int_or_zero(usage.get("input_tokens"))
+            added_output = int_or_zero(usage.get("output_tokens"))
+            added_cache_creation = int_or_zero(
                 usage.get("cache_creation_input_tokens")
             )
-            added_cache_read = _int_or_zero(usage.get("cache_read_input_tokens"))
+            added_cache_read = int_or_zero(usage.get("cache_read_input_tokens"))
 
         new_model = session.model
         if session.model == "unknown" and model:
@@ -168,8 +168,3 @@ def _extract_usage_and_model(
     return usage, model
 
 
-def _int_or_zero(value: object) -> int:
-    try:
-        return int(value) if value is not None else 0  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return 0

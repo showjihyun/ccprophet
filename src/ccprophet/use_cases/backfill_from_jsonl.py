@@ -20,6 +20,7 @@ from ccprophet.domain.values import (
     RawHash,
     SessionId,
     TokenCount,
+    int_or_zero,
 )
 from ccprophet.ports.jsonl import JsonlRecord, JsonlSource
 from ccprophet.ports.repositories import (
@@ -372,25 +373,18 @@ def _accumulate_usage(
 
     usage = message.get("usage")
     if isinstance(usage, dict):
-        bucket.input_tokens += _int_or_zero(usage.get("input_tokens"))
-        bucket.cache_creation_tokens += _int_or_zero(
+        bucket.input_tokens += int_or_zero(usage.get("input_tokens"))
+        bucket.cache_creation_tokens += int_or_zero(
             usage.get("cache_creation_input_tokens")
         )
-        bucket.cache_read_tokens += _int_or_zero(
+        bucket.cache_read_tokens += int_or_zero(
             usage.get("cache_read_input_tokens")
         )
-        bucket.output_tokens += _int_or_zero(usage.get("output_tokens"))
+        bucket.output_tokens += int_or_zero(usage.get("output_tokens"))
 
     model = message.get("model")
     if isinstance(model, str) and model and not bucket.model:
         bucket.model = model
-
-
-def _int_or_zero(value: object) -> int:
-    try:
-        return int(value) if value is not None else 0  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return 0
 
 
 def _subagent_context_tokens(totals: _SessionTotals | None) -> int:

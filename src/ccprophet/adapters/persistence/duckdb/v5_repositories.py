@@ -5,30 +5,16 @@ Kept in its own module so V1/V2/V3 files stay below the ~300 LOC AP-5 ceiling.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import TYPE_CHECKING
 
+from ccprophet.adapters.persistence.duckdb._tz import from_utc as _from_utc
+from ccprophet.adapters.persistence.duckdb._tz import to_utc_naive as _to_utc_naive
 from ccprophet.domain.entities import SessionSummary
 from ccprophet.domain.values import BloatRatio, SessionId, TokenCount
 
 if TYPE_CHECKING:
     import duckdb
-
-
-def _to_utc_naive(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    if dt.tzinfo is None:
-        return dt
-    return dt.astimezone(timezone.utc).replace(tzinfo=None)
-
-
-def _from_utc(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    if dt.tzinfo is not None:
-        return dt
-    return dt.replace(tzinfo=timezone.utc)
 
 
 class DuckDBSessionSummaryRepository:

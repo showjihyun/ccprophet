@@ -899,6 +899,7 @@ def main() -> None:
         code = run_live_command(
             detect,
             analyze,
+            sessions_repo=sessions_repo,
             as_json=json,
             with_cost=cost,
             pricing=DuckDBPricingProvider(conn) if cost else None,

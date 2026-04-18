@@ -77,12 +77,6 @@ class ToolDef:
     def source_type(self) -> ToolSource:
         return ToolSource.from_string(self.source)
 
-    @property
-    def source_group(self) -> str:
-        if self.source.startswith("mcp:"):
-            return self.source
-        return self.source
-
 
 @dataclass(frozen=True, slots=True)
 class FileAccess:

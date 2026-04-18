@@ -6,30 +6,16 @@ Kept in a separate module from V1 and V2 repositories to stay under the
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import TYPE_CHECKING
 
+from ccprophet.adapters.persistence.duckdb._tz import from_utc as _from_utc
+from ccprophet.adapters.persistence.duckdb._tz import to_utc_naive as _to_utc_naive
 from ccprophet.domain.entities import Forecast, Subagent
 from ccprophet.domain.values import SessionId, TokenCount
 
 if TYPE_CHECKING:
     import duckdb
-
-
-def _to_utc_naive(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    if dt.tzinfo is None:
-        return dt
-    return dt.astimezone(timezone.utc).replace(tzinfo=None)
-
-
-def _from_utc(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    if dt.tzinfo is not None:
-        return dt
-    return dt.replace(tzinfo=timezone.utc)
 
 
 class DuckDBSubagentRepository:

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ccprophet.domain.entities import Phase, Session
     from ccprophet.ports.pricing import PricingProvider
+    from ccprophet.ports.repositories import SessionRepository
     from ccprophet.use_cases.analyze_bloat import AnalyzeBloatUseCase
     from ccprophet.use_cases.detect_phases import DetectPhasesUseCase
 
@@ -18,6 +19,7 @@ def run_live_command(
     detect: DetectPhasesUseCase,
     analyze: AnalyzeBloatUseCase,
     *,
+    sessions_repo: "SessionRepository | None" = None,
     as_json: bool = False,
     with_cost: bool = False,
     pricing: "PricingProvider | None" = None,
@@ -28,8 +30,16 @@ def run_live_command(
         _print_no_session(e, as_json=as_json)
         return 2
 
-    session = detect.sessions.latest_active()
-    assert session is not None
+    repo = sessions_repo if sessions_repo is not None else detect.sessions
+    session = repo.latest_active()
+    if session is None:
+        msg = "No active session found after phase detection"
+        if as_json:
+            print(json_module.dumps({"error": msg}))
+        else:
+            from rich.console import Console
+            Console(stderr=True).print(f"[bold red]Error:[/] {msg}")
+        return 2
 
     try:
         report = analyze.execute(session.session_id)

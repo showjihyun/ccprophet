@@ -27,7 +27,7 @@ def _use_cases(repos: InMemoryRepositorySet):  # type: ignore[no-untyped-def]
 def test_live_no_session_returns_2(capsys) -> None:  # type: ignore[no-untyped-def]
     repos = InMemoryRepositorySet()
     detect, analyze = _use_cases(repos)
-    code = run_live_command(detect, analyze, as_json=True)
+    code = run_live_command(detect, analyze, sessions_repo=repos.sessions, as_json=True)
     assert code == 2
 
 
@@ -47,7 +47,7 @@ def test_live_renders_phases(capsys) -> None:  # type: ignore[no-untyped-def]
         repos.events.append(ev)
 
     detect, analyze = _use_cases(repos)
-    code = run_live_command(detect, analyze, as_json=True)
+    code = run_live_command(detect, analyze, sessions_repo=repos.sessions, as_json=True)
     captured = capsys.readouterr()
     assert code == 0
     payload = json.loads(captured.out)

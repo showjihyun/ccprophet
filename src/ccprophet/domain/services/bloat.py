@@ -19,7 +19,7 @@ class BloatCalculator:
             items.append(
                 BloatItem(
                     tool_name=td.tool_name,
-                    source=td.source_group,
+                    source=td.source,
                     tokens=td.tokens,
                     used=td.tool_name in called_names,
                 )

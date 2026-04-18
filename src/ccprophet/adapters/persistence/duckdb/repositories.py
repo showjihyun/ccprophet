@@ -2,19 +2,12 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Sequence
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import TYPE_CHECKING
 
+from ccprophet.adapters.persistence.duckdb._tz import to_utc_naive as _to_utc_naive
 from ccprophet.domain.entities import Event, Phase, Session, ToolCall, ToolDef
 from ccprophet.domain.values import EventId, PhaseType, RawHash, SessionId, TokenCount
-
-
-def _to_utc_naive(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    if dt.tzinfo is None:
-        return dt
-    return dt.astimezone(timezone.utc).replace(tzinfo=None)
 
 if TYPE_CHECKING:
     import duckdb
