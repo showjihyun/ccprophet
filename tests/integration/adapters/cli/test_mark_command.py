@@ -22,7 +22,7 @@ def _wire():  # type: ignore[no-untyped-def]
 
 
 def test_mark_success_json(capsys) -> None:  # type: ignore[no-untyped-def]
-    repos, uc = _wire()
+    _repos, uc = _wire()
     code = run_mark_command(
         uc, session_id="s-1", outcome="success", task_type="refactor", as_json=True
     )

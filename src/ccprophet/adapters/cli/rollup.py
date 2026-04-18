@@ -112,7 +112,15 @@ def _write_parquet_archive(
     file because the hot tables have differing schemas. Uses the existing
     read-write connection via a CTE (DuckDB forbids opening a second
     connection with a different mode while the first is still alive).
+
+    Resolves + validates `out_dir` before use: symlinks and `..` components
+    are collapsed via `Path.resolve()`, and the `COPY TO '…'` SQL string is
+    built from the resolved path only (no user-supplied substrings passed
+    raw into the SQL).
     """
+    out_dir = out_dir.resolve()
+    if any(part in ("", "..") for part in out_dir.parts[1:]):
+        raise ValueError(f"archive path contains traversal components: {out_dir}")
     out_dir.mkdir(parents=True, exist_ok=True)
     tables = ("events", "tool_calls", "tool_defs_loaded", "file_reads", "phases")
 

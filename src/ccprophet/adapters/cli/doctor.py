@@ -4,6 +4,7 @@ Operational adapter-layer command. Talks to DuckDB directly; no use-case layer.
 """
 from __future__ import annotations
 
+import contextlib
 import json as json_module
 import os
 from collections.abc import Callable
@@ -130,7 +131,9 @@ def _check_orphans(conn: duckdb.DuckDBPyConnection) -> dict[str, int]:
     return counts
 
 
-def _repair_orphans(conn: duckdb.DuckDBPyConnection, orphan_counts: dict[str, int]) -> dict[str, int]:
+def _repair_orphans(
+    conn: duckdb.DuckDBPyConnection, orphan_counts: dict[str, int]
+) -> dict[str, int]:
     import duckdb as _duckdb
 
     deleted: dict[str, int] = {}
@@ -154,10 +157,8 @@ def _snapshot_dir_mb(snapshot_dir: Path) -> float:
     total = 0
     for root, _dirs, files in os.walk(snapshot_dir):
         for fname in files:
-            try:
+            with contextlib.suppress(OSError):
                 total += os.path.getsize(os.path.join(root, fname))
-            except OSError:
-                pass
     return total / (1024 * 1024)
 
 
@@ -240,15 +241,26 @@ def run_doctor_command(
 
         # 4: negative tokens
         neg_checks = {
-            "tool_calls_neg_tokens": ("tool_calls", "input_tokens < 0 OR output_tokens < 0"),
-            "sessions_neg_tokens": ("sessions", "total_input_tokens < 0 OR total_output_tokens < 0"),
+            "tool_calls_neg_tokens": (
+                "tool_calls", "input_tokens < 0 OR output_tokens < 0"
+            ),
+            "sessions_neg_tokens": (
+                "sessions",
+                "total_input_tokens < 0 OR total_output_tokens < 0",
+            ),
         }
         neg_totals = {
-            k: (_count(ro_conn, f"SELECT COUNT(*) FROM {t} WHERE {cond}") if _table_exists(ro_conn, t) else 0)
+            k: (
+                _count(ro_conn, f"SELECT COUNT(*) FROM {t} WHERE {cond}")
+                if _table_exists(ro_conn, t)
+                else 0
+            )
             for k, (t, cond) in neg_checks.items()
         }
         neg_sum = sum(neg_totals.values())
-        neg_detail = ", ".join(f"{k}:{v}" for k, v in neg_totals.items() if v > 0) or "None"
+        neg_detail = (
+            ", ".join(f"{k}:{v}" for k, v in neg_totals.items() if v > 0) or "None"
+        )
         neg_status = WARN if neg_sum > 0 else OK
         report.checks.append(CheckResult("negative_tokens", neg_status, neg_detail))
         report.worst(neg_status)
@@ -259,7 +271,11 @@ def run_doctor_command(
             "phases_time_inversion": ("phases", "end_ts < start_ts"),
         }
         inv_totals = {
-            k: (_count(ro_conn, f"SELECT COUNT(*) FROM {t} WHERE {cond}") if _table_exists(ro_conn, t) else 0)
+            k: (
+                _count(ro_conn, f"SELECT COUNT(*) FROM {t} WHERE {cond}")
+                if _table_exists(ro_conn, t)
+                else 0
+            )
             for k, (t, cond) in inv_checks.items()
         }
         inv_sum = sum(inv_totals.values())
@@ -317,10 +333,8 @@ def run_doctor_command(
                 pass  # AP-3: silent fail
 
     finally:
-        try:
+        with contextlib.suppress(Exception):
             ro_conn.close()
-        except Exception:
-            pass
 
     # Re-compute overall (repairs may have cleared some WARNs)
     report.overall = OK
@@ -335,7 +349,10 @@ def _finish(report: DoctorReport, *, as_json: bool) -> int:
         print(json_module.dumps({
             "overall": report.overall,
             "db_path": report.db_path,
-            "checks": [{"name": c.name, "status": c.status, "detail": c.detail} for c in report.checks],
+            "checks": [
+                {"name": c.name, "status": c.status, "detail": c.detail}
+                for c in report.checks
+            ],
             "migration": report.migration,
             "repair": report.repair,
         }, indent=2))

@@ -80,7 +80,7 @@ class BestConfigExtractor:
                 if td.source.startswith("mcp:"):
                     mcp_loaded_in_any.add(td.source[len("mcp:"):])
 
-        threshold_count = max(1, int(round(n * common_threshold)))
+        threshold_count = max(1, round(n * common_threshold))
         common_tools = tuple(
             sorted(
                 name for name, freq in tool_frequency.items()

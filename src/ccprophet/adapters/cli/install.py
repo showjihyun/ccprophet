@@ -10,6 +10,7 @@ from the parent directory (no-op).
 """
 from __future__ import annotations
 
+import contextlib
 import json as json_module
 import os
 import sys
@@ -148,10 +149,8 @@ def _lock_down_permissions(path: Path) -> None:
     (file ACLs are inherited from the user profile directory)."""
     if sys.platform == "win32":
         return
-    try:
+    with contextlib.suppress(OSError):
         os.chmod(path, 0o600)
-    except OSError:
-        pass
 
 
 def _render(report: dict) -> None:  # type: ignore[type-arg]

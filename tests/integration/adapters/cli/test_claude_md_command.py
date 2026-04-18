@@ -93,7 +93,7 @@ class TestNoFile:
     def test_rich_output_mentions_no_file(self, tmp_path: Path, capsys):
         run_claude_md_command(root=tmp_path, as_json=False)
         # Rich output goes to stdout via Console(). Check something was printed.
-        out = capsys.readouterr()
+        capsys.readouterr()
         # No error should propagate
         assert True  # just verifying it doesn't raise
 
@@ -122,7 +122,7 @@ class TestSubdirectoryDiscovery:
         subdir = tmp_path / "subproject"
         subdir.mkdir()
         _write_claude_md(subdir, lines=50)
-        code = run_claude_md_command(root=tmp_path, as_json=True)
+        run_claude_md_command(root=tmp_path, as_json=True)
         data = json.loads(capsys.readouterr().out)
         assert len(data) == 1
         assert "subproject" in data[0]["path"] or "CLAUDE.md" in data[0]["path"]

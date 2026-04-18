@@ -84,7 +84,7 @@ def _render_table(recs: Sequence[Recommendation]) -> None:
         table.add_column("Why", overflow="fold")
 
         for r in pruning_recs:
-            conf_pct = int(round(r.confidence.value * 100))
+            conf_pct = round(r.confidence.value * 100)
             conf_color = "green" if conf_pct >= 80 else "yellow" if conf_pct >= 50 else "red"
             table.add_row(
                 r.kind.value,
@@ -112,7 +112,7 @@ def _render_table(recs: Sequence[Recommendation]) -> None:
         env_table.add_column("Why", overflow="fold")
 
         for r in env_recs:
-            conf_pct = int(round(r.confidence.value * 100))
+            conf_pct = round(r.confidence.value * 100)
             conf_color = "green" if conf_pct >= 80 else "yellow" if conf_pct >= 50 else "red"
             env_table.add_row(
                 "[env]",

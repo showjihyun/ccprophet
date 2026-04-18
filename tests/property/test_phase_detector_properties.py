@@ -7,6 +7,7 @@ phase order preserves event chronology.
 """
 from __future__ import annotations
 
+import itertools
 from datetime import datetime, timedelta, timezone
 
 from hypothesis import given
@@ -86,7 +87,7 @@ def test_confidence_in_unit_interval(spec) -> None:  # type: ignore[no-untyped-d
 def test_phases_chronological(spec) -> None:  # type: ignore[no-untyped-def]
     events = [_make_event(i, etype, tool) for i, (etype, tool) in enumerate(spec)]
     phases = PhaseDetector.detect(events)
-    for prev, nxt in zip(phases, phases[1:]):
+    for prev, nxt in itertools.pairwise(phases):
         assert prev.start_ts <= nxt.start_ts
         assert prev.end_ts <= nxt.end_ts
 

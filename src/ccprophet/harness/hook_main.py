@@ -6,15 +6,38 @@ from __future__ import annotations
 
 import os
 import sys
+import traceback
 from pathlib import Path
 
 
 def main() -> None:
+    # AP-3 Silent Fail: hook MUST exit 0 regardless of what goes wrong inside,
+    # or the whole Claude Code session stalls. But "silent" makes diagnosis
+    # impossible — so we append the traceback to a dedicated error log before
+    # exiting. The log itself is best-effort; if writing it fails, we still
+    # exit 0. This closes the observability gap called out by the pre-release
+    # audit without violating AP-3.
     try:
         _run()
     except Exception:
-        pass
+        _log_hook_error()
     sys.exit(0)
+
+
+def _log_hook_error() -> None:
+    """Best-effort append of the current traceback to the hook error log."""
+    try:
+        log_dir = Path(
+            os.environ.get("CCPROPHET_LOG_DIR")
+            or (Path.home() / ".claude-prophet" / "logs")
+        )
+        log_dir.mkdir(parents=True, exist_ok=True)
+        with (log_dir / "hook_errors.log").open("a", encoding="utf-8") as f:
+            f.write("---\n")
+            traceback.print_exc(file=f)
+    except Exception:
+        # If even the log write fails, respect AP-3 — never propagate.
+        pass
 
 
 def _run() -> None:

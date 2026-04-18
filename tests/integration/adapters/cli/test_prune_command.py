@@ -101,7 +101,7 @@ def test_apply_confirm_declined_returns_1(capsys, tmp_path) -> None:  # type: ig
 
 
 def test_apply_with_no_changes_is_noop(capsys, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    repos, preview, apply, path = _wire(tmp_path)
+    _repos, preview, apply, path = _wire(tmp_path)
     code = run_prune_command(
         preview, apply,
         target_path=path,

@@ -86,6 +86,23 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# Project-wide ignores — each is a deliberate idiom:
+# - B008: Typer commands use `typer.Argument(...)` / `typer.Option(...)` as
+#   defaults; this is the library's documented API.
+# - RUF001: We use Unicode arrows (→, Δ, ≈) in CLI output and rationale strings
+#   on purpose. These aren't ambiguous for terminal readers.
+ignore = ["B008", "RUF001"]
+
+[tool.ruff.lint.per-file-ignores]
+# CLI commands defer third-party imports (duckdb / rich / fastapi) into the
+# function body to keep the hook cold-start fast (NFR-1). E402 flags this as
+# "imports not at top of file", which is exactly the trade-off we want.
+"src/ccprophet/harness/commands/*.py" = ["E402"]
+"src/ccprophet/adapters/cli/*.py" = ["E402"]
+# Tests occasionally benefit from multi-line fixtures that exceed 100 chars
+# for readability (long URLs, wide data tables). We prioritise clarity over
+# strict wrapping in test code.
+"tests/**/*.py" = ["E501", "F841", "B007"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["ccprophet"]

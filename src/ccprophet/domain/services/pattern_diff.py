@@ -14,6 +14,7 @@ Design notes:
 """
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -110,10 +111,8 @@ def _magnitude(finding: PatternFinding) -> float:
             buf.append(ch)
             continue
         if buf:
-            try:
+            with contextlib.suppress(ValueError):
                 best = max(best, abs(float("".join(buf))))
-            except ValueError:
-                pass
             buf = []
     return best
 

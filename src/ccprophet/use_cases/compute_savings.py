@@ -75,7 +75,11 @@ class ComputeSavingsUseCase:
         start = now - timedelta(days=window_days)
         # +1s buffer so a rec marked applied in the same clock tick as
         # `execute()` still lands inside the range (range is half-open).
-        applied = list(self.recommendations.list_applied_in_range(start, now + timedelta(seconds=1)))
+        applied = list(
+            self.recommendations.list_applied_in_range(
+                start, now + timedelta(seconds=1)
+            )
+        )
         pending = list(self.recommendations.list_pending(limit=100))
 
         applied_total = _sum_usd(applied, currency)

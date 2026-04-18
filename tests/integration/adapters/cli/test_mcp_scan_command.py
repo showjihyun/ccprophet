@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 """Integration tests for run_mcp_scan_command.
 
 Uses a FakeLister (hand-rolled) plus InMemoryRepositorySet.
 No real `claude` binary is invoked.
 """
+from __future__ import annotations
 
 import json
 from collections.abc import Sequence

@@ -67,7 +67,7 @@ def _stddev(values: Sequence[int], mean: int) -> int:
     if len(values) < 2:
         return 0
     variance = sum((v - mean) ** 2 for v in values) / (len(values) - 1)
-    return int(round(math.sqrt(variance)))
+    return round(math.sqrt(variance))
 
 
 def _estimate_cost(

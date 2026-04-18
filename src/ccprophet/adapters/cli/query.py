@@ -135,7 +135,7 @@ def run_query_schema_command(*, db_path: Path, table: str, as_json: bool) -> int
         conn.close()
 
     if as_json:
-        payload = [dict(zip(columns, row)) for row in rows]
+        payload = [dict(zip(columns, row, strict=False)) for row in rows]
         print(json_module.dumps(payload, indent=2, default=str))
         return 0
 

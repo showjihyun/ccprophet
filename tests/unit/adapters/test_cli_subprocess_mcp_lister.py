@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Unit tests for ClaudeCliMcpLister — subprocess.run is always monkeypatched."""
+from __future__ import annotations
 
 import subprocess
 import types

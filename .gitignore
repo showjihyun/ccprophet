@@ -59,3 +59,4 @@ site/
 .claude/settings.local.json
 .e2e-tmp/
 dist/
+.playwright-mcp/

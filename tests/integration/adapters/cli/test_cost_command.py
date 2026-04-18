@@ -63,7 +63,7 @@ def test_session_flag_shows_single_breakdown(capsys) -> None:  # type: ignore[no
 
 
 def test_session_missing_returns_2(capsys) -> None:  # type: ignore[no-untyped-def]
-    repos, monthly, session_uc = _wire()
+    _repos, monthly, session_uc = _wire()
     code = run_cost_command(
         monthly, session_uc, session="nope", as_json=True
     )
@@ -75,7 +75,7 @@ def test_session_missing_returns_2(capsys) -> None:  # type: ignore[no-untyped-d
 
 
 def test_empty_month_is_zero_summary(capsys) -> None:  # type: ignore[no-untyped-def]
-    repos, monthly, session_uc = _wire()
+    _repos, monthly, session_uc = _wire()
     code = run_cost_command(
         monthly, session_uc, month="2020-01", as_json=True
     )

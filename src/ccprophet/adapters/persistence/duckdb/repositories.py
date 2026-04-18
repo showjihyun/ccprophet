@@ -14,6 +14,11 @@ from ccprophet.adapters.persistence.duckdb._tz import (
 from ccprophet.domain.entities import Event, Phase, Session, ToolCall, ToolDef
 from ccprophet.domain.values import EventId, PhaseType, RawHash, SessionId, TokenCount
 
+# Hard cap on per-session listings. Realistic sessions stay well under this
+# (5k to 20k rows in the fat tail). Prevents pathological memory usage when a
+# single runaway session has hundreds of thousands of events.
+_LIST_PER_SESSION_CAP = 100_000
+
 if TYPE_CHECKING:
     import duckdb
 
@@ -154,17 +159,15 @@ class DuckDBEventRepository:
 
     def list_by_session(self, sid: SessionId) -> Iterable[Event]:
         rows = self._conn.execute(
-            "SELECT * FROM events WHERE session_id = ? ORDER BY ts", [sid.value]
+            "SELECT * FROM events WHERE session_id = ? ORDER BY ts LIMIT ?",
+            [sid.value, _LIST_PER_SESSION_CAP],
         ).fetchall()
         return [self._row_to_event(r) for r in rows]
 
     @staticmethod
     def _row_to_event(row: tuple[object, ...]) -> Event:
         payload_raw = row[4]
-        if isinstance(payload_raw, str):
-            payload = json.loads(payload_raw)
-        else:
-            payload = payload_raw or {}
+        payload = json.loads(payload_raw) if isinstance(payload_raw, str) else payload_raw or {}
         return Event(
             event_id=EventId(str(row[0])),
             session_id=SessionId(str(row[1])),
@@ -241,7 +244,8 @@ class DuckDBToolCallRepository:
 
     def list_for_session(self, sid: SessionId) -> Iterable[ToolCall]:
         rows = self._conn.execute(
-            "SELECT * FROM tool_calls WHERE session_id = ? ORDER BY ts", [sid.value]
+            "SELECT * FROM tool_calls WHERE session_id = ? ORDER BY ts LIMIT ?",
+            [sid.value, _LIST_PER_SESSION_CAP],
         ).fetchall()
         return [
             ToolCall(
@@ -302,7 +306,8 @@ class DuckDBPhaseRepository:
 
     def list_for_session(self, sid: SessionId) -> Iterable[Phase]:
         rows = self._conn.execute(
-            "SELECT * FROM phases WHERE session_id = ? ORDER BY start_ts", [sid.value]
+            "SELECT * FROM phases WHERE session_id = ? ORDER BY start_ts LIMIT ?",
+            [sid.value, _LIST_PER_SESSION_CAP],
         ).fetchall()
         return [
             Phase(

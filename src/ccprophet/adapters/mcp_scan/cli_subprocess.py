@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """ClaudeCliMcpLister — shells out to `claude mcp list` and parses the output.
 
 Parsing approach
@@ -20,6 +18,7 @@ split(":") would break.  Strategy:
 Name normalisation (for the match inside the CLI adapter) lives in the CLI
 adapter; this module only returns raw strings.
 """
+from __future__ import annotations
 
 import subprocess
 import sys

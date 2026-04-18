@@ -85,7 +85,7 @@ def test_with_bloat_shows_percent(capsys) -> None:  # type: ignore[no-untyped-de
     repos.tool_calls.append(
         ToolCallBuilder().in_session(SessionId("bloat")).for_tool("Read").build()
     )
-    code = run_statusline_command(
+    run_statusline_command(
         repos.sessions,
         tool_defs_for=repos.tool_defs.list_for_session,
         tool_calls_for=repos.tool_calls.list_for_session,

@@ -3,7 +3,7 @@
 Directory layout per snapshot:
 
     <root>/<snapshot-id>/
-        manifest.json   # [{"path": "/original/abs/path", "sha256": "...", "size": N, "blob": "0.bin"}, ...]
+        manifest.json   # entries: {path, sha256, size, blob} per original file
         0.bin           # raw bytes for file 0
         1.bin           # ...
 

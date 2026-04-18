@@ -45,7 +45,7 @@ def seeded_repos() -> InMemoryRepositorySet:
     )
 
     # Two tool_calls in chronological order so they map to the detected phase.
-    for i, ts in enumerate([
+    for _i, ts in enumerate([
         datetime(2026, 4, 16, 9, 1, 0, tzinfo=timezone.utc),
         datetime(2026, 4, 16, 9, 2, 0, tzinfo=timezone.utc),
     ]):

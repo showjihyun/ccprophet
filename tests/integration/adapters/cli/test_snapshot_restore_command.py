@@ -53,7 +53,7 @@ def _setup(tmp_path):  # type: ignore[no-untyped-def]
 
 
 def test_restore_returns_zero_and_reverts_file(capsys, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    repos, apply_uc, restore_uc, path, original = _setup(tmp_path)
+    _repos, apply_uc, restore_uc, path, original = _setup(tmp_path)
     outcome = apply_uc.execute(target_path=path)
     assert outcome.snapshot is not None
     assert path.read_text(encoding="utf-8") != original
