@@ -1,0 +1,116 @@
+name: release
+
+# Triggered by a version tag push (v0.6.0, v0.7.0-rc1, etc).
+# Publishes to PyPI via Trusted Publishing (OIDC) — no PyPI token stored.
+#
+# One-time setup on PyPI side (https://pypi.org/manage/account/publishing/):
+#   - Publisher: GitHub
+#   - Owner: showjihyun
+#   - Repository: ccprophet
+#   - Workflow name: release.yml
+#   - Environment: pypi
+#
+# After that, `git tag vX.Y.Z && git push --tags` is all you need.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # to create a GitHub Release
+  id-token: write   # to mint the OIDC token for PyPI Trusted Publishing
+
+jobs:
+  build:
+    name: Build wheel + sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+
+      - name: Assert tag matches pyproject version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PYPROJECT=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "$TAG" != "$PYPROJECT" ]; then
+            echo "::error::tag $TAG does not match pyproject version $PYPROJECT"
+            exit 1
+          fi
+          echo "tag $TAG matches pyproject version $PYPROJECT"
+
+      - name: Sync + test (pre-release gate)
+        run: |
+          uv sync --all-extras --dev
+          uv run pytest -q
+          uv run lint-imports
+
+      - name: Build
+        run: uv build
+
+      - name: Verify wheel contents
+        shell: python
+        run: |
+          import glob, zipfile
+          whl = sorted(glob.glob("dist/*.whl"))[-1]
+          with zipfile.ZipFile(whl) as z:
+              names = z.namelist()
+              assert any("LICENSE" in n for n in names), "LICENSE not packaged"
+              assert any("_migrations/V1__init.sql" in n for n in names), "migrations not packaged"
+              assert any("ccprophet/web/index.html" in n for n in names), "web assets not packaged"
+              print(f"wheel OK: {whl} ({len(names)} files)")
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    name: Publish to PyPI (Trusted Publishing)
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ccprophet/
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish via PyPA action (uses OIDC automatically)
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          # Grab the section for this version from CHANGELOG.md.
+          awk "/^## \[?${VERSION}\]?/{flag=1; next} /^## \[?[0-9]/{flag=0} flag" CHANGELOG.md > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "## ccprophet ${TAG}" > /tmp/notes.md
+            echo "(no CHANGELOG entry found — please add one for ${VERSION})" >> /tmp/notes.md
+          fi
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body_path: /tmp/notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
