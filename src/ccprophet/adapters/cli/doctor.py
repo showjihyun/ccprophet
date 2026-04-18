@@ -277,6 +277,26 @@ def run_doctor_command(
         report.checks.append(CheckResult("snapshot_dir_usage", snap_status, snap_detail))
         report.worst(snap_status)
 
+        # 9: CLAUDE.md health (non-fatal surface only)
+        cwd_claude_md = Path.cwd() / "CLAUDE.md"
+        if cwd_claude_md.is_file():
+            from ccprophet.domain.services.claude_md_audit import ClaudeMdAuditor
+            try:
+                content = cwd_claude_md.read_text(encoding="utf-8")
+                cmd_report = ClaudeMdAuditor.audit(str(cwd_claude_md), content)
+                if cmd_report.worst_severity == CRITICAL:
+                    report.checks.append(CheckResult(
+                        "claude_md_health",
+                        WARN,
+                        f"CLAUDE.md has critical context-rot findings "
+                        f"({cmd_report.line_count} lines, "
+                        f"{len(cmd_report.findings)} finding(s)). "
+                        "Run `ccprophet claude-md` for details.",
+                    ))
+                    report.worst(WARN)
+            except Exception:
+                pass  # AP-3: silent fail
+
     finally:
         try:
             ro_conn.close()

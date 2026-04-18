@@ -137,6 +137,7 @@ class RecommendationKind(str, Enum):
     SWITCH_SUBSET = "switch_subset"
     COMPACT_FOCUS = "compact_focus"
     REPRODUCE_CONFIG = "reproduce_config"
+    SET_ENV_VAR = "set_env_var"  # advisory env-var setting recommendation
 
 
 class RecommendationStatus(str, Enum):

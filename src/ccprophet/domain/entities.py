@@ -457,3 +457,12 @@ class SessionSummary:
     file_read_count: int = 0
     phase_count: int = 0
     source_rows_deleted: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class McpServerInfo:
+    """Live MCP server entry from `claude mcp list`."""
+
+    name: str
+    command_or_url: str
+    status: str  # 'connected' | 'failed' | 'needs_auth' | 'unknown'

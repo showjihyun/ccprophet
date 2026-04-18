@@ -181,6 +181,9 @@ def main() -> None:
             DuckDBPricingProvider,
             DuckDBRecommendationRepository,
         )
+        from ccprophet.adapters.persistence.duckdb.v3_repositories import (
+            DuckDBSubagentRepository,
+        )
         from ccprophet.use_cases.recommend_action import RecommendActionUseCase
 
         conn = _connect_readwrite()
@@ -191,6 +194,7 @@ def main() -> None:
             recommendations=DuckDBRecommendationRepository(conn),
             pricing=DuckDBPricingProvider(conn),
             clock=SystemClock(),
+            subagents=DuckDBSubagentRepository(conn),
         )
         code = run_recommend_command(
             uc, session=session, as_json=json, persist=not no_persist
@@ -803,6 +807,39 @@ def main() -> None:
         )
         raise typer.Exit(code)
 
+    @app.command("mcp-scan")
+    def mcp_scan(
+        recent: int = typer.Option(20, "--recent", "-n", help="Sessions to check"),
+        json: bool = typer.Option(False, "--json"),
+    ) -> None:
+        """Scan active MCP servers and flag the ones never called recently."""
+        from ccprophet.adapters.cli.mcp_scan import run_mcp_scan_command
+        from ccprophet.adapters.mcp_scan.cli_subprocess import ClaudeCliMcpLister
+        from ccprophet.adapters.persistence.duckdb.repositories import (
+            DuckDBSessionRepository,
+            DuckDBToolCallRepository,
+        )
+
+        conn = _connect_readonly()
+        code = run_mcp_scan_command(
+            ClaudeCliMcpLister(),
+            DuckDBToolCallRepository(conn),
+            DuckDBSessionRepository(conn),
+            recent_limit=recent,
+            as_json=json,
+        )
+        raise typer.Exit(code)
+
+    @app.command("claude-md")
+    def claude_md(
+        root: Path = typer.Option(Path.cwd(), "--root", help="Project root to search"),
+        json: bool = typer.Option(False, "--json", help="Output as JSON"),
+    ) -> None:
+        """Audit CLAUDE.md files for context rot."""
+        from ccprophet.adapters.cli.claude_md import run_claude_md_command
+
+        raise typer.Exit(run_claude_md_command(root=root, as_json=json))
+
     @app.command()
     def mcp() -> None:
         """Run the read-only MCP stdio server (for Claude Code registration)."""
@@ -866,6 +903,32 @@ def main() -> None:
             with_cost=cost,
             pricing=DuckDBPricingProvider(conn) if cost else None,
         )
+        raise typer.Exit(code)
+
+    @app.command()
+    def savings(
+        window: int = typer.Option(
+            30, "--window", help="Days to look back for applied savings"
+        ),
+        json: bool = typer.Option(False, "--json"),
+    ) -> None:
+        """Token-savings dashboard — applied, pending, and opportunity knobs."""
+        from ccprophet.adapters.cli.savings import run_savings_command
+        from ccprophet.adapters.clock.system import SystemClock
+        from ccprophet.adapters.persistence.duckdb.v2_repositories import (
+            DuckDBRecommendationRepository,
+        )
+        from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
+        from ccprophet.use_cases.compute_savings import ComputeSavingsUseCase
+
+        conn = _connect_readonly()
+        uc = ComputeSavingsUseCase(
+            recommendations=DuckDBRecommendationRepository(conn),
+            settings=JsonFileSettingsStore(),
+            clock=SystemClock(),
+            settings_path=DEFAULT_SETTINGS_PATH,
+        )
+        code = run_savings_command(uc, window_days=window, as_json=json)
         raise typer.Exit(code)
 
     app()
