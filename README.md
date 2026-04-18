@@ -31,7 +31,7 @@
 
 ```bash
 # 1. Install (uv only — see AGENTS.md §1.4)
-uv tool install "ccprophet[web,mcp,forecast]"
+uv tool install "ccprophet[web,mcp,forecast] @ git+https://github.com/showjihyun/ccprophet.git"
 
 # 2. Wire into Claude Code + create the local DuckDB
 ccprophet install
@@ -45,6 +45,23 @@ ccprophet reproduce refactor --apply   # 🎯 Session Optimizer: apply best conf
 ccprophet cost --month           # 💰 Cost Dashboard: tokens → $
 ccprophet quality                # 📊 Quality Watch: anti-downgrade
 ```
+
+<details>
+<summary><b>Windows: one-liner installer</b> (no Python/uv required)</summary>
+
+PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/showjihyun/ccprophet/main/scripts/install.bat -OutFile install.bat; .\install.bat
+```
+
+cmd.exe:
+```cmd
+curl -L -o install.bat https://raw.githubusercontent.com/showjihyun/ccprophet/main/scripts/install.bat && install.bat
+```
+
+The script installs `uv` via winget (or Astral's bootstrap) if missing, then runs `uv tool install`. Pass `minimal` or a custom extras spec (e.g. `install.bat web,mcp`) to override the default `web,mcp,forecast`. Uninstall with `scripts/uninstall.bat`.
+
+</details>
 
 All data lives in `~/.claude-prophet/events.duckdb` — a single file, **zero external network calls**.
 
