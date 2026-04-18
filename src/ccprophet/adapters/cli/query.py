@@ -17,7 +17,7 @@ def run_query_command(
 ) -> int:
     """Execute an arbitrary read-only SQL and render result as table or JSON."""
     if not db_path.exists():
-        _print_no_db(db_path)
+        _print_no_db(db_path, as_json=as_json)
         return 2
 
     import duckdb
@@ -61,7 +61,7 @@ def run_query_command(
 def run_query_tables_command(*, db_path: Path, as_json: bool) -> int:
     """List all tables in the DB with row counts."""
     if not db_path.exists():
-        _print_no_db(db_path)
+        _print_no_db(db_path, as_json=as_json)
         return 2
 
     import duckdb
@@ -102,7 +102,7 @@ def run_query_tables_command(*, db_path: Path, as_json: bool) -> int:
 def run_query_schema_command(*, db_path: Path, table: str, as_json: bool) -> int:
     """Show column types for a given table."""
     if not db_path.exists():
-        _print_no_db(db_path)
+        _print_no_db(db_path, as_json=as_json)
         return 2
 
     import duckdb
@@ -148,11 +148,24 @@ def run_query_schema_command(*, db_path: Path, table: str, as_json: bool) -> int
 # ---------------------------------------------------------------------------
 
 
-def _print_no_db(db_path: Path) -> None:
+def _print_no_db(db_path: Path, as_json: bool = False) -> None:
+    # Error text MUST go to stderr so `ccprophet query run --json | jq` stays
+    # clean. Matching the other CLI adapters: JSON error on stderr, rich
+    # error on stderr.
+    import sys
+
+    if as_json:
+        print(
+            json_module.dumps(
+                {"error": f"ccprophet DB not found at {db_path}", "code": "db_missing"}
+            ),
+            file=sys.stderr,
+        )
+        return
     from rich.console import Console
 
-    Console().print(
-        f"[red]ccprophet DB not found at {db_path}[/]\n"
+    Console(stderr=True).print(
+        f"[bold red]Error:[/] ccprophet DB not found at {db_path}\n"
         "Run [bold]ccprophet install[/] or trigger a hook first."
     )
 
@@ -165,7 +178,7 @@ def _print_error(message: str, as_json: bool) -> None:
     else:
         from rich.console import Console
 
-        Console(stderr=True).print(f"[red]Error:[/] {message}")
+        Console(stderr=True).print(f"[bold red]Error:[/] {message}")
 
 
 def _render_query_table(

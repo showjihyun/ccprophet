@@ -9,7 +9,6 @@ import json
 
 from ccprophet.adapters.cli.postmortem import run_postmortem_command
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
-from ccprophet.domain.values import SessionId
 from ccprophet.use_cases.analyze_postmortem import AnalyzePostmortemUseCase
 from tests.fixtures.builders import SessionBuilder
 

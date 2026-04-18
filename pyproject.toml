@@ -1,12 +1,32 @@
 [project]
 name = "ccprophet"
-version = "0.1.0"
-description = "Context Efficiency Profiler for Claude Code"
-readme = "docs/PRD.md"
+version = "0.6.0"
+description = "Local-first Context Efficiency Advisor for Claude Code — auto-fix bloat, reproduce best configs, tokens→USD, anti-downgrade"
+readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "ccprophet contributors" }]
-keywords = ["claude-code", "profiler", "context", "efficiency"]
+keywords = [
+    "claude-code", "claude", "anthropic", "context", "efficiency",
+    "bloat", "profiler", "auto-fix", "cost", "duckdb", "mcp",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: System :: Monitoring",
+    "Typing :: Typed",
+]
 
 dependencies = [
     "duckdb>=1.0",
@@ -25,6 +45,12 @@ ccprophet = "ccprophet.harness.cli_main:main"
 ccprophet-hook = "ccprophet.harness.hook_main:main"
 ccprophet-mcp = "ccprophet.harness.mcp_main:main"
 
+[project.urls]
+Homepage = "https://github.com/showjihyun/ccprophet"
+Repository = "https://github.com/showjihyun/ccprophet"
+Issues = "https://github.com/showjihyun/ccprophet/issues"
+Documentation = "https://github.com/showjihyun/ccprophet/tree/main/docs"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -33,7 +59,26 @@ build-backend = "hatchling.build"
 packages = ["src/ccprophet"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/ccprophet/web" = "ccprophet/web"
+# Migrations live at repo root (outside the package). Force-include under
+# `ccprophet/_migrations/` so `MIGRATIONS_DIR = parents[3]/"_migrations"`
+# resolves inside an installed wheel. Without this, `ccprophet doctor
+# --migrate` silently finds zero files and the schema never initializes.
+"migrations" = "ccprophet/_migrations"
+# NOTE: src/ccprophet/web/ is already picked up by `packages = [src/ccprophet]`
+# above — no separate force-include (would create duplicate-name warnings).
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "migrations/",
+    "docs/",
+    "web/",
+    "README.md",
+    "LICENSE",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "pyproject.toml",
+]
 
 [tool.ruff]
 line-length = 100

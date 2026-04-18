@@ -120,15 +120,24 @@ def register(app: typer.Typer) -> None:
     query_app = typer.Typer(help="Read-only SQL query against events.duckdb")
     app.add_typer(query_app, name="query")
 
-    def _require_db() -> None:
+    def _require_db(as_json: bool = False) -> None:
         if DB_PATH.exists():
             return
-        typer.secho(
+        import json as _json
+        import sys as _sys
+
+        msg = (
             f"ccprophet DB not found at {DB_PATH}\n"
-            "Run `ccprophet install` or trigger a hook first.",
-            err=True,
-            fg="red",
+            "Run `ccprophet install` or trigger a hook first."
         )
+        if as_json:
+            # Stable shape for pipelines: stderr JSON + exit 2.
+            print(
+                _json.dumps({"error": msg, "code": "db_missing"}),
+                file=_sys.stderr,
+            )
+        else:
+            typer.secho(msg, err=True, fg="red")
         raise typer.Exit(2)
 
     @query_app.command("run")
@@ -138,7 +147,7 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Run an ad-hoc read-only SQL query against events.duckdb."""
-        _require_db()
+        _require_db(as_json=json)
         from ccprophet.adapters.cli.query import run_query_command
 
         raise typer.Exit(run_query_command(db_path=DB_PATH, sql=sql, as_json=json, limit=limit))
@@ -148,7 +157,7 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """List all tables in events.duckdb with row counts."""
-        _require_db()
+        _require_db(as_json=json)
         from ccprophet.adapters.cli.query import run_query_tables_command
 
         raise typer.Exit(run_query_tables_command(db_path=DB_PATH, as_json=json))
@@ -159,7 +168,7 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Show column types for a table in events.duckdb."""
-        _require_db()
+        _require_db(as_json=json)
         from ccprophet.adapters.cli.query import run_query_schema_command
 
         raise typer.Exit(run_query_schema_command(db_path=DB_PATH, table=table, as_json=json))

@@ -6,7 +6,28 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import duckdb
 
-MIGRATIONS_DIR = Path(__file__).resolve().parents[5] / "migrations"
+
+def _resolve_migrations_dir() -> Path:
+    """Locate the `migrations/` directory under both layouts.
+
+    - Installed wheel: `ccprophet/_migrations/` (force-included by hatch, see
+      pyproject.toml `[tool.hatch.build.targets.wheel.force-include]`).
+    - Editable / source install: repo-root `migrations/`.
+
+    Picking the first that actually exists keeps `ccprophet doctor --migrate`
+    working in both modes without an env var.
+    """
+    # Packaged location (inside the installed wheel, co-located with the
+    # ccprophet package). `__file__` is .../ccprophet/adapters/persistence/duckdb/migrations.py
+    # so `parents[3]` is .../ccprophet/.
+    packaged = Path(__file__).resolve().parents[3] / "_migrations"
+    if packaged.is_dir():
+        return packaged
+    # Repo-root (development checkout: src/ccprophet/... → parents[5] == repo)
+    return Path(__file__).resolve().parents[5] / "migrations"
+
+
+MIGRATIONS_DIR = _resolve_migrations_dir()
 
 
 def current_version(conn: duckdb.DuckDBPyConnection) -> int:

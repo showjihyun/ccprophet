@@ -9,11 +9,34 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 import uuid
 from pathlib import Path
 
 from ccprophet.domain.entities import SettingsDoc
 from ccprophet.domain.errors import SnapshotConflict
+
+
+def _atomic_replace(src: Path, dst: Path, *, attempts: int = 3) -> None:
+    """Windows-safe wrapper around ``os.replace``.
+
+    On Windows, ``os.replace`` can raise ``PermissionError`` (winerror 5) when
+    the target is momentarily held open by AV, Spotlight / indexer, or another
+    ccprophet process. A short retry loop recovers without surfacing a scary
+    traceback to a user running `ccprophet prune --apply`.
+    """
+    last_exc: OSError | None = None
+    for i in range(attempts):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError as exc:  # Windows only
+            last_exc = exc
+            time.sleep(0.05 * (i + 1))
+    # Exhausted retries — surface the original exception so callers can
+    # decide (CLI renders a readable error; tests still see PermissionError).
+    assert last_exc is not None
+    raise last_exc
 
 
 class JsonFileSettingsStore:
@@ -46,7 +69,7 @@ class JsonFileSettingsStore:
         data = _serialize(content)
         tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
         tmp.write_bytes(data)
-        os.replace(tmp, path)
+        _atomic_replace(tmp, path)
         return SettingsDoc(
             path=str(path),
             content=content,
@@ -59,7 +82,7 @@ class JsonFileSettingsStore:
     def write_bytes_atomic(self, path: Path, data: bytes) -> None:
         tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
         tmp.write_bytes(data)
-        os.replace(tmp, path)
+        _atomic_replace(tmp, path)
 
     @staticmethod
     def _hash_of(path: Path) -> str:

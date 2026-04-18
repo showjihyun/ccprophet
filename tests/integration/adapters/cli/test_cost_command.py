@@ -67,8 +67,11 @@ def test_session_missing_returns_2(capsys) -> None:  # type: ignore[no-untyped-d
     code = run_cost_command(
         monthly, session_uc, session="nope", as_json=True
     )
+    captured = capsys.readouterr()
     assert code == 2
-    assert "error" in json.loads(capsys.readouterr().out)
+    # Error JSON routes to stderr so `ccprophet cost ... --json | jq` stays clean
+    assert captured.out == ""
+    assert "error" in json.loads(captured.err)
 
 
 def test_empty_month_is_zero_summary(capsys) -> None:  # type: ignore[no-untyped-def]

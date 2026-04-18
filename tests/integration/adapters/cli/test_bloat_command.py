@@ -7,11 +7,9 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from ccprophet.adapters.cli.bloat import run_bloat_command
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
-from ccprophet.domain.values import SessionId, TokenCount
+from ccprophet.domain.values import SessionId
 from ccprophet.use_cases.analyze_bloat import AnalyzeBloatUseCase
 from tests.fixtures.builders import (
     PricingRateBuilder,

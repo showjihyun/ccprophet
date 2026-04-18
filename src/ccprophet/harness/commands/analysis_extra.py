@@ -74,7 +74,7 @@ def register(app: typer.Typer) -> None:
         session_id: str = typer.Argument(..., help="Failed session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
         md: Path | None = typer.Option(
-            None, "--md", help="Write Markdown report to this path (FR-11.5)"
+            None, "--md", help="Write Markdown report to this path"
         ),
     ) -> None:
         """Explain why a session failed vs similar successes."""

@@ -183,7 +183,7 @@ def register(app: typer.Typer) -> None:
             None,
             "--task-type",
             "--task",  # v0.5 alias kept for backwards compat
-            help="Task type (e.g., refactor-auth) — PRD FR-8.1",
+            help="Task type (e.g., refactor-auth) for pattern reproduction",
         ),
         reason: str | None = typer.Option(
             None, "--reason", help="Short note (optional)"

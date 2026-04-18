@@ -24,7 +24,11 @@ def run_cost_command(
     if session:
         return _run_session(session_uc, session, as_json=as_json)
 
-    start, end = _resolve_month_range(month)
+    try:
+        start, end = _resolve_month_range(month)
+    except _InvalidMonthFormat as exc:
+        _print_err(str(exc), as_json=as_json)
+        return 2
     summary = monthly_uc.execute(month_start=start, month_end=end)
     if as_json:
         print(json_module.dumps(_summary_dict(summary), indent=2, default=str))
@@ -52,6 +56,10 @@ def _run_session(
     return 0
 
 
+class _InvalidMonthFormat(ValueError):
+    """Raised when --month does not parse as YYYY-MM. Caller maps to exit 2."""
+
+
 def _resolve_month_range(month: str | None) -> tuple[datetime, datetime]:
     if month is None:
         now = datetime.now(timezone.utc)
@@ -60,7 +68,9 @@ def _resolve_month_range(month: str | None) -> tuple[datetime, datetime]:
         try:
             start = datetime.strptime(month, "%Y-%m").replace(tzinfo=timezone.utc)
         except ValueError as exc:
-            raise SystemExit(f"--month expects YYYY-MM, got {month!r}") from exc
+            raise _InvalidMonthFormat(
+                f"--month expects YYYY-MM, got {month!r}"
+            ) from exc
     end = (start + timedelta(days=32)).replace(day=1, hour=0, minute=0, second=0)
     return start, end
 
@@ -103,8 +113,11 @@ def _money_dict(m) -> dict[str, object]:  # type: ignore[no-untyped-def]
 
 
 def _print_err(msg: str, *, as_json: bool) -> None:
+    import sys
+
     if as_json:
-        print(json_module.dumps({"error": msg}))
+        # Error JSON to stderr — keeps `ccprophet cost ... --json | jq` clean.
+        print(json_module.dumps({"error": msg}), file=sys.stderr)
         return
     from rich.console import Console
 

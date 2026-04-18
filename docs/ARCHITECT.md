@@ -403,9 +403,10 @@ output_per_mtok = 15.0
 - 결과는 `pricing_rates` 테이블에 사용 요율을 함께 stamp해 추후 감사 가능.
 
 **설계 결정**
-- 기본 요율표는 PyPI 패키지에 번들 (`ccprophet/data/pricing.toml`). 업데이트는 **패키지 릴리즈로만** 반영 (네트워크 차단).
-- 모델 미매칭 시 `UnknownPricingError` → CLI가 `-`로 표시, JSON은 `null`.
-- 통화 변환: 고정 환율 테이블, 사용자 `pricing.toml`에서 override. 기본은 USD 고정.
+- **v0.6 현재 구현**: 기본 요율은 `migrations/V2__auto_fix_outcome_cost.sql` 의 seed INSERT 로 `pricing_rates` 테이블에 저장되며, `DuckDBPricingProvider` 가 읽는다. 업데이트는 새 migration 릴리즈로 반영.
+- *Phase 2 roadmap*: `ccprophet/data/pricing.toml` 번들 + 사용자 `~/.claude-prophet/pricing.toml` override — 현재는 미구현.
+- 모델 미매칭 시 `UnknownPricingModel` 예외 → CLI 가 `-`로 표시, JSON은 `null`, `cost --session` 은 exit 3.
+- 통화 변환은 고정 USD. 다통화는 Phase 2.
 
 ### 4.9 Outcome Engine — Clusterer + Classifier + Postmortem
 

@@ -27,9 +27,20 @@ from ccprophet.ports.snapshots import SnapshotMeta
 
 
 def _atomic_write_bytes(path: Path, data: bytes) -> None:
-    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    # uuid4().hex[:12] keeps the tmp name short enough to stay under
+    # Windows MAX_PATH (260) when combined with deep snapshot directories.
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex[:12]}.tmp")
     tmp.write_bytes(data)
-    os.replace(tmp, path)
+    # Windows-safe replace with short retry — AV / indexer can briefly hold
+    # the target; no need to fail the whole snapshot.
+    import time
+    for i in range(3):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            time.sleep(0.05 * (i + 1))
+    os.replace(tmp, path)  # final attempt — raises if still locked
 
 
 class FilesystemSnapshotStore:

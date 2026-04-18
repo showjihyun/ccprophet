@@ -97,7 +97,7 @@ def register(app: typer.Typer) -> None:
     def statusline(
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
         cost: bool = typer.Option(
-            False, "--cost", help="Include session $ estimate (FR-10.3)"
+            False, "--cost", help="Include session $ estimate"
         ),
     ) -> None:
         """One-line session status for Claude Code statusLine integration."""
@@ -193,7 +193,7 @@ def register(app: typer.Typer) -> None:
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
         cost: bool = typer.Option(
-            False, "--cost", help="Include session-to-date $ (FR-10.3)"
+            False, "--cost", help="Include session-to-date $"
         ),
     ) -> None:
         """Forecast when this session will hit the autocompact threshold."""

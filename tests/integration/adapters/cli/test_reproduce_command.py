@@ -11,14 +11,12 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-import pytest
-
 from ccprophet.adapters.cli.reproduce import run_reproduce_command
 from ccprophet.adapters.clock.system import FrozenClock
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
 from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
 from ccprophet.adapters.snapshot.filesystem import FilesystemSnapshotStore
-from ccprophet.domain.values import OutcomeLabelValue, SessionId, TaskType
+from ccprophet.domain.values import OutcomeLabelValue, SessionId
 from ccprophet.use_cases.apply_pruning import ApplyPruningUseCase
 from ccprophet.use_cases.prune_tools import PruneToolsUseCase
 from ccprophet.use_cases.reproduce_session import ReproduceSessionUseCase

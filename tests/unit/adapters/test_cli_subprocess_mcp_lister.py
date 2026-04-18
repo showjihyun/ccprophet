@@ -9,7 +9,13 @@ from ccprophet.adapters.mcp_scan.cli_subprocess import ClaudeCliMcpLister
 
 
 def _make_result(stdout: str, returncode: int = 0, stderr: str = "") -> types.SimpleNamespace:
-    return types.SimpleNamespace(stdout=stdout, stderr=stderr, returncode=returncode)
+    # Production code now captures bytes (capture_output=True, no text=True)
+    # to avoid locale crashes on Windows cp949. Match that contract here.
+    return types.SimpleNamespace(
+        stdout=stdout.encode("utf-8"),
+        stderr=stderr.encode("utf-8"),
+        returncode=returncode,
+    )
 
 
 _SAMPLE_OUTPUT = """\

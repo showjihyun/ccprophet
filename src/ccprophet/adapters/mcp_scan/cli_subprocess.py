@@ -93,11 +93,13 @@ class ClaudeCliMcpLister:
     """
 
     def list_servers(self) -> Sequence[McpServerInfo]:
+        # NOTE: subprocess(text=True) decodes via locale.getpreferredencoding()
+        # which on Windows (cp949/cp1252) would crash on the Unicode ✓/✗ that
+        # `claude mcp list` emits. Capture bytes + decode UTF-8 with replace.
         try:
             result = subprocess.run(
-                ["claude", "mcp", "list"],
+                _claude_cmd(),
                 capture_output=True,
-                text=True,
                 timeout=5,
             )
         except FileNotFoundError:
@@ -109,9 +111,15 @@ class ClaudeCliMcpLister:
         except subprocess.TimeoutExpired:
             _warn("claude mcp list timed out after 5 s")
             return ()
+        except OSError as exc:
+            _warn(f"could not launch claude mcp list: {exc}")
+            return ()
+
+        stdout = (result.stdout or b"").decode("utf-8", errors="replace")
+        stderr = (result.stderr or b"").decode("utf-8", errors="replace")
 
         if result.returncode != 0:
-            stderr_snippet = (result.stderr or "").strip()[:200]
+            stderr_snippet = stderr.strip()[:200]
             _warn(
                 f"claude mcp list exited with code {result.returncode}"
                 + (f": {stderr_snippet}" if stderr_snippet else "")
@@ -119,11 +127,31 @@ class ClaudeCliMcpLister:
             return ()
 
         servers: list[McpServerInfo] = []
-        for line in result.stdout.splitlines():
+        for line in stdout.splitlines():
             info = _parse_line(line)
             if info is not None:
                 servers.append(info)
         return tuple(servers)
+
+
+def _claude_cmd() -> list[str]:
+    """Resolve the `claude` binary across platforms.
+
+    On Windows, Claude Code is typically installed as `claude.cmd` (batch
+    wrapper). `subprocess.run` without `shell=True` does NOT auto-resolve
+    `.cmd` extensions on Python < 3.12, so fall back explicitly.
+    """
+    import shutil
+    import sys
+
+    resolved = shutil.which("claude")
+    if resolved:
+        return [resolved, "mcp", "list"]
+    if sys.platform == "win32":
+        cmd_resolved = shutil.which("claude.cmd")
+        if cmd_resolved:
+            return [cmd_resolved, "mcp", "list"]
+    return ["claude", "mcp", "list"]
 
 
 def _warn(msg: str) -> None:
