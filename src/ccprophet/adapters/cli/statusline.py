@@ -6,10 +6,12 @@ or no session has been recorded yet, print a placeholder and exit 0 (AP-3).
 from __future__ import annotations
 
 import json as json_module
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ccprophet.domain.entities import Session
+    from ccprophet.domain.entities import Session, ToolCall, ToolDef
+    from ccprophet.domain.values import SessionId
     from ccprophet.ports.pricing import PricingProvider
     from ccprophet.ports.repositories import SessionRepository
 
@@ -22,8 +24,8 @@ def run_statusline_command(
     sessions: SessionRepository,
     pricing: PricingProvider | None = None,
     *,
-    tool_defs_for: callable | None = None,
-    tool_calls_for: callable | None = None,
+    tool_defs_for: Callable[[SessionId], Iterable[ToolDef]] | None = None,
+    tool_calls_for: Callable[[SessionId], Iterable[ToolCall]] | None = None,
     as_json: bool = False,
     with_cost: bool = False,
 ) -> int:

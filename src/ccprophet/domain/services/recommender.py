@@ -69,8 +69,8 @@ def _pruning_rec(
     kind = RecommendationKind.PRUNE_MCP if is_mcp else RecommendationKind.PRUNE_TOOL
     usd = _estimate_usd(item.tokens, ctx.pricing)
     rationale = (
-        f"{item.source} / {item.tool_name}: 세션 내 0회 호출, "
-        f"제거 시 {item.tokens.value:,} 토큰 절감"
+        f"{item.source} / {item.tool_name}: 0 calls in session — "
+        f"removing saves ~{item.tokens.value:,} tokens"
     )
     return Recommendation(
         rec_id=str(uuid.uuid4()),

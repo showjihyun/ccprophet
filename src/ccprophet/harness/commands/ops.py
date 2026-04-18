@@ -71,7 +71,7 @@ def register(app: typer.Typer) -> None:
         )
         from ccprophet.use_cases.backfill_from_jsonl import BackfillFromJsonlUseCase
 
-        conn = connect_readwrite()
+        conn = connect_readwrite(create_if_missing=True)
         ensure_schema(conn)
         uc = BackfillFromJsonlUseCase(
             source=JsonlReader(),

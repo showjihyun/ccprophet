@@ -44,7 +44,3 @@ class ProfileNotFound(DomainError):
     def __init__(self, name: str) -> None:
         self.name = name
         super().__init__(f"Subset profile not found: {name}")
-
-
-class InvalidOutcomeRule(DomainError):
-    pass

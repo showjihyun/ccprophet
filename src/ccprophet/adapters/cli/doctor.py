@@ -54,18 +54,22 @@ class DoctorReport:
 # ── helpers ──────────────────────────────────────────────────────────────── #
 
 def _table_exists(conn: duckdb.DuckDBPyConnection, table: str) -> bool:
+    import duckdb as _duckdb  # local import to narrow the except
+
     try:
         conn.execute(f"SELECT 1 FROM {table} LIMIT 0").fetchall()
         return True
-    except Exception:
+    except _duckdb.Error:
         return False
 
 
 def _count(conn: duckdb.DuckDBPyConnection, sql: str) -> int:
+    import duckdb as _duckdb
+
     try:
         row = conn.execute(sql).fetchone()
         return row[0] if row else 0
-    except Exception:
+    except _duckdb.Error:
         return 0
 
 
@@ -127,6 +131,8 @@ def _check_orphans(conn: duckdb.DuckDBPyConnection) -> dict[str, int]:
 
 
 def _repair_orphans(conn: duckdb.DuckDBPyConnection, orphan_counts: dict[str, int]) -> dict[str, int]:
+    import duckdb as _duckdb
+
     deleted: dict[str, int] = {}
     for tbl, count in orphan_counts.items():
         if count == 0:
@@ -137,7 +143,7 @@ def _repair_orphans(conn: duckdb.DuckDBPyConnection, orphan_counts: dict[str, in
                 f"DELETE FROM {tbl} WHERE session_id NOT IN (SELECT session_id FROM sessions)"
             )
             deleted[tbl] = count
-        except Exception:
+        except _duckdb.Error:
             deleted[tbl] = -1
     return deleted
 

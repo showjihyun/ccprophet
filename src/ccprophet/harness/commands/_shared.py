@@ -28,8 +28,22 @@ def connect_readonly() -> duckdb.DuckDBPyConnection:
     return duckdb.connect(str(DB_PATH), read_only=True)
 
 
-def connect_readwrite() -> duckdb.DuckDBPyConnection:
+def connect_readwrite(*, create_if_missing: bool = False) -> duckdb.DuckDBPyConnection:
+    """Open DB for read-write.
+
+    Default: refuses to auto-create. Auto-created DBs have no schema and the
+    first query crashes with `CatalogException`; a clear "run ccprophet install"
+    hint is strictly better UX.
+
+    `create_if_missing=True` is reserved for `ingest` / hook ingestion paths
+    that call `ensure_schema(conn)` right after opening.
+    """
     import duckdb
 
+    if not DB_PATH.exists() and not create_if_missing:
+        raise SystemExit(
+            f"ccprophet DB not found at {DB_PATH}\n"
+            f"Run `ccprophet install` or trigger a hook first."
+        )
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(str(DB_PATH))

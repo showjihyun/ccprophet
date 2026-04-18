@@ -187,7 +187,7 @@ def create_app(
     def api_dag(sid: str) -> Response:
         session = _require_session(uc, sid)
         try:
-            phases = uc.detect_phases.execute(session.session_id)
+            phases = uc.detect_phases.execute(session.session_id, persist=False)
         except SessionNotFound:
             raise HTTPException(status_code=404, detail="session not found") from None
         if not phases:
@@ -210,7 +210,7 @@ def create_app(
     def api_replay(sid: str) -> Response:
         session = _require_session(uc, sid)
         try:
-            phases = uc.detect_phases.execute(session.session_id)
+            phases = uc.detect_phases.execute(session.session_id, persist=False)
         except SessionNotFound:
             raise HTTPException(status_code=404, detail="session not found") from None
         if not phases:

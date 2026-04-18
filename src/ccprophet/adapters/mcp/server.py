@@ -228,15 +228,15 @@ class CcprophetMcpServer:
         try:
             report = self.analyze_bloat.execute_current()
         except SessionNotFound as e:
-            return _error("no_active_session", str(e))
+            return _error("session_not_found", str(e))
         return shape_bloat(report)
 
     def tool_get_phase_breakdown(self, sid: str | None = None) -> dict[str, Any]:
         try:
             phases = (
-                self.detect_phases.execute(SessionId(sid))
+                self.detect_phases.execute(SessionId(sid), persist=False)
                 if sid
-                else self.detect_phases.execute_current()
+                else self.detect_phases.execute_current(persist=False)
             )
         except SessionNotFound as e:
             return _error("session_not_found", str(e))

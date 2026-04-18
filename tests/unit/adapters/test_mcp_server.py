@@ -105,7 +105,8 @@ class TestGetCurrentBloat:
     def test_returns_error_payload_when_no_active_session(self) -> None:
         repos = InMemoryRepositorySet()
         payload = _build_server(repos).dispatch("get_current_bloat", {})
-        assert payload["code"] == "no_active_session"
+        # unified code: all SessionNotFound paths emit `session_not_found`
+        assert payload["code"] == "session_not_found"
         assert "error" in payload
 
 

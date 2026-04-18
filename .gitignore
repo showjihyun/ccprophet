@@ -57,3 +57,4 @@ site/
 
 # User-local Claude Code settings (not for check-in)
 .claude/settings.local.json
+.e2e-tmp/

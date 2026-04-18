@@ -189,7 +189,7 @@ echo '<hook payload>' | ccprophet-hook
 
 **실행 모드**
 - `ccprophet tail` — foreground watchdog 모드
-- `ccprophet ingest --once` — 한 번만 훑고 종료 (cron 또는 `launchd` 연동)
+- `ccprophet ingest` — 한 번만 훑고 종료 (cron 또는 `launchd` 연동)
 
 #### 4.1.3 `otlp_bridge.py` (opt-in)
 
@@ -463,7 +463,7 @@ output_per_mtok = 15.0
 **Backfill 플로우 (historical)**
 
 ```
-[1] ccprophet ingest --once 실행
+[1] ccprophet ingest 실행
         │
         ▼
 [2] jsonl_tailer가 ~/.claude/projects/ 스캔

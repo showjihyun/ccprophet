@@ -19,17 +19,27 @@ class DetectPhasesUseCase:
     events: EventRepository
     phases: PhaseRepository
 
-    def execute(self, session_id: SessionId) -> list[Phase]:
+    def execute(
+        self, session_id: SessionId, *, persist: bool = True
+    ) -> list[Phase]:
+        """Detect phases for `session_id`.
+
+        When `persist=False` the detected phases are returned without writing
+        back to the PhaseRepository. Used by the read-only Web viewer (NFR-2:
+        Web connects in read-only DuckDB mode — calling `replace_for_session`
+        would raise `InvalidInputException`).
+        """
         session = self.sessions.get(session_id)
         if session is None:
             raise SessionNotFound(session_id)
         evs = list(self.events.list_by_session(session_id))
         detected = PhaseDetector.detect(evs)
-        self.phases.replace_for_session(session_id, detected)
+        if persist:
+            self.phases.replace_for_session(session_id, detected)
         return detected
 
-    def execute_current(self) -> list[Phase]:
+    def execute_current(self, *, persist: bool = True) -> list[Phase]:
         session = self.sessions.latest_active()
         if session is None:
             raise SessionNotFound(SessionId("(no active session)"))
-        return self.execute(session.session_id)
+        return self.execute(session.session_id, persist=persist)

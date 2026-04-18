@@ -121,7 +121,7 @@ uv add duckdb
 uv add --dev pytest
 
 # 새 세션 분석 (dogfooding)
-uv run ccprophet ingest --once
+uv run ccprophet ingest
 uv run ccprophet bloat --session $(uv run ccprophet sessions --latest --id-only)
 ```
 
@@ -156,9 +156,9 @@ uv run ccprophet bloat --session $(uv run ccprophet sessions --latest --id-only)
 
 ### CLI / Rich
 
-- `rich.Theme`은 `ccprophet/ui/theme.py`의 `CCPROPHET_THEME`을 재사용. 로컬 색 하드코딩 금지.
-- `--json` 플래그는 모든 분석 커맨드에 필수 (FR-3.2).
-- 메시지는 `CCPROF_LOCALE` 환경변수 기반 i18n (ko/en).
+- `--json` 플래그는 모든 분석 커맨드에 필수 (FR-3.2). Cost-sensitive 커맨드 (`bloat`, `live`, `forecast`, `statusline`) 는 `--cost` 지원 (FR-10.3).
+- 모든 CLI 메시지는 영어로 작성. i18n (ko/en) 은 Phase 2 로 deferred — 관련 env var (`CCPROF_LOCALE`) 은 v0.6 시점 **구현 안됨**.
+- `rich.Theme` 중앙 집중 시스템은 현재 없음. 각 CLI 파일에서 `Console()` + 인라인 색 사용 — Phase 2 에서 `design tokens` 통합 예정.
 
 ## 테스트 요구사항
 

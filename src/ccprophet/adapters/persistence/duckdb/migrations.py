@@ -10,12 +10,16 @@ MIGRATIONS_DIR = Path(__file__).resolve().parents[5] / "migrations"
 
 
 def current_version(conn: duckdb.DuckDBPyConnection) -> int:
+    import duckdb as _duckdb
+
     try:
         result = conn.execute(
             "SELECT MAX(version) FROM schema_migrations"
         ).fetchone()
         return result[0] if result and result[0] is not None else 0
-    except Exception:
+    except _duckdb.CatalogException:
+        # Fresh DB — `schema_migrations` table doesn't exist yet. Callers
+        # interpret 0 as "nothing applied", which is correct.
         return 0
 
 
