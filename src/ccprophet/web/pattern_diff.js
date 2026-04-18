@@ -90,9 +90,11 @@
       html.push('<ul style="list-style:none;padding:0;margin:0">');
       state.report.findings.forEach(function (f) {
         var color = SEVERITY_COLORS[f.severity] || "#94a3b8";
+        var sev = f.severity || "info";
         html.push(
           '<li style="margin:4px 0;display:flex;gap:6px;align-items:flex-start">' +
-          '<span style="flex:0 0 8px;height:8px;margin-top:5px;border-radius:50%;' +
+          '<span role="img" aria-label="' + escapeHtml(sev) + ' severity"' +
+          ' style="flex:0 0 8px;height:8px;margin-top:5px;border-radius:50%;' +
           'background:' + color + '"></span>' +
           '<span><b>' + escapeHtml(f.kind) + '</b> — ' +
           escapeHtml(f.detail) + '</span></li>'

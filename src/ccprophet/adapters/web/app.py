@@ -3,10 +3,11 @@
 All endpoints are read-only. Bound to 127.0.0.1 by the harness; no CORS is
 configured on purpose (NFR-2). Business logic lives in use cases — this
 adapter only shapes domain objects into JSON (see ``shapers``) and serves
-the bundled HTML assets from ``web/`` at the repo root.
+the bundled HTML assets from ``src/ccprophet/web/`` (inside the package).
 """
 from __future__ import annotations
 
+import importlib.metadata
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,8 +42,33 @@ if TYPE_CHECKING:
     from ccprophet.use_cases.detect_phases import DetectPhasesUseCase
 
 
-# Default repo-root ``web/`` directory for static assets.
-_WEB_DIR = Path(__file__).resolve().parents[3].parent / "web"
+def _get_version() -> str:
+    """Return the installed package version, falling back to '0' on error."""
+    try:
+        return importlib.metadata.version("ccprophet")
+    except importlib.metadata.PackageNotFoundError:
+        return "0"
+
+
+def _resolve_web_dir() -> Path:
+    """Locate the bundled web assets directory.
+
+    Priority:
+    1. ``src/ccprophet/web/`` co-located inside the package (installed wheel or editable).
+    2. Legacy repo-root ``web/`` for any old layout still in use.
+    """
+    # Installed wheel / editable install: web/ lives inside the ccprophet package.
+    # __file__ = .../ccprophet/adapters/web/app.py
+    # parent x3  = .../ccprophet/
+    pkg_web = Path(__file__).resolve().parent.parent.parent / "web"
+    if pkg_web.is_dir():
+        return pkg_web
+    # Fallback: repo root layout (old path kept for compatibility).
+    return Path(__file__).resolve().parents[3].parent / "web"
+
+
+_WEB_DIR = _resolve_web_dir()
+_VERSION = _get_version()
 
 
 @dataclass
@@ -80,9 +106,12 @@ def _require_session(uc: WebUseCases, sid: str) -> Session:
     return session
 
 
-def create_app(uc: WebUseCases, *, web_dir: Path | None = None) -> FastAPI:
+def create_app(
+    uc: WebUseCases, *, web_dir: Path | None = None, version: str | None = None
+) -> FastAPI:
     """Build the FastAPI app. Pure function of its inputs (LP-6 friendly)."""
     assets_dir = web_dir or _WEB_DIR
+    _v = version if version is not None else _VERSION
     app = FastAPI(title="ccprophet", docs_url=None, redoc_url=None)
 
     @app.get("/healthz")
@@ -94,7 +123,11 @@ def create_app(uc: WebUseCases, *, web_dir: Path | None = None) -> FastAPI:
         index_path = assets_dir / "index.html"
         if not index_path.exists():
             raise HTTPException(status_code=404, detail="index.html not found")
-        return FileResponse(index_path, media_type="text/html")
+        html = index_path.read_text(encoding="utf-8")
+        # Inject cache-busting version query param on bundled script references.
+        html = html.replace('src="./replay.js"', f'src="./replay.js?v={_v}"')
+        html = html.replace('src="./pattern_diff.js"', f'src="./pattern_diff.js?v={_v}"')
+        return Response(content=html, media_type="text/html")
 
     @app.get("/vendor/{name}")
     def vendor(name: str) -> Response:

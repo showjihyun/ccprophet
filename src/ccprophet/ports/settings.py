@@ -26,6 +26,13 @@ class SettingsStore(Protocol):
         expected_hash: str | None = None,
     ) -> SettingsDoc: ...
 
+    def read_bytes(self, path: Path) -> bytes:
+        """Return the raw bytes of *path* without parsing.
+
+        Used by ApplyPruningUseCase to snapshot the pre-write state byte-accurately.
+        """
+        ...
+
     def write_bytes_atomic(self, path: Path, data: bytes) -> None:
         """Used by RestoreSnapshotUseCase to put original bytes back verbatim.
 

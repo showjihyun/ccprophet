@@ -157,6 +157,9 @@ def test_apply_propagates_settings_conflict(wired, snapshot_root) -> None:  # ty
         def write_atomic(self, path, content, *, expected_hash=None):
             raise SnapshotConflict("forced for test")
 
+        def read_bytes(self, path):
+            return self._real.read_bytes(path)
+
         def write_bytes_atomic(self, path, data):
             self._real.write_bytes_atomic(path, data)
 

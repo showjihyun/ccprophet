@@ -56,7 +56,7 @@ class ApplyPruningUseCase:
                 reason="no changes to apply",
             )
 
-        original_bytes = target_path.read_bytes()
+        original_bytes = self.settings.read_bytes(target_path)
         snapshot = self.snapshot_store.capture(
             files={str(target_path): original_bytes},
             meta=SnapshotMeta(

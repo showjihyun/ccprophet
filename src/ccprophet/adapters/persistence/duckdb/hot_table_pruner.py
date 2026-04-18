@@ -49,18 +49,17 @@ class DuckDBHotTablePruner:
         )
 
     def _delete(self, table: str, col: str, ids: list[str]) -> int:
-        # DuckDB's `DELETE` returns affected rowcount via the result set of
-        # `SELECT COUNT(*)`-first-then-delete; simpler & portable to count
-        # beforehand and issue the DELETE.
-        before = self._conn.execute(
-            f"SELECT COUNT(*) FROM {table} WHERE {col} = ANY(?)", [ids]
-        ).fetchone()
-        rowcount = int(before[0]) if before else 0
-        if rowcount > 0:
-            self._conn.execute(
-                f"DELETE FROM {table} WHERE {col} = ANY(?)", [ids]
-            )
-        return rowcount
+        # Single round-trip: DELETE ... RETURNING 1 emits one row per deleted
+        # row; counting in Python avoids the prior SELECT COUNT(*) pre-query.
+        try:
+            rows = self._conn.execute(
+                f"DELETE FROM {table} WHERE {col} = ANY(?) RETURNING 1", [ids]
+            ).fetchall()
+        except Exception:
+            # Table may not exist yet on a fresh DB (CatalogException or
+            # similar).  Treat as zero deleted rows.
+            return 0
+        return len(rows)
 
     def preview_counts(self, sids: Sequence[SessionId]) -> PruneCounts:
         """Non-destructive companion used by the CLI dry-run output."""

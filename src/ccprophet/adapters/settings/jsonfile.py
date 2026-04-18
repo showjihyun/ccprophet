@@ -53,6 +53,9 @@ class JsonFileSettingsStore:
             sha256=hashlib.sha256(data).hexdigest(),
         )
 
+    def read_bytes(self, path: Path) -> bytes:
+        return path.read_bytes()
+
     def write_bytes_atomic(self, path: Path, data: bytes) -> None:
         tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
         tmp.write_bytes(data)

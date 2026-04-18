@@ -277,7 +277,7 @@
       <button id="mode-compare" type="button">Compare</button>
     </span>
     <select id="second-session-picker" aria-label="compare against"></select>
-    <span class="meta" id="session-meta"><span class="chip">select a session</span></span>
+    <span class="meta" id="session-meta" role="status" aria-live="polite"><span class="chip">select a session</span></span>
     <button class="refresh" id="refresh-btn" type="button">refresh</button>
   </header>
   <main id="main-grid">
@@ -289,8 +289,9 @@
       <span class="pane-label" id="pane-label-left" style="display:none">L</span>
       <svg class="dag" id="dag"></svg>
       <div class="empty-state" id="empty-state">
-        <div>No session selected.</div>
-        <div>Trigger a Claude Code hook, then refresh.</div>
+        <div>No sessions yet.</div>
+        <div>Run <code>ccprophet install</code> and use Claude Code once.</div>
+        <div>Or <code>ccprophet ingest</code> to backfill from <code>~/.claude/projects</code>.</div>
       </div>
       <div class="legend">
         <span><span class="swatch" style="background:#a78bfa"></span>session</span>
@@ -317,9 +318,9 @@
         <button id="replay-play" type="button" aria-label="play/pause">play</button>
       </span>
       <span class="replay-ctrl" id="replay-speed">
-        <button data-speed="1" class="active" type="button">1x</button>
-        <button data-speed="2" type="button">2x</button>
-        <button data-speed="5" type="button">5x</button>
+        <button data-speed="1" class="active" type="button" aria-label="replay speed 1x">1x</button>
+        <button data-speed="2" type="button" aria-label="replay speed 2x">2x</button>
+        <button data-speed="5" type="button" aria-label="replay speed 5x">5x</button>
       </span>
       <input id="replay-slider" type="range" min="0" max="1000" value="0" step="1" />
       <span id="delta-chip" style="display:none">L: - | R: -</span>
@@ -329,7 +330,7 @@
       </label>
     </div>
     <div class="replay-row">
-      <span id="replay-status">t=+00:00 - ready</span>
+      <span id="replay-status" role="status" aria-live="polite">t=+00:00 - ready</span>
     </div>
   </section>
   <script src="./vendor/d3.v7.min.js"></script>
@@ -393,7 +394,12 @@
       chips.push('<span class="chip">' + CCP.fmtInt(tokens) + ' tok</span>');
       if (detail.bloat) {
         var cls = detail.bloat.bloat_ratio > 0.3 ? 'bad' : (detail.bloat.bloat_ratio > 0.15 ? 'warn' : 'ok');
-        chips.push('<span class="chip ' + cls + '">bloat ' + CCP.fmtPct(detail.bloat.bloat_ratio) + '</span>');
+        var sev = cls === 'bad' ? 'critical' : (cls === 'warn' ? 'warning' : 'ok');
+        var bloatPct = CCP.fmtPct(detail.bloat.bloat_ratio);
+        chips.push(
+          '<span class="chip ' + cls + '" role="status" aria-label="bloat ' + bloatPct +
+          ' \u2014 status: ' + sev + '">bloat ' + bloatPct + '</span>'
+        );
       }
       if (detail.cost) {
         chips.push('<span class="chip">' + CCP.fmtUsd(detail.cost.total_usd) + '</span>');
@@ -470,7 +476,14 @@
         ctx.nodeSel.append("text")
           .text(function (d) { return d.label.length > 24 ? d.label.slice(0, 22) + "..." : d.label; })
           .attr("dx", function (d) { return CCP.nodeRadius(d.tokens) + 4; })
-          .attr("dy", "0.32em");
+          .attr("dy", "0.32em")
+          .filter(function (d) { return d.label.length > 24; })
+          .append("title")
+          .text(function (d) { return d.label; });
+
+        // Also add native browser tooltip on each node group for full label.
+        ctx.nodeSel.append("title")
+          .text(function (d) { return d.label; });
 
         ctx.simulation = d3.forceSimulation(nodes)
           .force("link", d3.forceLink(edges).id(function (d) { return d.id; }).distance(60).strength(0.6))
