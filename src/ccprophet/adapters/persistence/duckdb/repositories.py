@@ -183,15 +183,20 @@ class DuckDBToolDefRepository:
         self._conn = conn
 
     def bulk_add(self, sid: SessionId, defs: Sequence[ToolDef]) -> None:
-        for td in defs:
-            self._conn.execute(
-                """
-                INSERT INTO tool_defs_loaded (session_id, tool_name, tokens, source, loaded_at)
-                VALUES (?, ?, ?, ?, now())
-                ON CONFLICT (session_id, tool_name) DO NOTHING
-                """,
-                [sid.value, td.tool_name, td.tokens.value, td.source],
-            )
+        rows = [
+            [sid.value, td.tool_name, td.tokens.value, td.source]
+            for td in defs
+        ]
+        if not rows:
+            return
+        self._conn.executemany(
+            """
+            INSERT INTO tool_defs_loaded (session_id, tool_name, tokens, source, loaded_at)
+            VALUES (?, ?, ?, ?, now())
+            ON CONFLICT (session_id, tool_name) DO NOTHING
+            """,
+            rows,
+        )
 
     def list_for_session(self, sid: SessionId) -> Iterable[ToolDef]:
         rows = self._conn.execute(
@@ -263,26 +268,31 @@ class DuckDBPhaseRepository:
 
     def replace_for_session(self, sid: SessionId, phases: Sequence[Phase]) -> None:
         self._conn.execute("DELETE FROM phases WHERE session_id = ?", [sid.value])
-        for p in phases:
-            self._conn.execute(
-                """
-                INSERT INTO phases (phase_id, session_id, phase_type, start_ts, end_ts,
-                                    input_tokens, output_tokens, tool_call_count,
-                                    detection_confidence)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    p.phase_id,
-                    p.session_id.value,
-                    p.phase_type.value,
-                    p.start_ts,
-                    p.end_ts,
-                    p.input_tokens.value,
-                    p.output_tokens.value,
-                    p.tool_call_count,
-                    p.detection_confidence,
-                ],
-            )
+        rows = [
+            [
+                p.phase_id,
+                p.session_id.value,
+                p.phase_type.value,
+                p.start_ts,
+                p.end_ts,
+                p.input_tokens.value,
+                p.output_tokens.value,
+                p.tool_call_count,
+                p.detection_confidence,
+            ]
+            for p in phases
+        ]
+        if not rows:
+            return
+        self._conn.executemany(
+            """
+            INSERT INTO phases (phase_id, session_id, phase_type, start_ts, end_ts,
+                                input_tokens, output_tokens, tool_call_count,
+                                detection_confidence)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
 
     def list_for_session(self, sid: SessionId) -> Iterable[Phase]:
         rows = self._conn.execute(

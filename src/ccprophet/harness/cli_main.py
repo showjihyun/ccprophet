@@ -100,6 +100,7 @@ def main() -> None:
             DuckDBSessionRepository,
             DuckDBToolCallRepository,
         )
+        from ccprophet.adapters.persistence.duckdb.transaction import transaction
         from ccprophet.adapters.persistence.duckdb.v3_repositories import (
             DuckDBSubagentRepository,
         )
@@ -115,7 +116,9 @@ def main() -> None:
             subagents=DuckDBSubagentRepository(conn),
         )
         paths = [file] if file is not None else discover_jsonl_files(root)
-        code = run_ingest_command(uc, paths=paths, as_json=json)
+        # Collapse per-row commits into one transaction per ingest run.
+        with transaction(conn):
+            code = run_ingest_command(uc, paths=paths, as_json=json)
         raise typer.Exit(code)
 
     @app.command()

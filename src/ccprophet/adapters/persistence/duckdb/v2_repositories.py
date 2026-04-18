@@ -58,32 +58,37 @@ class DuckDBRecommendationRepository:
         self._conn = conn
 
     def save_all(self, recs: Sequence[Recommendation]) -> None:
-        for r in recs:
-            self._conn.execute(
-                """
-                INSERT OR REPLACE INTO recommendations
-                    (rec_id, session_id, kind, target, est_savings_tokens,
-                     est_savings_usd, confidence, rationale, status, snapshot_id,
-                     provenance, created_at, applied_at, dismissed_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    r.rec_id,
-                    r.session_id.value,
-                    r.kind.value,
-                    r.target,
-                    r.est_savings_tokens.value,
-                    float(r.est_savings_usd.amount),
-                    r.confidence.value,
-                    r.rationale,
-                    r.status.value,
-                    r.snapshot_id.value if r.snapshot_id else None,
-                    r.provenance,
-                    _to_utc_naive(r.created_at),
-                    _to_utc_naive(r.applied_at),
-                    _to_utc_naive(r.dismissed_at),
-                ],
-            )
+        rows = [
+            [
+                r.rec_id,
+                r.session_id.value,
+                r.kind.value,
+                r.target,
+                r.est_savings_tokens.value,
+                float(r.est_savings_usd.amount),
+                r.confidence.value,
+                r.rationale,
+                r.status.value,
+                r.snapshot_id.value if r.snapshot_id else None,
+                r.provenance,
+                _to_utc_naive(r.created_at),
+                _to_utc_naive(r.applied_at),
+                _to_utc_naive(r.dismissed_at),
+            ]
+            for r in recs
+        ]
+        if not rows:
+            return
+        self._conn.executemany(
+            """
+            INSERT OR REPLACE INTO recommendations
+                (rec_id, session_id, kind, target, est_savings_tokens,
+                 est_savings_usd, confidence, rationale, status, snapshot_id,
+                 provenance, created_at, applied_at, dismissed_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
 
     def list_for_session(
         self, sid: SessionId, *, status: RecommendationStatus | None = None
