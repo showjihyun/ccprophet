@@ -19,10 +19,10 @@ def run_live_command(
     detect: DetectPhasesUseCase,
     analyze: AnalyzeBloatUseCase,
     *,
-    sessions_repo: "SessionRepository | None" = None,
+    sessions_repo: SessionRepository | None = None,
     as_json: bool = False,
     with_cost: bool = False,
-    pricing: "PricingProvider | None" = None,
+    pricing: PricingProvider | None = None,
 ) -> int:
     try:
         phases = detect.execute_current()

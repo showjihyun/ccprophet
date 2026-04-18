@@ -16,7 +16,7 @@ from ccprophet.domain.entities import (
     ToolCall,
     ToolDef,
 )
-from ccprophet.domain.values import SessionId, TaskType
+from ccprophet.domain.values import TaskType
 
 TASK_TOOL = "Task"
 READ_TOOLS = frozenset({"Read", "Glob", "Grep"})

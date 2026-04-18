@@ -34,7 +34,6 @@ from ccprophet.use_cases.detect_phases import DetectPhasesUseCase
 from ccprophet.use_cases.estimate_budget import EstimateBudgetUseCase
 from ccprophet.use_cases.list_recommendations import ListRecommendationsUseCase
 
-
 SERVER_NAME = "ccprophet"
 SERVER_VERSION = "0.1.0"
 

@@ -4,15 +4,15 @@ import duckdb
 import pytest
 
 from ccprophet.adapters.persistence.duckdb.migrations import ensure_schema
+from tests.contract.test_forecast_repository_contract import (
+    ForecastRepositoryContract,
+)
 from tests.contract.test_outcome_repository_contract import OutcomeRepositoryContract
 from tests.contract.test_pricing_provider_contract import PricingProviderContract
 from tests.contract.test_recommendation_repository_contract import (
     RecommendationRepositoryContract,
 )
 from tests.contract.test_snapshot_repository_contract import SnapshotRepositoryContract
-from tests.contract.test_forecast_repository_contract import (
-    ForecastRepositoryContract,
-)
 from tests.contract.test_subagent_repository_contract import (
     SubagentRepositoryContract,
 )

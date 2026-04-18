@@ -1,9 +1,7 @@
 """Unit tests for ClaudeMdAuditor domain service."""
 from __future__ import annotations
 
-import pytest
-
-from ccprophet.domain.services.claude_md_audit import ClaudeMdAuditor, ClaudeMdFinding
+from ccprophet.domain.services.claude_md_audit import ClaudeMdAuditor
 
 
 def _make_lines(n: int, prefix: str = "line ") -> str:

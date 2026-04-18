@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ccprophet.use_cases.analyze_bloat import AnalyzeBloatUseCase
 
 from ccprophet.domain.errors import SessionNotFound, UnknownPricingModel
-from ccprophet.domain.values import Money, SessionId
+from ccprophet.domain.values import SessionId
 
 
 def run_bloat_command(
@@ -20,8 +20,8 @@ def run_bloat_command(
     session: str | None = None,
     as_json: bool = False,
     with_cost: bool = False,
-    sessions_repo: "SessionRepository | None" = None,
-    pricing: "PricingProvider | None" = None,
+    sessions_repo: SessionRepository | None = None,
+    pricing: PricingProvider | None = None,
 ) -> int:
     from rich.console import Console
     from rich.table import Table

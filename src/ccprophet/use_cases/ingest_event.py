@@ -80,9 +80,9 @@ class IngestEventUseCase:
             tool_name=tool_name,
             input_hash=input_hash,
             ts=now,
-            input_tokens=TokenCount(int(payload.get("input_tokens", 0))),
-            output_tokens=TokenCount(int(payload.get("output_tokens", 0))),
-            latency_ms=int(payload.get("latency_ms", 0)),
+            input_tokens=TokenCount(int_or_zero(payload.get("input_tokens"))),
+            output_tokens=TokenCount(int_or_zero(payload.get("output_tokens"))),
+            latency_ms=int_or_zero(payload.get("latency_ms")),
             success=bool(payload.get("success", True)),
         )
         self.tool_calls.append(tc)

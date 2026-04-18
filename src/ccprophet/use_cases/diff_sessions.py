@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from ccprophet.domain.entities import SessionDiff
+from ccprophet.domain.entities import SessionDiff, ToolCall, ToolDef
 from ccprophet.domain.errors import SessionNotFound
 from ccprophet.domain.services.bloat import BloatCalculator
 from ccprophet.domain.values import SessionId
@@ -56,12 +56,17 @@ class DiffSessionsUseCase:
         )
 
 
-def _mcps_called(calls: Sequence, defs: Sequence) -> set[str]:  # type: ignore[no-untyped-def]
-    source_lookup = {
-        td.tool_name: td.source[len("mcp:"):]
-        for td in defs
-        if td.source.startswith("mcp:")
-    }
+def _mcps_called(
+    calls: Sequence[ToolCall], defs: Sequence[ToolDef]
+) -> set[str]:
+    _PREFIX = "mcp:"
+    source_lookup: dict[str, str] = {}
+    for td in defs:
+        if not td.source.startswith(_PREFIX):
+            continue
+        server = td.source[len(_PREFIX):]
+        if server:  # drop `mcp:` with no server name — malformed def
+            source_lookup[td.tool_name] = server
     return {
         server
         for tc in calls

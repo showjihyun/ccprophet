@@ -6,12 +6,25 @@ from __future__ import annotations
 
 import json as json_module
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import duckdb
+
+
+@dataclass(frozen=True)
+class MigrationOps:
+    """Harness-provided handles for schema inspection / migration.
+
+    Decouples the doctor CLI adapter from the persistence adapter (LAYERING
+    §4.4 adapter-family independence).
+    """
+    migrations_dir: Path
+    current_version: Callable[[duckdb.DuckDBPyConnection], int]
+    apply_migrations: Callable[..., int]
 
 OK, WARN, CRITICAL = "ok", "warn", "critical"
 _RANK = {OK: 0, WARN: 1, CRITICAL: 2}
@@ -71,9 +84,10 @@ def _check_db_file(db_path: Path) -> CheckResult:
 
 
 def _check_schema_version(
-    conn: duckdb.DuckDBPyConnection, migrations_dir: Path
+    conn: duckdb.DuckDBPyConnection,
+    migrations_dir: Path,
+    current_version: Callable[[duckdb.DuckDBPyConnection], int],
 ) -> tuple[CheckResult, dict]:  # type: ignore[type-arg]
-    from ccprophet.adapters.persistence.duckdb.migrations import current_version
     current = current_version(conn)
     latest = max(
         (
@@ -149,11 +163,11 @@ def run_doctor_command(
     as_json: bool,
     repair: bool,
     migrate: bool,
+    migration_ops: MigrationOps,
     migrations_dir: Path | None = None,
     snapshot_dir: Path | None = None,
 ) -> int:
-    from ccprophet.adapters.persistence.duckdb.migrations import MIGRATIONS_DIR
-    mdir = migrations_dir or MIGRATIONS_DIR
+    mdir = migrations_dir or migration_ops.migrations_dir
     sdir = snapshot_dir or (db_path.parent / "snapshots")
 
     report = DoctorReport(overall=OK, db_path=str(db_path))
@@ -168,7 +182,9 @@ def run_doctor_command(
     ro_conn = duckdb.connect(str(db_path), read_only=True)
     try:
         # 2: schema version
-        schema_check, minfo = _check_schema_version(ro_conn, mdir)
+        schema_check, minfo = _check_schema_version(
+            ro_conn, mdir, migration_ops.current_version
+        )
         report.checks.append(schema_check)
         report.worst(schema_check.status)
         report.migration = minfo
@@ -177,11 +193,8 @@ def run_doctor_command(
             ro_conn.close()
             rw = duckdb.connect(str(db_path))
             try:
-                from ccprophet.adapters.persistence.duckdb.migrations import (
-                    apply_migrations, current_version,
-                )
-                applied = apply_migrations(rw, migrations_dir=mdir)
-                new_ver = current_version(rw)
+                applied = migration_ops.apply_migrations(rw, migrations_dir=mdir)
+                new_ver = migration_ops.current_version(rw)
             finally:
                 rw.close()
             report.migration.update(applied=applied, new_version=new_ver, needs_migration=False)

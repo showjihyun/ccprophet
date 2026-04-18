@@ -4,9 +4,9 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 0.2 (Sellable MVP Alignment) |
-| 작성일 | 2026-04-17 |
-| 상위 문서 | `PRD.md` v0.4, `ARCHITECT.md` v0.3 |
+| 문서 버전 | 0.3 (Implementation Alignment) |
+| 작성일 | 2026-04-18 |
+| 상위 문서 | `PRD.md` v0.6, `ARCHITECT.md` v0.4 |
 | 대상 독자 | 컨트리뷰터, 코드 리뷰어, 테스트 담당 |
 | 기조 | **Clean Architecture**(Robert C. Martin) 중심 + **Hexagonal Architecture**(Alistair Cockburn)의 Ports & Adapters를 경계 명세 언어로 결합 |
 
@@ -459,8 +459,14 @@ def main() -> None:
 
 ```toml
 # pyproject.toml
+# NOTE: import-linter ≥ 2 uses `root_packages` (plural). 계약은 아래 4개.
+# v0.3 구현 상태:
+#   (1) (2) (3) — pyproject.toml 에 반영됨
+#   (4) independence — 준비 중 (adapters/cli/install.py 가 SettingsStore 를
+#       직접 import 하던 violation 은 v0.6 에서 제거됨; 이 contract 는
+#       B5 태스크에서 활성화 예정).
 [tool.importlinter]
-root_package = "ccprophet"
+root_packages = ["ccprophet"]
 
 [[tool.importlinter.contracts]]
 name = "Clean Architecture layers"
@@ -487,7 +493,8 @@ name = "Use cases and ports are framework-free"
 type = "forbidden"
 source_modules = ["ccprophet.use_cases", "ccprophet.ports"]
 forbidden_modules = [
-    "duckdb", "fastapi", "typer", "rich", "watchdog", "mcp", "statsmodels",
+    "duckdb", "fastapi", "typer", "rich", "watchdog", "mcp",
+    "statsmodels", "httpx", "requests", "urllib3",
 ]
 
 [[tool.importlinter.contracts]]
@@ -510,6 +517,7 @@ modules = [
     "ccprophet.adapters.subset_profile",
     "ccprophet.adapters.pricing",
     "ccprophet.adapters.outcome_rules",
+    "ccprophet.adapters.mcp_scan",
 ]
 ```
 
@@ -544,9 +552,11 @@ ccprophet/
 │   ├── DESIGN.md
 │   └── LAYERING.md          ← 본 문서
 ├── migrations/
-│   └── V1__init.sql
-├── web/                     # 빌드 스텝 없음
-│   └── index.html
+│   ├── V1__init.sql
+│   ├── V2__auto_fix_outcome_cost.sql
+│   ├── V3__cache_tokens.sql
+│   ├── V4__subagent_summary.sql
+│   └── V5__session_summary.sql
 ├── src/ccprophet/
 │   ├── __init__.py
 │   ├── data/
@@ -559,14 +569,18 @@ ccprophet/
 │   │   └── services/
 │   │       ├── bloat.py
 │   │       ├── phase.py
-│   │       ├── utilization.py
-│   │       ├── recommender.py
-│   │       ├── cost.py
-│   │       ├── outcome.py
+│   │       ├── budget.py
+│   │       ├── claude_md_audit.py
 │   │       ├── cluster.py
+│   │       ├── cost.py
+│   │       ├── forecast.py
+│   │       ├── pattern_diff.py
 │   │       ├── postmortem.py
+│   │       ├── quality.py
+│   │       ├── recommender.py
+│   │       ├── session_aggregator.py
 │   │       └── settings_patch.py   # pure planner (IO는 adapter)
-│   ├── use_cases/
+│   ├── use_cases/               # ~25 files (1 파일 = 1 유스케이스)
 │   │   ├── __init__.py
 │   │   ├── ingest_event.py
 │   │   ├── backfill_from_jsonl.py
@@ -578,68 +592,71 @@ ccprophet/
 │   │   ├── apply_pruning.py
 │   │   ├── restore_snapshot.py
 │   │   ├── list_snapshots.py
+│   │   ├── list_recommendations.py
+│   │   ├── list_subagents.py
 │   │   ├── mark_outcome.py
-│   │   ├── classify_outcome_auto.py
 │   │   ├── estimate_budget.py
 │   │   ├── reproduce_session.py
 │   │   ├── analyze_postmortem.py
 │   │   ├── diff_sessions.py
 │   │   ├── compute_session_cost.py
 │   │   ├── compute_monthly_cost.py
-│   │   └── compute_realized_savings.py
+│   │   ├── compute_savings.py
+│   │   ├── assess_quality.py
+│   │   └── rollup_sessions.py
+│   │   # 주: pattern_diff / claude-md audit / mcp-scan 은 별도 use-case 래퍼 없이
+│   │   #    도메인 서비스 (domain/services/) 를 CLI/Web adapter 가 직접 호출한다.
+│   │   #    compute_savings.py 가 realized + estimated 모두 담당 (v0.6).
 │   ├── ports/
 │   │   ├── __init__.py
-│   │   ├── use_cases.py          # driving protocols
-│   │   ├── repositories.py       # Event/Session/ToolCall/ToolDef/Phase
+│   │   ├── repositories.py       # EventRepository, SessionRepository, ToolCallRepository,
+│   │   │                         # ToolDefRepository, PhaseRepository, ForecastRepository
 │   │   ├── recommendations.py    # RecommendationRepository
 │   │   ├── snapshots.py          # SnapshotRepository + SnapshotStore
-│   │   ├── settings.py           # SettingsStore
+│   │   ├── settings.py           # SettingsStore (read_bytes/write_atomic)
 │   │   ├── subset_profile.py
-│   │   ├── pricing.py
+│   │   ├── pricing.py            # PricingProvider
 │   │   ├── outcomes.py           # OutcomeRepository + OutcomeRulesProvider
+│   │   ├── subagents.py          # SubagentRepository
+│   │   ├── session_summary.py    # SessionSummaryRepository
+│   │   ├── jsonl.py              # JsonlReader (F1 backfill)
+│   │   ├── hot_table_pruner.py   # HotTablePruner (F3 rollup)
+│   │   ├── mcp_scan.py           # McpScanner (Audit)
 │   │   ├── clock.py
 │   │   ├── redactor.py
-│   │   ├── forecast_model.py
-│   │   ├── publisher.py
-│   │   ├── filewatch.py
+│   │   ├── forecast_model.py     # LinearForecastModel / ArimaForecastModel
 │   │   └── logger.py
+│   │   # 주: driving Protocol (UseCase interfaces) 은 파일로 분리하지 않고
+│   │   #    Use Case 클래스 자체가 계약이 된다 (LAYERING §4.3 Driving Adapter 규약 참조).
+│   │   #    publisher/filewatch 포트는 v0.6 시점 미도입 — WS live push 는 내부 callable.
 │   ├── adapters/
 │   │   ├── __init__.py
-│   │   ├── cli/             # driving
-│   │   │   ├── __init__.py
-│   │   │   ├── bloat.py
-│   │   │   ├── live.py
-│   │   │   ├── sessions.py
-│   │   │   ├── recommend.py
-│   │   │   ├── prune.py
-│   │   │   ├── snapshot.py
-│   │   │   ├── cost.py
-│   │   │   ├── mark.py
-│   │   │   ├── reproduce.py
-│   │   │   ├── postmortem.py
-│   │   │   └── install.py
-│   │   ├── web/             # driving
+│   │   ├── cli/             # driving — one module per rendered command
+│   │   ├── web/             # driving (FastAPI, read-only, 127.0.0.1 only)
 │   │   │   ├── app.py
-│   │   │   ├── routes/
-│   │   │   └── ws.py
-│   │   ├── mcp/             # driving (read-only)
+│   │   │   ├── shapers.py
+│   │   │   ├── pattern_diff_shaper.py
+│   │   │   └── replay_shaper.py
+│   │   ├── mcp/             # driving (read-only stdio)
 │   │   │   └── server.py
-│   │   ├── hook/            # driving
+│   │   ├── hook/            # driving — stdlib + duckdb only
 │   │   │   └── receiver.py
 │   │   ├── persistence/
-│   │   │   ├── duckdb/      # driven
-│   │   │   │   ├── event_repository.py
-│   │   │   │   ├── session_repository.py
-│   │   │   │   ├── recommendation_repository.py
-│   │   │   │   ├── snapshot_repository.py
-│   │   │   │   ├── outcome_repository.py
-│   │   │   │   └── migrations.py
+│   │   │   ├── duckdb/      # driven — one file ~= one aggregate family
+│   │   │   │   ├── _tz.py           # UTC round-trip helpers
+│   │   │   │   ├── transaction.py   # BEGIN/COMMIT helper
+│   │   │   │   ├── migrations.py    # V*.sql applier
+│   │   │   │   ├── repositories.py  # V1 aggregates
+│   │   │   │   ├── v2_repositories.py  # V2 Auto-Fix/Outcome/Pricing
+│   │   │   │   ├── v3_repositories.py  # V3 cache-token aggregates
+│   │   │   │   ├── v5_repositories.py  # V5 session_summary
+│   │   │   │   └── hot_table_pruner.py # F3 rollup
 │   │   │   └── inmemory/    # driven (test fakes)
 │   │   │       └── repositories.py
 │   │   ├── settings/
-│   │   │   └── jsonfile.py
+│   │   │   └── jsonfile.py  # atomic write + SHA256 guard
 │   │   ├── snapshot/
-│   │   │   └── filesystem.py
+│   │   │   └── filesystem.py  # atomic blob + manifest
 │   │   ├── subset_profile/
 │   │   │   └── jsonfile.py
 │   │   ├── pricing/
@@ -647,52 +664,78 @@ ccprophet/
 │   │   │   └── tomloverride.py
 │   │   ├── outcome_rules/
 │   │   │   └── toml.py
+│   │   ├── mcp_scan/
+│   │   │   └── cli_subprocess.py    # `claude mcp list` subprocess
 │   │   ├── clock/
 │   │   ├── redaction/
-│   │   ├── forecast/
+│   │   ├── forecast/        # linear + ARIMA fallback
 │   │   ├── filewatch/
 │   │   ├── publisher/
 │   │   └── logger/
-│   └── harness/
-│       ├── cli_main.py
-│       ├── hook_main.py
-│       ├── web_main.py
-│       └── mcp_main.py
+│   ├── harness/                # composition root — assembly only
+│   │   ├── cli_main.py           # creates Typer app, registers command groups
+│   │   ├── hook_main.py
+│   │   ├── web_main.py
+│   │   ├── mcp_main.py
+│   │   └── commands/             # CLI wiring split (v0.6)
+│   │       ├── _shared.py        # DB_PATH / connect_readonly (CCPROPHET_DB)
+│   │       ├── analysis.py
+│   │       ├── analysis_extra.py
+│   │       ├── actions.py
+│   │       ├── actions_rollup.py
+│   │       ├── actions_snapshot.py
+│   │       ├── info.py
+│   │       ├── ops.py
+│   │       └── services.py
+│   └── web/                    # static assets packaged with the wheel
+│       ├── index.html          # single-file, no build step
+│       ├── replay.js
+│       ├── pattern_diff.js
+│       └── vendor/d3.v7.min.js
 └── tests/
     ├── conftest.py
     ├── unit/
-    │   ├── domain/
-    │   │   ├── test_bloat_calculator.py
-    │   │   ├── test_phase_detector.py
-    │   │   └── test_values.py
+    │   ├── domain/{test_bloat_calculator,test_phase_detector,test_values,…}.py
     │   └── use_cases/
-    │       ├── test_analyze_bloat.py
-    │       └── test_detect_phases.py
-    ├── contract/
+    ├── contract/               # Port 공통 계약 — InMemory & DuckDB 양쪽이 상속
     │   ├── test_event_repository_contract.py
     │   ├── test_session_repository_contract.py
-    │   ├── test_clock_contract.py
-    │   └── test_forecast_model_contract.py
+    │   ├── test_phase_repository_contract.py
+    │   ├── test_forecast_repository_contract.py
+    │   ├── test_outcome_repository_contract.py
+    │   ├── test_pricing_provider_contract.py
+    │   ├── test_recommendation_repository_contract.py
+    │   ├── test_session_summary_repository_contract.py
+    │   ├── test_snapshot_repository_contract.py
+    │   ├── test_subagent_repository_contract.py
+    │   └── test_subset_profile_contract.py
     ├── integration/
     │   ├── adapters/
-    │   │   ├── persistence/duckdb/
+    │   │   ├── persistence/{duckdb,inmemory}/
     │   │   ├── cli/
     │   │   ├── web/
     │   │   ├── mcp/
     │   │   └── hook/
-    │   └── migrations/
-    ├── e2e/
-    │   └── test_install_and_analyze.py
-    ├── perf/
-    │   ├── test_hook_latency.py
-    │   └── test_bloat_query.py
-    ├── property/
+    │   ├── migrations/
+    │   └── use_cases/
+    ├── perf/                  # NFR-1 guards (marker `perf`)
+    │   └── test_hook_latency.py
+    ├── property/              # Hypothesis-based domain invariants
+    │   ├── test_bloat_calculator_properties.py
     │   └── test_phase_detector_properties.py
     └── fixtures/
         ├── sample_session.jsonl
         ├── hook_payloads.json
         └── builders.py
 ```
+
+**v0.3 drift notes**
+- `ClassifyOutcomeAutoUseCase` — Phase 3 로 deferred (PRD FR-8.1, auto-classifier 실험적). 현재 없음.
+- Pattern Diff / CLAUDE.md 감사 / MCP 스캔 은 use-case wrapper 없이 domain service + CLI adapter 직결. 향후 새 driving port 가 붙으면 use-case 로 승격.
+- `tests/e2e/` 디렉토리는 v0.3 시점에 아직 생성 안 됨. 로컬 스모크는 `tests/integration/adapters/cli/` 로 대체 중.
+- `tests/perf/test_bloat_query.py` 는 30일 쿼리 성능 가드용으로 예약 — 미구현 (우선순위 낮음).
+- `tests/contract/test_clock_contract.py` / `test_forecast_model_contract.py` — Protocol 이 좁아 unit 테스트 (`tests/unit/adapters/test_arima_forecast.py` 등) 로 cover; contract suite 불필요.
+- `src/ccprophet/adapters/cli/` 는 명령별 수십 개 모듈. 트리에서 펼치지 않고, `harness/commands/` 의 register() 호출 체인으로 검증.
 
 ## 7. 테스트 전략 (상세)
 

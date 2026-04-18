@@ -5,8 +5,6 @@ from __future__ import annotations
 import subprocess
 import types
 
-import pytest
-
 from ccprophet.adapters.mcp_scan.cli_subprocess import ClaudeCliMcpLister
 
 

@@ -16,7 +16,6 @@ from ccprophet.domain.values import TokenCount
 from ccprophet.use_cases.assess_quality import AssessQualityUseCase
 from tests.fixtures.builders import SessionBuilder
 
-
 NOW = datetime(2026, 4, 17, 12, 0, tzinfo=timezone.utc)
 
 

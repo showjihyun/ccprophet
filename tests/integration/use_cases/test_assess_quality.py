@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from ccprophet.adapters.clock.system import FrozenClock
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
-from ccprophet.domain.values import SessionId, TokenCount
+from ccprophet.domain.values import TokenCount
 from ccprophet.use_cases.assess_quality import AssessQualityUseCase
 from tests.fixtures.builders import SessionBuilder
 

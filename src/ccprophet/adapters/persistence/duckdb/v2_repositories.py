@@ -204,8 +204,8 @@ class DuckDBSnapshotRepository:
 
     def mark_restored(self, sid: SnapshotId) -> None:
         self._conn.execute(
-            "UPDATE snapshots SET restored_at = now() WHERE snapshot_id = ?",
-            [sid.value],
+            "UPDATE snapshots SET restored_at = ? WHERE snapshot_id = ?",
+            [_to_utc_naive(datetime.now(timezone.utc)), sid.value],
         )
 
 

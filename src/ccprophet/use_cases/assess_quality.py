@@ -1,9 +1,8 @@
 """Roll up recent sessions into per-model quality series + regression flags."""
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from ccprophet.domain.entities import RegressionReport
 from ccprophet.domain.services.quality import (

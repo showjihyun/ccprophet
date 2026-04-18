@@ -15,12 +15,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ccprophet.ports.hot_table_pruner import PruneCounts
+from ccprophet.ports.hot_table_pruner import HotTablePruner, PruneCounts
 
 if TYPE_CHECKING:
-    from ccprophet.adapters.persistence.duckdb.hot_table_pruner import (
-        DuckDBHotTablePruner,
-    )
     from ccprophet.domain.values import SessionId
     from ccprophet.use_cases.rollup_sessions import RollupOutcome, RollupSessionsUseCase
 
@@ -44,7 +41,7 @@ def run_rollup_command(
     as_json: bool = False,
     now: datetime | None = None,
     db_path: Path | None = None,
-    preview_pruner: DuckDBHotTablePruner | None = None,
+    preview_pruner: HotTablePruner | None = None,
     archive_conn: object | None = None,
 ) -> int:
     cutoff = (now or datetime.now(tz=timezone.utc)) - timedelta(days=older_than_days)
@@ -100,7 +97,7 @@ def _attach_archive(outcome: RollupOutcome, path: Path | None) -> RollupOutcome:
     return replace(outcome, archive_path=path)
 
 
-def _as_sid(v: str) -> "SessionId":
+def _as_sid(v: str) -> SessionId:
     from ccprophet.domain.values import SessionId as _SID
 
     return _SID(v)

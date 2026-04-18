@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import typer  # module-level so typer.Context annotations resolve via get_annotations
 
 if TYPE_CHECKING:
-    import duckdb
+    pass
 
 # Re-export shared constants for backward compatibility.
 from ccprophet.harness.commands._shared import (  # noqa: F401
@@ -13,8 +13,6 @@ from ccprophet.harness.commands._shared import (  # noqa: F401
     DEFAULT_JSONL_ROOT,
     DEFAULT_SETTINGS_PATH,
     SNAPSHOT_ROOT,
-    connect_readonly as _connect_readonly,
-    connect_readwrite as _connect_readwrite,
 )
 
 

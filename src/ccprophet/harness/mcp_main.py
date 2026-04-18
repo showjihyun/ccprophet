@@ -6,25 +6,13 @@ server. Keeps zero business logic — any branching lives inside use cases.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
-DB_PATH = Path.home() / ".claude-prophet" / "events.duckdb"
+from ccprophet.harness.commands._shared import connect_readonly as _connect_readonly
 
 _MCP_MISSING_HINT = (
     "ccprophet mcp requires the optional `mcp` extra.\n"
     "Install with:  uv sync --extra mcp\n"
 )
-
-
-def _connect_readonly():  # type: ignore[no-untyped-def]
-    import duckdb
-
-    if not DB_PATH.exists():
-        raise SystemExit(
-            f"ccprophet DB not found at {DB_PATH}\n"
-            f"Run `ccprophet install` or trigger a hook first."
-        )
-    return duckdb.connect(str(DB_PATH), read_only=True)
 
 
 def _build_server():  # type: ignore[no-untyped-def]

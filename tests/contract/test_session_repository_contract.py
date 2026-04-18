@@ -25,7 +25,6 @@ class SessionRepositoryContract(ABC):
         assert repository.get(SessionId("nope")) is None
 
     def test_latest_active_returns_most_recent(self, repository) -> None:  # type: ignore[no-untyped-def]
-        from datetime import datetime, timezone
         s1 = SessionBuilder().with_id("s1").build()
         s2 = SessionBuilder().with_id("s2").build()
         repository.upsert(s1)

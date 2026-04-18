@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import uuid
 from collections.abc import Mapping
 from datetime import datetime, timezone
@@ -23,6 +24,12 @@ from ccprophet.domain.entities import Snapshot, SnapshotFileEntry
 from ccprophet.domain.errors import SnapshotMissing
 from ccprophet.domain.values import SnapshotId
 from ccprophet.ports.snapshots import SnapshotMeta
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, path)
 
 
 class FilesystemSnapshotStore:
@@ -39,9 +46,12 @@ class FilesystemSnapshotStore:
         manifest: list[dict[str, object]] = []
         entries: list[SnapshotFileEntry] = []
 
+        # Write blobs first (atomic each); manifest.json last — an absent or
+        # orphaned blob without a manifest entry is safely ignored by restore,
+        # but a corrupt manifest would break recovery.
         for index, (original_path, data) in enumerate(files.items()):
             blob_name = f"{index}.bin"
-            (snap_dir / blob_name).write_bytes(data)
+            _atomic_write_bytes(snap_dir / blob_name, data)
             digest = hashlib.sha256(data).hexdigest()
             manifest.append(
                 {
@@ -57,9 +67,9 @@ class FilesystemSnapshotStore:
                 )
             )
 
-        (snap_dir / "manifest.json").write_text(
-            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
+        _atomic_write_bytes(
+            snap_dir / "manifest.json",
+            (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
         )
 
         return Snapshot(

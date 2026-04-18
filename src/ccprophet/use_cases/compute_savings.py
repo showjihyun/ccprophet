@@ -14,8 +14,7 @@ from __future__ import annotations
 import os
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from ccprophet.domain.entities import Recommendation

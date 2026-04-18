@@ -59,9 +59,7 @@ class ClaudeMdAuditor:
 
         # --- 1. Total length ---
         if line_count > _TOTAL_WARN:
-            if line_count > _TOTAL_CRITICAL_UPGRADE:
-                sev = "critical"
-            elif line_count > _TOTAL_CRITICAL:
+            if line_count > _TOTAL_CRITICAL_UPGRADE or line_count > _TOTAL_CRITICAL:
                 sev = "critical"
             else:
                 sev = "warn"

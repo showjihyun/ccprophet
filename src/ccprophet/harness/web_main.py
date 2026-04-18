@@ -9,9 +9,8 @@ from __future__ import annotations
 import sys
 import threading
 import webbrowser
-from pathlib import Path
 
-DB_PATH = Path.home() / ".claude-prophet" / "events.duckdb"
+from ccprophet.harness.commands._shared import connect_readonly as _connect_readonly
 
 _WEB_MISSING_HINT = (
     "ccprophet serve requires the optional `web` extra.\n"
@@ -19,17 +18,6 @@ _WEB_MISSING_HINT = (
 )
 
 _ALLOWED_HOSTS = {"127.0.0.1", "localhost", "::1"}
-
-
-def _connect_readonly():  # type: ignore[no-untyped-def]
-    import duckdb
-
-    if not DB_PATH.exists():
-        raise SystemExit(
-            f"ccprophet DB not found at {DB_PATH}\n"
-            f"Run `ccprophet install` or trigger a hook first."
-        )
-    return duckdb.connect(str(DB_PATH), read_only=True)
 
 
 def _build_app():  # type: ignore[no-untyped-def]
@@ -95,8 +83,8 @@ def serve(
         raise SystemExit(2)
 
     try:
-        import uvicorn  # noqa: F401
         import fastapi  # noqa: F401
+        import uvicorn
     except ImportError:
         sys.stderr.write(_WEB_MISSING_HINT)
         raise SystemExit(1) from None

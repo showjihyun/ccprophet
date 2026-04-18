@@ -21,7 +21,6 @@ from ccprophet.domain.entities import ToolDef
 from ccprophet.domain.values import (
     OutcomeLabelValue,
     SessionId,
-    TaskType,
     TokenCount,
 )
 from ccprophet.use_cases.analyze_bloat import AnalyzeBloatUseCase
@@ -36,7 +35,6 @@ from tests.fixtures.builders import (
     SessionBuilder,
     ToolCallBuilder,
 )
-
 
 FROZEN = datetime(2026, 4, 17, 12, 0, 0, tzinfo=timezone.utc)
 

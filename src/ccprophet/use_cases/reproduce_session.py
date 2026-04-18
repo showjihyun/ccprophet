@@ -7,16 +7,14 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 from ccprophet.domain.entities import BestConfig, Recommendation
-from ccprophet.domain.errors import InsufficientSamples
 from ccprophet.domain.services.cluster import (
+    DEFAULT_MIN_SAMPLES,
     BestConfigExtractor,
     ClusterInputs,
-    DEFAULT_MIN_SAMPLES,
 )
 from ccprophet.domain.values import (
     Confidence,

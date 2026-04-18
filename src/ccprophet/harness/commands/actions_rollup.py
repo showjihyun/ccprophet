@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -19,7 +18,7 @@ def register(app: typer.Typer) -> None:
             "--apply",
             help="Actually summarize and delete (default is dry-run)",
         ),
-        archive_parquet: Optional[Path] = typer.Option(
+        archive_parquet: Path | None = typer.Option(
             None,
             "--archive-parquet",
             help="Directory to dump hot-table Parquet archives before --apply",

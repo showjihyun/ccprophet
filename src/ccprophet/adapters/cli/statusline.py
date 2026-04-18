@@ -22,8 +22,8 @@ def run_statusline_command(
     sessions: SessionRepository,
     pricing: PricingProvider | None = None,
     *,
-    tool_defs_for: "callable | None" = None,
-    tool_calls_for: "callable | None" = None,
+    tool_defs_for: callable | None = None,
+    tool_calls_for: callable | None = None,
     as_json: bool = False,
 ) -> int:
     session = _pick_latest_session(sessions)
@@ -59,7 +59,7 @@ def run_statusline_command(
     return 0
 
 
-def _pick_latest_session(sessions: SessionRepository) -> "Session | None":
+def _pick_latest_session(sessions: SessionRepository) -> Session | None:
     active = sessions.latest_active()
     if active is not None:
         return active

@@ -31,10 +31,13 @@
 
 - **AP-1**: Local-First, Zero Network by default. 외부 호출 opt-in.
 - **AP-2**: Non-Invasive — Claude Code 프로세스 수정 금지, 공식 확장점(hooks/JSONL/OTLP/MCP)만 사용.
-- **AP-3**: Silent Fail — ccprophet 오류가 Claude Code 세션을 막으면 안 됨. 훅 timeout 10s, 예외는 로그만.
+- **AP-3**: Silent Fail — ccprophet 오류가 Claude Code 세션을 막으면 안 됨. 훅 timeout 10s는 `settings.json`의 `"timeout": 10`으로 Claude Code가 enforce (ccprophet은 top-level에서 예외를 swallow + 로그).
 - **AP-4**: Single-File Portability — DuckDB 단일 파일, HTML 단일 파일, Python 단일 엔트리포인트.
 - **AP-5**: Readable Beats Clever — 50~300 LOC/파일 지향.
 - **AP-6**: Self-Introspective — MCP 서버로 노출되는 모든 기능은 CLI로도 제공.
+- **AP-7**: Reversible Auto-Fix — settings.json 쓰기는 snapshot → atomic write (tmp+rename) → SHA-256 hash guard → 1-step rollback 보장. 모든 쓰기는 `SettingsStore.write_atomic`을 경유한다.
+- **AP-8**: Explainable Recommendations — 모든 추천은 "왜"를 동반한다. `Recommendation.rationale` 필드 필수.
+- **AP-9**: Dollar Transparency — 토큰 → \$ 환산의 계산식·요율표는 전부 공개. 번들 pricing.toml + 사용자 override + `pricing_rates` 테이블 stamp로 감사 가능.
 
 ## 디렉토리 레이아웃 (목표, 계층 구조)
 
@@ -49,44 +52,45 @@ ccprophet/
 │   ├── PRD.md · ARCHITECT.md · DATAMODELING.md
 │   ├── LAYERING.md          # 계층·의존성·테스트 전략
 │   └── DESIGN.md
-├── migrations/              # V{N}__{description}.sql
-├── web/                     # 단일 HTML (빌드 스텝 없음)
+├── migrations/              # V{N}__{description}.sql — V1..V5 현재 존재
 └── src/ccprophet/
     ├── domain/              # ← 가장 안쪽. third-party import 금지
-    │   ├── entities.py      #   Session, Event, ToolCall, BloatReport, ...
-    │   ├── values.py        #   SessionId, TokenCount, BloatRatio, ...
+    │   ├── entities.py      #   Session, Event, ToolCall, Recommendation, Snapshot, ...
+    │   ├── values.py        #   SessionId, TokenCount, BloatRatio, Money, ...
     │   ├── errors.py
-    │   └── services/        #   BloatCalculator, PhaseDetector, ... (순수)
-    ├── use_cases/           # domain + ports만 import
-    │   ├── ingest_event.py
-    │   ├── analyze_bloat.py
-    │   ├── detect_phases.py
-    │   ├── forecast_compact.py
-    │   ├── recommend_action.py
-    │   └── diff_sessions.py
+    │   └── services/        #   BloatCalculator, PhaseDetector, PatternDiff, forecast, ...
+    ├── use_cases/           # domain + ports만 import (1 파일 = 1 유스케이스)
+    │   ├── ingest_event.py · analyze_bloat.py · detect_phases.py
+    │   ├── forecast_compact.py · recommend_action.py · diff_sessions.py
+    │   ├── prune_tools.py · apply_pruning.py · restore_snapshot.py · list_snapshots.py
+    │   ├── mark_outcome.py · estimate_budget.py · reproduce_session.py · analyze_postmortem.py
+    │   ├── compute_session_cost.py · compute_monthly_cost.py · compute_savings.py
+    │   ├── assess_quality.py · audit_claude_md.py · rollup_sessions.py
+    │   └── list_recommendations.py · list_subagents.py · scan_mcp.py · pattern_diff.py · ...
     ├── ports/               # Protocol 인터페이스. domain만 의존
-    │   ├── use_cases.py     #   driving ports
-    │   ├── repositories.py  #   driven: EventRepository, SessionRepository, ...
-    │   ├── clock.py · redactor.py · logger.py
-    │   ├── forecast_model.py · publisher.py · filewatch.py
-    ├── adapters/            # 프레임워크·IO는 여기서만
+    │   ├── repositories.py · recommendations.py · snapshots.py · settings.py
+    │   ├── subset_profile.py · pricing.py · outcomes.py · subagents.py · session_summary.py
+    │   ├── jsonl.py · hot_table_pruner.py · mcp_scan.py
+    │   └── clock.py · redactor.py · forecast_model.py · logger.py
+    ├── adapters/            # 프레임워크·IO는 여기서만 (family 간 직접 import 금지)
     │   ├── cli/ · web/ · mcp/ · hook/             # driving
     │   ├── persistence/
-    │   │   ├── duckdb/      # driven: 실제 DuckDB 구현
+    │   │   ├── duckdb/      # driven: 실제 DuckDB 구현 (_tz, transaction, migrations, V1/V2/V3/V5 repos, hot_table_pruner)
     │   │   └── inmemory/    # driven: 테스트용 fake (계약 동일)
-    │   ├── redaction/ · clock/ · forecast/
-    │   ├── filewatch/ · publisher/ · logger/
-    └── harness/             # composition root — 조립만, 로직 금지
-        ├── cli_main.py · hook_main.py
-        ├── web_main.py · mcp_main.py
+    │   ├── settings/ · snapshot/ · subset_profile/ · pricing/ · outcome_rules/
+    │   ├── redaction/ · clock/ · forecast/ · mcp_scan/
+    │   └── filewatch/ · publisher/ · logger/
+    ├── harness/             # composition root — 조립만, 로직 금지
+    │   ├── cli_main.py · hook_main.py · web_main.py · mcp_main.py
+    │   └── commands/        # CLI 명령 분할 (v0.6): _shared / analysis / actions / ops / info / services / …
+    └── web/                 # 패키지 내부 static 자산 (index.html, replay.js, pattern_diff.js, vendor/d3.v7.min.js)
 
 tests/
-├── unit/{domain,use_cases}/
-├── contract/                # Port 계약 테스트 (Adapter 공통)
-├── integration/adapters/{persistence,cli,web,mcp,hook}/
-├── e2e/                     # 전 스택 smoke
-├── perf/                    # NFR-1 훅 p99, 쿼리
-├── property/                # Hypothesis 기반
+├── unit/{domain,use_cases,adapters}/
+├── contract/                # Port 계약 테스트 (Adapter 공통) — 11 계약
+├── integration/{adapters/{persistence,cli,web,mcp,hook},use_cases,migrations}/
+├── perf/                    # NFR-1 훅 p99<50ms (marker `perf`)
+├── property/                # Hypothesis — BloatCalculator·PhaseDetector 불변식
 └── fixtures/                # builders, sample JSONL
 ```
 

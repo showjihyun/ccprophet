@@ -35,11 +35,11 @@ bloat).
 
 import json as json_module
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ccprophet.domain.entities import McpServerInfo, Session, ToolCall
+    from ccprophet.domain.entities import McpServerInfo, Session
     from ccprophet.ports.mcp_scan import McpServerLister
     from ccprophet.ports.repositories import SessionRepository, ToolCallRepository
 
@@ -89,7 +89,6 @@ def _collect_called_slugs(
     tool_calls_repo: ToolCallRepository,
 ) -> set[str]:
     called: set[str] = set()
-    from ccprophet.domain.values import SessionId
 
     for session in sessions:
         for tc in tool_calls_repo.list_for_session(session.session_id):

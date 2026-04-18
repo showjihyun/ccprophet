@@ -4,9 +4,9 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 0.2 (Sellable MVP Alignment) |
-| 작성일 | 2026-04-17 |
-| 상위 문서 | `PRD.md` v0.4, `ARCHITECT.md` v0.3, `LAYERING.md` v0.2 |
+| 문서 버전 | 0.3 (Implementation Alignment) |
+| 작성일 | 2026-04-18 |
+| 상위 문서 | `PRD.md` v0.6, `ARCHITECT.md` v0.4, `LAYERING.md` v0.3 |
 | 대상 독자 | 컨트리뷰터, 스키마 확장자, 분석 쿼리 작성자 |
 | DB 엔진 | DuckDB 1.x |
 
@@ -217,7 +217,7 @@ CREATE TABLE sessions (
     project_slug        VARCHAR NOT NULL,
     worktree_path_hash  VARCHAR,               -- SHA256(worktree_path)
     worktree_path       VARCHAR,               -- redaction OFF일 때만
-    model               VARCHAR NOT NULL,      -- 'claude-opus-4-6' 등
+    model               VARCHAR NOT NULL,      -- 'claude-opus-4-7' 등
     started_at          TIMESTAMP NOT NULL,
     ended_at            TIMESTAMP,             -- NULL이면 active
     total_input_tokens  INTEGER DEFAULT 0,
@@ -396,7 +396,7 @@ CREATE INDEX idx_phases_type ON phases(phase_type);
 | `review` | Read 비율 높고 Edit 없는 말미 구간 |
 | `unknown` | 위 규칙 매치 안 되는 구간 (detection_confidence 낮음) |
 
-Phase detection 로직의 상세는 `docs/phase_detection.md`에서 별도 관리.
+Phase detection 로직의 상세는 `src/ccprophet/domain/services/phase.py` 의 `PhaseDetector` 및 그 docstring 을 canonical source 로 한다. 관련 테스트: `tests/unit/domain/test_phase_detector.py`, `tests/property/test_phase_detector_properties.py`.
 
 ### 4.7 `forecasts`
 
@@ -1146,7 +1146,19 @@ VALUES (2, NOW(), 'Sellable MVP: recommendations/snapshots/outcomes/profiles/pri
 COMMIT;
 ```
 
-### 8.3 Breaking Change 처리
+### 8.3 v0.6 현재 적용된 마이그레이션 목록
+
+| Version | 파일 | 용도 |
+|---|---|---|
+| V1 | `V1__init.sql` | 1차 스키마 — sessions, events, tool_calls, tool_defs_loaded, file_reads, phases, forecasts, subagents, prophet_self_metrics, schema_migrations |
+| V2 | `V2__auto_fix_outcome_cost.sql` | Sellable MVP — recommendations, snapshots, outcome_labels, subset_profiles, pricing_rates + seed pricing |
+| V3 | `V3__cache_tokens.sql` | `sessions` 에 `total_cache_creation_tokens`, `total_cache_read_tokens` 컬럼 추가 (캐시 분리 과금용; PRD F10 / FR-10.3) |
+| V4 | `V4__subagent_summary.sql` | `ALTER TABLE subagents ADD COLUMN returned_summary VARCHAR` — §4.8 스키마와 런타임 일치시키는 단일 컬럼 추가 |
+| V5 | `V5__session_summary.sql` | `session_summary` 롤업 테이블 — `ccprophet rollup` 이 hot-table 정리 후 long-tail 세션 요약을 남김 (DATAMODELING §6.2 Roll-up 정책 구현) |
+
+**Migration runner 규약.** 각 `V{N}__*.sql` 은 자신의 마지막 문장으로 `INSERT INTO schema_migrations (version, applied_at, description)` 을 포함한다. Python 의 `apply_migrations(conn)` 은 파일을 그대로 `conn.execute(sql)` 할 뿐 별도의 version 레코드를 쓰지 않는다 (SQL 파일이 self-registering). 이 규약을 깨는 마이그레이션은 거부.
+
+### 8.4 Breaking Change 처리
 
 Breaking change (예: 필드 타입 변경)는:
 1. minor 버전 bump (0.x.0 → 0.{x+1}.0)
@@ -1163,7 +1175,7 @@ Breaking change (예: 필드 타입 변경)는:
   "session_id": "7f8e9d2a-1b3c-4d5e-6f7a-8b9c0d1e2f3a",
   "project_slug": "kahis-zavis",
   "worktree_path_hash": "sha256:a3f5...",
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "started_at": "2026-04-16T09:12:34",
   "ended_at": "2026-04-16T10:47:02",
   "total_input_tokens": 142850,

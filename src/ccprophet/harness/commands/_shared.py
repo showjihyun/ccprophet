@@ -1,18 +1,23 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import duckdb
 
-DB_PATH = Path.home() / ".claude-prophet" / "events.duckdb"
+
+DB_PATH = Path(
+    os.environ.get("CCPROPHET_DB")
+    or (Path.home() / ".claude-prophet" / "events.duckdb")
+)
 SNAPSHOT_ROOT = Path.home() / ".claude-prophet" / "snapshots"
 DEFAULT_SETTINGS_PATH = Path.home() / ".claude" / "settings.json"
 DEFAULT_JSONL_ROOT = Path.home() / ".claude" / "projects"
 
 
-def connect_readonly() -> "duckdb.DuckDBPyConnection":
+def connect_readonly() -> duckdb.DuckDBPyConnection:
     import duckdb
 
     if not DB_PATH.exists():
@@ -23,7 +28,7 @@ def connect_readonly() -> "duckdb.DuckDBPyConnection":
     return duckdb.connect(str(DB_PATH), read_only=True)
 
 
-def connect_readwrite() -> "duckdb.DuckDBPyConnection":
+def connect_readwrite() -> duckdb.DuckDBPyConnection:
     import duckdb
 
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)

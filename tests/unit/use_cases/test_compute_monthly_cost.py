@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
-from ccprophet.domain.values import Money, SessionId, SnapshotId, TokenCount
+from ccprophet.domain.values import Money, SnapshotId, TokenCount
 from ccprophet.use_cases.compute_monthly_cost import ComputeMonthlyCostUseCase
 from tests.fixtures.builders import (
     PricingRateBuilder,

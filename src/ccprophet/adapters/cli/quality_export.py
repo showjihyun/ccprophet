@@ -93,7 +93,7 @@ def export_quality_series(
 
 def _flatten(
     reports: Sequence[RegressionReport],
-) -> "list[tuple[object, ...]]":
+) -> list[tuple[object, ...]]:
     out: list[tuple[object, ...]] = []
     for report in reports:
         for point in report.series.points:

@@ -19,7 +19,7 @@ def run_prune_command(
     apply: bool = False,
     assume_yes: bool = False,
     as_json: bool = False,
-    confirm: "Confirm" | None = None,
+    confirm: Confirm | None = None,
 ) -> int:
     try:
         preview = preview_uc.execute(target_path=target_path)

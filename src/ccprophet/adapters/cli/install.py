@@ -13,11 +13,16 @@ from __future__ import annotations
 import json as json_module
 import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ccprophet.domain.entities import SettingsDoc
+    from ccprophet.ports.settings import SettingsStore
+
+# A harness-provided callable that creates `<prophet_dir>/events.duckdb` and
+# runs migrations. CLI stays ignorant of DuckDB and the persistence adapter.
+DbBootstrap = Callable[[Path], None]
 
 HOOK_COMMAND = "ccprophet-hook"
 STATUSLINE_COMMAND = "ccprophet statusline"
@@ -37,6 +42,8 @@ STATUSLINE_CONFIG = {
 
 def run_install_command(
     *,
+    settings: SettingsStore,
+    bootstrap_db: DbBootstrap,
     dry_run: bool = False,
     as_json: bool = False,
     prophet_dir: Path | None = None,
@@ -47,11 +54,13 @@ def run_install_command(
 
     if not dry_run:
         prophet_dir.mkdir(parents=True, exist_ok=True)
-        _ensure_duckdb(prophet_dir)
+        db_path = prophet_dir / "events.duckdb"
+        bootstrap_db(db_path)
+        _lock_down_permissions(db_path)
 
     plan = _plan_hook_patch(settings_path)
     if not dry_run and plan["needs_write"]:
-        _apply_hook_patch(settings_path, plan["new_content"])
+        _apply_hook_patch(settings, settings_path, plan["new_content"])
 
     report = {
         "db_path": str(prophet_dir / "events.duckdb"),
@@ -125,28 +134,13 @@ def _command_value(entry: dict) -> str:  # type: ignore[type-arg]
     return cmd if isinstance(cmd, str) else ""
 
 
-def _apply_hook_patch(settings_path: Path, new_content: dict) -> None:  # type: ignore[type-arg]
-    from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
-
-    store = JsonFileSettingsStore()
+def _apply_hook_patch(  # type: ignore[type-arg]
+    store: SettingsStore, settings_path: Path, new_content: dict
+) -> None:
     expected_hash: str | None = None
     if settings_path.exists():
         expected_hash = store.read(settings_path).sha256
     store.write_atomic(settings_path, new_content, expected_hash=expected_hash)
-
-
-def _ensure_duckdb(prophet_dir: Path) -> None:
-    import duckdb
-
-    from ccprophet.adapters.persistence.duckdb.migrations import ensure_schema
-
-    db_path = prophet_dir / "events.duckdb"
-    conn = duckdb.connect(str(db_path))
-    try:
-        ensure_schema(conn)
-    finally:
-        conn.close()
-    _lock_down_permissions(db_path)
 
 
 def _lock_down_permissions(path: Path) -> None:

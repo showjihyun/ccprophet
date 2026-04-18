@@ -6,9 +6,9 @@ from ccprophet.domain.entities import BudgetEnvelope
 from ccprophet.domain.errors import UnknownPricingModel
 from ccprophet.domain.services.budget import BudgetAnalyzer
 from ccprophet.domain.services.cluster import (
+    DEFAULT_MIN_SAMPLES,
     BestConfigExtractor,
     ClusterInputs,
-    DEFAULT_MIN_SAMPLES,
 )
 from ccprophet.domain.values import OutcomeLabelValue, TaskType
 from ccprophet.ports.outcomes import OutcomeRepository

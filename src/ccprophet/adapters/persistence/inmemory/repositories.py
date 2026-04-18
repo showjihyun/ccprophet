@@ -142,7 +142,9 @@ class InMemoryRecommendationRepository:
             and r.applied_at is not None
             and start <= r.applied_at < end
         ]
-        return sorted(rows, key=lambda r: r.applied_at or datetime.min)
+        # `applied_at` is guaranteed non-None by the filter above; the type
+        # checker needs the assertion to narrow `datetime | None` -> `datetime`.
+        return sorted(rows, key=lambda r: r.applied_at)  # type: ignore[arg-type,return-value]
 
     def mark_applied(
         self, rec_ids: Sequence[str], snapshot_id: SnapshotId

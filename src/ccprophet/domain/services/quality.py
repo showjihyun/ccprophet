@@ -24,7 +24,7 @@ from ccprophet.domain.entities import (
     Session,
     ToolCall,
 )
-from ccprophet.domain.values import OutcomeLabelValue, SessionId
+from ccprophet.domain.values import OutcomeLabelValue
 
 REPEAT_READ_THRESHOLD = 5
 READ_TOOLS = frozenset({"Read", "Glob", "Grep"})

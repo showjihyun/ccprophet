@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -15,7 +14,7 @@ from ccprophet.harness.commands._shared import (
 def register(app: typer.Typer) -> None:
     @app.command()
     def recommend(
-        session: Optional[str] = typer.Option(None, "--session", "-s", help="Session ID"),
+        session: str | None = typer.Option(None, "--session", "-s", help="Session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
         no_persist: bool = typer.Option(
             False, "--no-persist", help="Skip saving recommendations to DB"
@@ -180,10 +179,10 @@ def register(app: typer.Typer) -> None:
             "-o",
             help="success | fail | partial | unlabeled",
         ),
-        task: Optional[str] = typer.Option(
+        task: str | None = typer.Option(
             None, "--task", help="Task type (e.g., refactor-auth)"
         ),
-        reason: Optional[str] = typer.Option(
+        reason: str | None = typer.Option(
             None, "--reason", help="Short note (optional)"
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),

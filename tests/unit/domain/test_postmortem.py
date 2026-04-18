@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, timezone
 
 from ccprophet.domain.entities import ToolDef
 from ccprophet.domain.services.postmortem import (

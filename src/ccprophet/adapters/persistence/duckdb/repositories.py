@@ -5,7 +5,12 @@ from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from ccprophet.adapters.persistence.duckdb._tz import to_utc_naive as _to_utc_naive
+from ccprophet.adapters.persistence.duckdb._tz import (
+    from_utc as _from_utc,
+)
+from ccprophet.adapters.persistence.duckdb._tz import (
+    to_utc_naive as _to_utc_naive,
+)
 from ccprophet.domain.entities import Event, Phase, Session, ToolCall, ToolDef
 from ccprophet.domain.values import EventId, PhaseType, RawHash, SessionId, TokenCount
 
@@ -93,14 +98,14 @@ class DuckDBSessionRepository:
             session_id=SessionId(str(row[0])),
             project_slug=str(row[1]),
             model=str(row[3]),
-            started_at=row[4],  # type: ignore[arg-type]
-            ended_at=row[5],  # type: ignore[arg-type]
+            started_at=_from_utc(row[4]),  # type: ignore[arg-type]
+            ended_at=_from_utc(row[5]),  # type: ignore[arg-type]
             total_input_tokens=TokenCount(int(row[6] or 0)),
             total_output_tokens=TokenCount(int(row[7] or 0)),
             total_cache_creation_tokens=TokenCount(cache_creation),
             total_cache_read_tokens=TokenCount(cache_read),
             compacted=bool(row[8]),
-            compacted_at=row[9],  # type: ignore[arg-type]
+            compacted_at=_from_utc(row[9]),  # type: ignore[arg-type]
             context_window_size=int(row[10] or 200_000),
         )
 
@@ -128,7 +133,7 @@ class DuckDBEventRepository:
                 event.event_id.value,
                 event.session_id.value,
                 event.event_type,
-                event.ts,
+                _to_utc_naive(event.ts),
                 json.dumps(event.payload),
                 event.raw_hash.value,
                 event.ingested_via,
@@ -164,7 +169,7 @@ class DuckDBEventRepository:
             event_id=EventId(str(row[0])),
             session_id=SessionId(str(row[1])),
             event_type=str(row[2]),
-            ts=row[3],  # type: ignore[arg-type]
+            ts=_from_utc(row[3]),  # type: ignore[arg-type]
             payload=payload,
             raw_hash=RawHash(str(row[5])),
             ingested_via=str(row[7] or "hook"),
@@ -230,7 +235,7 @@ class DuckDBToolCallRepository:
                 tc.output_tokens.value,
                 tc.latency_ms,
                 tc.success,
-                tc.ts,
+                _to_utc_naive(tc.ts),
             ],
         )
 
@@ -249,7 +254,7 @@ class DuckDBToolCallRepository:
                 output_tokens=TokenCount(int(r[6] or 0)),
                 latency_ms=int(r[7] or 0),
                 success=bool(r[8]),
-                ts=r[10],  # type: ignore[arg-type]
+                ts=_from_utc(r[10]),  # type: ignore[arg-type]
             )
             for r in rows
         ]
@@ -260,14 +265,13 @@ class DuckDBPhaseRepository:
         self._conn = conn
 
     def replace_for_session(self, sid: SessionId, phases: Sequence[Phase]) -> None:
-        self._conn.execute("DELETE FROM phases WHERE session_id = ?", [sid.value])
         rows = [
             [
                 p.phase_id,
                 p.session_id.value,
                 p.phase_type.value,
-                p.start_ts,
-                p.end_ts,
+                _to_utc_naive(p.start_ts),
+                _to_utc_naive(p.end_ts),
                 p.input_tokens.value,
                 p.output_tokens.value,
                 p.tool_call_count,
@@ -275,17 +279,26 @@ class DuckDBPhaseRepository:
             ]
             for p in phases
         ]
-        if not rows:
-            return
-        self._conn.executemany(
-            """
-            INSERT INTO phases (phase_id, session_id, phase_type, start_ts, end_ts,
-                                input_tokens, output_tokens, tool_call_count,
-                                detection_confidence)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            rows,
-        )
+        self._conn.execute("BEGIN")
+        try:
+            self._conn.execute(
+                "DELETE FROM phases WHERE session_id = ?", [sid.value]
+            )
+            if rows:
+                self._conn.executemany(
+                    """
+                    INSERT INTO phases (phase_id, session_id, phase_type,
+                                        start_ts, end_ts, input_tokens,
+                                        output_tokens, tool_call_count,
+                                        detection_confidence)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    rows,
+                )
+            self._conn.execute("COMMIT")
+        except Exception:
+            self._conn.execute("ROLLBACK")
+            raise
 
     def list_for_session(self, sid: SessionId) -> Iterable[Phase]:
         rows = self._conn.execute(
@@ -296,8 +309,8 @@ class DuckDBPhaseRepository:
                 phase_id=str(r[0]),
                 session_id=SessionId(str(r[1])),
                 phase_type=PhaseType(str(r[2])),
-                start_ts=r[3],  # type: ignore[arg-type]
-                end_ts=r[4],  # type: ignore[arg-type]
+                start_ts=_from_utc(r[3]),  # type: ignore[arg-type]
+                end_ts=_from_utc(r[4]),  # type: ignore[arg-type]
                 input_tokens=TokenCount(int(r[5] or 0)),
                 output_tokens=TokenCount(int(r[6] or 0)),
                 tool_call_count=int(r[7] or 0),

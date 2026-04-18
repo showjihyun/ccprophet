@@ -3,7 +3,6 @@ from __future__ import annotations
 # Safety model: We connect read_only=True at the DuckDB engine level, which
 # refuses all DDL/DML at the connection level. This is sufficient — no regex
 # filtering needed and regex filters are easy to bypass anyway.
-
 import json as json_module
 from pathlib import Path
 from typing import Any

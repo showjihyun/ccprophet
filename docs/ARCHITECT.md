@@ -4,10 +4,10 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 0.3 (Sellable MVP Alignment) |
-| 작성일 | 2026-04-17 |
-| 상위 문서 | `PRD.md` v0.4 |
-| 관련 문서 | `LAYERING.md` v0.2 (Clean Architecture + Hexagonal) |
+| 문서 버전 | 0.4 (Implementation Alignment) |
+| 작성일 | 2026-04-18 |
+| 상위 문서 | `PRD.md` v0.6 |
+| 관련 문서 | `LAYERING.md` v0.3, `DATAMODELING.md` v0.3 |
 | 대상 독자 | 컨트리뷰터, 연동 파트너, 엔터프라이즈 도입 검토자 |
 
 ---
@@ -248,22 +248,25 @@ Claude Code의 `CLAUDE_CODE_ENABLE_TELEMETRY=1` + OTLP exporter가 이미 설정
 
 ### 4.4 Web Viewer
 
-`ccprophet serve`로 localhost:8765에 HTTP 서버 실행. Work DAG 시각화가 핵심.
+`ccprophet serve`로 localhost:8765에 HTTP 서버 실행. Work DAG 시각화 + Replay + Compare + Pattern Diff 네 모드가 단일 HTML에 공존한다.
 
 **아키텍처**
 ```
 ccprophet serve
     │
-    ├─ FastAPI server (localhost only, CORS disabled)
-    │   ├─ GET  /api/sessions
+    ├─ FastAPI server (127.0.0.1 bind-only, CORS 없음, NFR-2)
+    │   ├─ GET  /api/sessions[?latest]
     │   ├─ GET  /api/sessions/{sid}/dag
     │   ├─ GET  /api/sessions/{sid}/bloat
-    │   └─ WS   /ws → 실시간 이벤트 push (Ingestor가 publish)
+    │   ├─ GET  /api/sessions/{sid}/replay
+    │   ├─ GET  /api/sessions/{sid}/cost
+    │   └─ GET  /api/pattern-diff?a=<sid_a>&b=<sid_b>
     │
-    └─ Static assets (단일 index.html + bundled JS)
-        ├─ D3.js v7 (force-directed)
-        ├─ Cytoscape.js (대안 렌더러, 대용량 그래프용)
-        └─ vanilla JS (빌드 스텝 없음)
+    └─ Static assets (src/ccprophet/web/ — 패키지 내부, 빌드 스텝 없음)
+        ├─ index.html          (단일 HTML, 캐시버스터 ?v={version})
+        ├─ replay.js
+        ├─ pattern_diff.js
+        └─ vendor/d3.v7.min.js  (로컬 번들, CDN 없음)
 ```
 
 **설계 결정**
@@ -377,7 +380,7 @@ rules = [
 **요율표 구조**
 ```toml
 # ~/.claude-prophet/pricing.toml (사용자 override 가능)
-[claude-opus-4-6]
+[claude-opus-4-7]
 input_per_mtok = 15.0    # USD per 1M input tokens
 output_per_mtok = 75.0
 cache_write_per_mtok = 18.75
@@ -618,19 +621,20 @@ Claude Code가 OTLP로 emit하는 이벤트를 받는 경로. `ccprophet install
 ### 8.1 설치 경로
 
 ```bash
-# 권장 — 격리된 환경
-pipx install ccprophet
-
-# 또는 uv
+# 표준 — uv 전용 (AGENTS.md §1.4)
 uv tool install ccprophet
+uv tool install "ccprophet[web,mcp,forecast]"   # 웹 DAG + MCP + ARIMA 까지
 
 # 일회성 실행
 uvx ccprophet bloat
 
 # 설치 후 한 번 실행
-ccprophet install
-# └─ 훅 등록, MCP 등록, DuckDB 초기화, 체크포인트 생성
+ccprophet install           # 훅·statusLine 등록, DuckDB 초기화, 퍼미션 0o600
+ccprophet doctor --migrate  # 스키마 최신화 (V1..V5)
+ccprophet ingest            # 과거 Claude Code JSONL backfill (transactional)
 ```
+
+`pipx install` 은 내부적으로 pip 를 사용하므로 ccprophet 프로젝트 정책(pip 금지)과 배치된다. 외부 사용자는 `pipx` 를 선택해도 되지만 공식 설치 경로는 `uv` 이다.
 
 ### 8.2 디렉토리 레이아웃
 
@@ -703,12 +707,16 @@ store_prompt_content = false
 store_command_args = false
 ```
 
-### 9.3 오프라인 모드
+### 9.3 오프라인 모드 (`CCPROPHET_OFFLINE=1`)
 
-`CCPROPHET_OFFLINE=1` 환경변수가 설정되면:
-- OTLP bridge 비활성화
-- 외부 이미지·폰트 로딩 차단 (Web Viewer)
-- 패키지 업데이트 체크 없음
+**v0.6 현재 상태**: ccprophet 은 이미 **zero-network by design** 이다 — `src/` 어디에도 HTTP / OTLP 호출이 없고, Web Viewer 는 로컬 D3 번들만 사용하며, 패키지 업데이트 체크도 없다. 따라서 v0.6 시점의 `CCPROPHET_OFFLINE=1` 은 **관찰 가능한 효과가 없다 (no-op)**.
+
+이 환경변수는 다음을 위한 **예약 계약**이다:
+- 향후 opt-in OTLP bridge (PRD §7.2 / AP-1) — 도입 시 반드시 이 플래그 에서 no-op.
+- 향후 pricing.toml PyPI 번들 refresh 혹은 모델 카탈로그 fetch — 도입 시 반드시 no-op.
+- 사용자 정의 plugin 이 네트워크 호출을 추가할 때의 공통 circuit breaker.
+
+"새로 추가되는 외부 네트워크 경로는 반드시 `CCPROPHET_OFFLINE=1`에서 no-op" (CLAUDE.md / AGENTS.md §8 체크리스트) — 이 원칙은 v0.6 에서 실제 걸릴 사이트가 없으므로 정적 / 런타임 guard 모두 **미구현** 이다. PR 리뷰어는 새 네트워크 호출이 들어오는 순간 즉시 `os.environ.get("CCPROPHET_OFFLINE") == "1"` guard 를 요구해야 한다.
 
 ## 10. 확장성 (Extensibility)
 

@@ -9,19 +9,16 @@ Each rule is tested independently with:
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal
 
-import pytest
-
-from ccprophet.domain.entities import BloatItem, BloatReport
+from ccprophet.domain.entities import BloatReport
 from ccprophet.domain.services.recommender import (
+    _MCP_OUTPUT_CAP,
+    _MCP_OUTPUT_TRIGGER,
+    _SUBAGENT_TRIGGER,
+    _THINKING_HIGH,
+    _THINKING_TRIGGER,
     RecommendationContext,
     Recommender,
-    _THINKING_TRIGGER,
-    _THINKING_HIGH,
-    _SUBAGENT_TRIGGER,
-    _MCP_OUTPUT_TRIGGER,
-    _MCP_OUTPUT_CAP,
 )
 from ccprophet.domain.values import (
     BloatRatio,

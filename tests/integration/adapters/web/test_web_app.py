@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from decimal import Decimal
 
 import pytest
 
@@ -12,7 +11,7 @@ from fastapi.testclient import TestClient
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
 from ccprophet.adapters.web.app import WebUseCases, create_app
 from ccprophet.domain.entities import PricingRate
-from ccprophet.domain.values import SessionId, TokenCount
+from ccprophet.domain.values import SessionId
 from ccprophet.use_cases.analyze_bloat import AnalyzeBloatUseCase
 from ccprophet.use_cases.compute_session_cost import ComputeSessionCostUseCase
 from ccprophet.use_cases.detect_phases import DetectPhasesUseCase
@@ -22,7 +21,6 @@ from tests.fixtures.builders import (
     ToolCallBuilder,
     ToolDefBuilder,
 )
-
 
 SID = "web-session-1"
 

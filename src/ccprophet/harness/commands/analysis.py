@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -15,7 +14,7 @@ from ccprophet.harness.commands._shared import (
 def register(app: typer.Typer) -> None:
     @app.command()
     def bloat(
-        session: Optional[str] = typer.Option(None, "--session", "-s", help="Session ID"),
+        session: str | None = typer.Option(None, "--session", "-s", help="Session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
         cost: bool = typer.Option(
             False, "--cost", help="Include $ estimate for bloat tokens"
@@ -108,8 +107,6 @@ def register(app: typer.Typer) -> None:
                 print("(ccprophet: not installed)")
             raise typer.Exit(0)
 
-        import duckdb as _duckdb
-
         from ccprophet.adapters.cli.statusline import run_statusline_command
         from ccprophet.adapters.persistence.duckdb.repositories import (
             DuckDBSessionRepository,
@@ -120,7 +117,7 @@ def register(app: typer.Typer) -> None:
             DuckDBPricingProvider,
         )
 
-        conn = _duckdb.connect(str(DB_PATH), read_only=True)
+        conn = connect_readonly()
         tool_defs = DuckDBToolDefRepository(conn)
         tool_calls = DuckDBToolCallRepository(conn)
         code = run_statusline_command(
@@ -134,7 +131,7 @@ def register(app: typer.Typer) -> None:
 
     @app.command()
     def quality(
-        model: Optional[str] = typer.Option(
+        model: str | None = typer.Option(
             None, "--model", help="Filter to a single model"
         ),
         window: int = typer.Option(7, "--window", help="Recent window (days)"),
@@ -148,7 +145,7 @@ def register(app: typer.Typer) -> None:
         ascii: bool = typer.Option(
             False, "--ascii", help="ASCII-only sparklines (fallback terminals)"
         ),
-        export_parquet: Optional[Path] = typer.Option(
+        export_parquet: Path | None = typer.Option(
             None,
             "--export-parquet",
             help="Dump time series to a Parquet file",
@@ -187,7 +184,7 @@ def register(app: typer.Typer) -> None:
 
     @app.command()
     def forecast(
-        session: Optional[str] = typer.Option(
+        session: str | None = typer.Option(
             None, "--session", "-s", help="Session ID (default: latest active)"
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),

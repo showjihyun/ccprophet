@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
-from datetime import datetime, timezone
 
 from ccprophet.adapters.cli.statusline import run_statusline_command
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet

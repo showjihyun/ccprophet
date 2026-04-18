@@ -4,8 +4,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from ccprophet.adapters.cli.claude_md import (
     EXIT_CRITICAL,
     EXIT_NOT_FOUND,

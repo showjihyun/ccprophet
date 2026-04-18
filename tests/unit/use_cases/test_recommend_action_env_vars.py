@@ -8,11 +8,8 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import datetime, timezone
 
-import pytest
-
 from ccprophet.adapters.clock.system import FrozenClock
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
-from ccprophet.domain.entities import ToolCall, ToolDef
 from ccprophet.domain.values import (
     RecommendationKind,
     SessionId,
@@ -20,7 +17,6 @@ from ccprophet.domain.values import (
 )
 from ccprophet.use_cases.recommend_action import RecommendActionUseCase
 from tests.fixtures.builders import (
-    PricingRateBuilder,
     SessionBuilder,
     SubagentBuilder,
     ToolCallBuilder,

@@ -5,7 +5,7 @@ import json as json_module
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ccprophet.use_cases.compute_savings import SavingsSummary, ComputeSavingsUseCase
+    from ccprophet.use_cases.compute_savings import ComputeSavingsUseCase, SavingsSummary
 
 
 def run_savings_command(

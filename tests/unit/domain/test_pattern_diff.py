@@ -10,7 +10,6 @@ from datetime import datetime, timedelta, timezone
 
 from ccprophet.domain.services.pattern_diff import (
     PatternDiffAnalyzer,
-    PatternFinding,
 )
 from ccprophet.domain.values import PhaseType, SessionId, TokenCount
 from tests.fixtures.builders import (

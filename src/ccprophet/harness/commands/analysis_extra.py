@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 
 from ccprophet.harness.commands._shared import connect_readonly
@@ -10,10 +8,10 @@ from ccprophet.harness.commands._shared import connect_readonly
 def register(app: typer.Typer) -> None:
     @app.command()
     def cost(
-        month: Optional[str] = typer.Option(
+        month: str | None = typer.Option(
             None, "--month", help="YYYY-MM; defaults to current month"
         ),
-        session: Optional[str] = typer.Option(
+        session: str | None = typer.Option(
             None, "--session", "-s", help="Single session id"
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),

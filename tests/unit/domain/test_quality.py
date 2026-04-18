@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from ccprophet.domain.entities import (
     DailyQualityPoint,
     QualitySeries,
-    Session,
-    ToolCall,
 )
 from ccprophet.domain.services.quality import (
     QualityInputs,

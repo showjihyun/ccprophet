@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -23,9 +22,25 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Register hooks, create DB, set up ccprophet."""
-        from ccprophet.adapters.cli.install import run_install_command
+        import duckdb
 
-        code = run_install_command(dry_run=dry_run, as_json=json)
+        from ccprophet.adapters.cli.install import run_install_command
+        from ccprophet.adapters.persistence.duckdb.migrations import ensure_schema
+        from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
+
+        def _bootstrap_db(db_path: Path) -> None:
+            conn = duckdb.connect(str(db_path))
+            try:
+                ensure_schema(conn)
+            finally:
+                conn.close()
+
+        code = run_install_command(
+            settings=JsonFileSettingsStore(),
+            bootstrap_db=_bootstrap_db,
+            dry_run=dry_run,
+            as_json=json,
+        )
         raise typer.Exit(code)
 
     @app.command()
@@ -33,7 +48,7 @@ def register(app: typer.Typer) -> None:
         root: Path = typer.Option(
             DEFAULT_JSONL_ROOT, "--root", help="Claude Code projects directory"
         ),
-        file: Optional[Path] = typer.Option(
+        file: Path | None = typer.Option(
             None, "--file", help="Ingest a single JSONL file (overrides --root)"
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -82,13 +97,23 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """DB health checks — schema version, orphans, data quality, disk usage."""
-        from ccprophet.adapters.cli.doctor import run_doctor_command
+        from ccprophet.adapters.cli.doctor import MigrationOps, run_doctor_command
+        from ccprophet.adapters.persistence.duckdb.migrations import (
+            MIGRATIONS_DIR,
+            apply_migrations,
+            current_version,
+        )
 
         code = run_doctor_command(
             db_path=DB_PATH,
             as_json=json,
             repair=repair,
             migrate=migrate,
+            migration_ops=MigrationOps(
+                migrations_dir=MIGRATIONS_DIR,
+                current_version=current_version,
+                apply_migrations=apply_migrations,
+            ),
         )
         raise typer.Exit(code)
 

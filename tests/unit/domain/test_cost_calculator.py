@@ -3,13 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from ccprophet.domain.entities import CostBreakdown, Session
+from ccprophet.domain.entities import Session
 from ccprophet.domain.services.cost import CostCalculator
 from ccprophet.domain.values import (
-    Confidence,
     Money,
-    RecommendationKind,
-    SessionId,
     TokenCount,
 )
 from tests.fixtures.builders import (

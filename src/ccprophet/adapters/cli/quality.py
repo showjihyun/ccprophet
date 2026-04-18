@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ccprophet.domain.entities import (
         DailyQualityPoint,
-        QualitySeries,
-        RegressionFlag,
         RegressionReport,
     )
     from ccprophet.use_cases.assess_quality import AssessQualityUseCase

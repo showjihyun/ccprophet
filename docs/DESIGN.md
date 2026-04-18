@@ -4,11 +4,12 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | 0.1 (Draft) |
-| 작성일 | 2026-04-16 |
-| 상위 문서 | `PRD.md` v0.2, `ARCHITECT.md` v0.1 |
+| 문서 버전 | 0.2 (Spec Sync) |
+| 작성일 | 2026-04-18 |
+| 상위 문서 | `PRD.md` v0.6, `ARCHITECT.md` v0.4 |
 | 대상 독자 | 프론트엔드 컨트리뷰터, CLI 렌더링 담당, 디자이너 |
 | 디자인 기조 | `shadcn/ui` — neutral palette, typography-first, minimal chrome |
+| v0.2 갭 | v0.4 이후 추가된 Auto-Fix snapshot/rollback UX, Cost Dashboard, Quality Watch sparkline, Pattern Diff, Subagent timeline 의 디자인 토큰·컴포넌트는 본 문서에 아직 반영되지 않았다. 개별 UX 상세는 `ARCHITECT.md` §4.4/§4.7/§4.8 을 canonical source 로 참조. 디자인 시스템 통합은 Phase 2. |
 
 ---
 

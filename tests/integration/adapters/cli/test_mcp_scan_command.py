@@ -9,14 +9,10 @@ No real `claude` binary is invoked.
 import json
 from collections.abc import Sequence
 
-import pytest
-
 from ccprophet.adapters.cli.mcp_scan import run_mcp_scan_command
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
 from ccprophet.domain.entities import McpServerInfo
-from ccprophet.domain.values import SessionId
 from tests.fixtures.builders import SessionBuilder, ToolCallBuilder
-
 
 # ---------------------------------------------------------------------------
 # FakeLister

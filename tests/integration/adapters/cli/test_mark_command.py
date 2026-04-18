@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from ccprophet.adapters.cli.mark import run_mark_command
 from ccprophet.adapters.clock.system import FrozenClock
 from ccprophet.adapters.persistence.inmemory.repositories import InMemoryRepositorySet
-from ccprophet.domain.values import OutcomeLabelValue, SessionId
 from ccprophet.use_cases.mark_outcome import MarkOutcomeUseCase
 from tests.fixtures.builders import SessionBuilder
 

@@ -6,7 +6,6 @@ Kept in a separate module from V1 and V2 repositories to stay under the
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 from ccprophet.adapters.persistence.duckdb._tz import from_utc as _from_utc
