@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 
 from ccprophet.harness.commands._shared import connect_readonly
@@ -71,6 +73,9 @@ def register(app: typer.Typer) -> None:
     def postmortem(
         session_id: str = typer.Argument(..., help="Failed session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
+        md: Path | None = typer.Option(
+            None, "--md", help="Write Markdown report to this path (FR-11.5)"
+        ),
     ) -> None:
         """Explain why a session failed vs similar successes."""
         from ccprophet.adapters.cli.postmortem import run_postmortem_command
@@ -91,7 +96,9 @@ def register(app: typer.Typer) -> None:
             tool_calls=DuckDBToolCallRepository(conn),
             tool_defs=DuckDBToolDefRepository(conn),
         )
-        code = run_postmortem_command(uc, session_id=session_id, as_json=json)
+        code = run_postmortem_command(
+            uc, session_id=session_id, as_json=json, output_markdown=md
+        )
         raise typer.Exit(code)
 
     @app.command()

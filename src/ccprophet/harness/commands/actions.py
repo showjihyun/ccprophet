@@ -180,7 +180,10 @@ def register(app: typer.Typer) -> None:
             help="success | fail | partial | unlabeled",
         ),
         task: str | None = typer.Option(
-            None, "--task", help="Task type (e.g., refactor-auth)"
+            None,
+            "--task-type",
+            "--task",  # v0.5 alias kept for backwards compat
+            help="Task type (e.g., refactor-auth) — PRD FR-8.1",
         ),
         reason: str | None = typer.Option(
             None, "--reason", help="Short note (optional)"

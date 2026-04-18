@@ -64,12 +64,8 @@ def _render(d: SessionDiff) -> None:
     console.print(
         f"[bold]{d.session_a_id.value}[/] → [bold]{d.session_b_id.value}[/]"
     )
-    console.print(
-        f"  input tokens Δ: {_signed(d.input_tokens_delta):>+}"
-    )
-    console.print(
-        f"  output tokens Δ: {_signed(d.output_tokens_delta):>+}"
-    )
+    console.print(f"  input tokens Δ: {d.input_tokens_delta:+,}")
+    console.print(f"  output tokens Δ: {d.output_tokens_delta:+,}")
     console.print(f"  tool calls Δ: {d.tool_call_count_delta:+d}")
     console.print(
         f"  bloat ratio Δ: {d.bloat_ratio_delta * 100:+.1f}%"
@@ -84,7 +80,3 @@ def _render(d: SessionDiff) -> None:
         console.print("  [green]+ MCPs[/]: " + ", ".join(d.mcps_added))
     if d.mcps_removed:
         console.print("  [red]- MCPs[/]: " + ", ".join(d.mcps_removed))
-
-
-def _signed(n: int) -> str:
-    return f"{n:,}"

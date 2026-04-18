@@ -65,7 +65,35 @@ class PostmortemAnalyzer:
             sample_size=n,
             findings=tuple(findings),
             suggestions=tuple(suggestions),
+            rationale=_rationale(findings, inputs.failed_session.compacted, n),
         )
+
+
+def _rationale(
+    findings: Sequence[PostmortemFinding], compacted: bool, sample_size: int
+) -> str:
+    """Compress the worst finding into a 1-line "why it failed" (AP-8)."""
+    if sample_size < 3:
+        return (
+            f"Only {sample_size} labelled success sample(s) — conclusions are "
+            f"low-confidence; mark more sessions to strengthen the baseline."
+        )
+    # Rank by expected user impact: task overrun > repeat reads > unused MCPs
+    # (tool bloat is the cheapest to fix; task fan-out is the most disruptive).
+    priority = {"task_overrun": 0, "repeat_reads": 1, "unused_mcp": 2}
+    ranked = sorted(findings, key=lambda f: priority.get(f.kind, 99))
+    if ranked:
+        top = ranked[0]
+        label = {
+            "task_overrun": "Task tool fan-out",
+            "repeat_reads": "File re-reading loop",
+            "unused_mcp": "Unused MCP bloat",
+        }.get(top.kind, top.kind)
+        compact_note = " after autocompact" if compacted else ""
+        return f"{label}{compact_note} — {top.detail}."
+    if compacted:
+        return "Session hit autocompact but matched success patterns otherwise."
+    return "No dominant failure signal; session matches success patterns on the tracked axes."
 
 
 def _task_overrun_findings(inputs: PostmortemInputs) -> list[PostmortemFinding]:

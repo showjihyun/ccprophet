@@ -115,7 +115,17 @@ def run_mcp_scan_command(
 
     if not servers:
         if as_json:
-            print(json_module.dumps({"loaded": []}))
+            # Keep the JSON shape stable with the non-empty path — consumers
+            # shouldn't need to branch on "loaded vs connected_used" keys.
+            print(json_module.dumps(
+                {
+                    "connected_used": [],
+                    "connected_unused": [],
+                    "failed": [],
+                    "needs_auth": [],
+                },
+                indent=2,
+            ))
         else:
             print(
                 "Claude Code `claude mcp list` unavailable or no MCPs loaded."

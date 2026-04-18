@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json as json_module
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,6 +17,7 @@ def run_postmortem_command(
     *,
     session_id: str,
     as_json: bool = False,
+    output_markdown: Path | None = None,
 ) -> int:
     try:
         report = use_case.execute(SessionId(session_id))
@@ -23,11 +25,20 @@ def run_postmortem_command(
         _err(str(e), as_json=as_json)
         return 2
 
+    if output_markdown is not None:
+        output_markdown.parent.mkdir(parents=True, exist_ok=True)
+        output_markdown.write_text(report.to_markdown(), encoding="utf-8")
+        if not as_json:
+            from rich.console import Console
+
+            Console().print(f"Wrote Markdown postmortem to [cyan]{output_markdown}[/]")
+
     if as_json:
         print(json_module.dumps(_report_dict(report), indent=2, default=str))
         return 0
 
-    _render(report)
+    if output_markdown is None:
+        _render(report)
     return 0
 
 
@@ -36,6 +47,7 @@ def _report_dict(r: PostmortemReport) -> dict[str, object]:
         "failed_session_id": r.failed_session_id.value,
         "task_type": r.task_type.value if r.task_type else None,
         "sample_size": r.sample_size,
+        "rationale": r.rationale,
         "findings": [
             {"kind": f.kind, "detail": f.detail} for f in r.findings
         ],
@@ -61,6 +73,8 @@ def _render(r: PostmortemReport) -> None:
         f"[bold]Postmortem[/] for {r.failed_session_id.value}  "
         f"[dim](task: {task_label}, successes compared: {r.sample_size})[/]"
     )
+    if r.rationale:
+        console.print(f"[bold cyan]Why[/]: {r.rationale}")
     if not r.findings:
         console.print("[dim]No structural deltas detected.[/]")
         return

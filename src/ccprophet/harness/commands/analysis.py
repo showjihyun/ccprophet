@@ -96,6 +96,9 @@ def register(app: typer.Typer) -> None:
     @app.command()
     def statusline(
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
+        cost: bool = typer.Option(
+            False, "--cost", help="Include session $ estimate (FR-10.3)"
+        ),
     ) -> None:
         """One-line session status for Claude Code statusLine integration."""
         if not DB_PATH.exists():
@@ -122,10 +125,11 @@ def register(app: typer.Typer) -> None:
         tool_calls = DuckDBToolCallRepository(conn)
         code = run_statusline_command(
             DuckDBSessionRepository(conn),
-            DuckDBPricingProvider(conn),
+            DuckDBPricingProvider(conn) if cost else None,
             tool_defs_for=tool_defs.list_for_session,
             tool_calls_for=tool_calls.list_for_session,
             as_json=json,
+            with_cost=cost,
         )
         raise typer.Exit(code)
 
@@ -188,6 +192,9 @@ def register(app: typer.Typer) -> None:
             None, "--session", "-s", help="Session ID (default: latest active)"
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
+        cost: bool = typer.Option(
+            False, "--cost", help="Include session-to-date $ (FR-10.3)"
+        ),
     ) -> None:
         """Forecast when this session will hit the autocompact threshold."""
         from ccprophet.adapters.cli.forecast import run_forecast_command
@@ -197,18 +204,29 @@ def register(app: typer.Typer) -> None:
             DuckDBEventRepository,
             DuckDBSessionRepository,
         )
+        from ccprophet.adapters.persistence.duckdb.v2_repositories import (
+            DuckDBPricingProvider,
+        )
         from ccprophet.adapters.persistence.duckdb.v3_repositories import (
             DuckDBForecastRepository,
         )
         from ccprophet.use_cases.forecast_compact import ForecastCompactUseCase
 
         conn = connect_readwrite()
+        sessions_repo = DuckDBSessionRepository(conn)
         uc = ForecastCompactUseCase(
-            sessions=DuckDBSessionRepository(conn),
+            sessions=sessions_repo,
             events=DuckDBEventRepository(conn),
             forecasts=DuckDBForecastRepository(conn),
             model=LinearForecastModel(),
             clock=SystemClock(),
         )
-        code = run_forecast_command(uc, session=session, as_json=json)
+        code = run_forecast_command(
+            uc,
+            session=session,
+            as_json=json,
+            with_cost=cost,
+            sessions_repo=sessions_repo if cost else None,
+            pricing=DuckDBPricingProvider(conn) if cost else None,
+        )
         raise typer.Exit(code)

@@ -99,7 +99,7 @@ def _render_table(recs: Sequence[Recommendation]) -> None:
         console.print(table)
         console.print()
         console.print(
-            "[dim]Run `ccprophet prune --apply` to act on these (coming in Step 4).[/]"
+            "[dim]Run `ccprophet prune --apply` to act on these.[/]"
         )
 
     if env_recs:

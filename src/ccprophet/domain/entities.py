@@ -214,6 +214,16 @@ class Recommendation:
     applied_at: datetime | None = None
     dismissed_at: datetime | None = None
 
+    def __post_init__(self) -> None:
+        # AP-8 Explainable Recommendations: the rationale is the contract with
+        # the user. Empty/whitespace-only strings defeat the whole point of
+        # "why", so reject at construction time rather than shipping a silent
+        # blank to the CLI / Web / MCP.
+        if not self.rationale or not self.rationale.strip():
+            raise ValueError(
+                "Recommendation.rationale must be a non-empty explanation (AP-8)"
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class SnapshotFileEntry:
@@ -380,6 +390,39 @@ class PostmortemReport:
     sample_size: int
     findings: tuple[PostmortemFinding, ...]
     suggestions: tuple[str, ...]
+    rationale: str = ""  # 1-line "why it failed" (AP-8; populated by analyzer)
+
+    def to_markdown(self) -> str:
+        """Render the report as Markdown (PRD FR-11.5).
+
+        Sections: headline rationale, metadata, findings, suggestions. Stable
+        output — teams use this for retro notes.
+        """
+        lines: list[str] = []
+        lines.append(f"# Postmortem — session `{self.failed_session_id.value}`")
+        lines.append("")
+        if self.rationale:
+            lines.append(f"> **Why it failed**: {self.rationale}")
+            lines.append("")
+        task = self.task_type.value if self.task_type else "—"
+        lines.append(f"- Task type: `{task}`")
+        lines.append(f"- Compared against: **{self.sample_size}** success sample(s)")
+        lines.append("")
+        lines.append("## Findings")
+        if self.findings:
+            for f in self.findings:
+                lines.append(f"- **{f.kind}**: {f.detail}")
+        else:
+            lines.append("_No signals detected (insufficient samples or clean run)._")
+        lines.append("")
+        lines.append("## Suggestions")
+        if self.suggestions:
+            for s in self.suggestions:
+                lines.append(f"- {s}")
+        else:
+            lines.append("_No automated suggestions._")
+        lines.append("")
+        return "\n".join(lines)
 
 
 @dataclass(frozen=True, slots=True)

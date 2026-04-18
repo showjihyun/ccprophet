@@ -181,6 +181,21 @@ def test_apply_propagates_settings_conflict(wired, snapshot_root) -> None:  # ty
     snaps = list(wired["repos"].snapshots.list_recent())
     assert len(snaps) == 1
 
+    # AP-7 invariant: recommendation MUST remain pending when the atomic write
+    # was rejected — mark_applied only runs after write_atomic returns.
+    pending = list(
+        wired["repos"].recommendations.list_for_session(
+            SessionId("s-1"), status=RecommendationStatus.PENDING
+        )
+    )
+    assert len(pending) == 1
+    applied = list(
+        wired["repos"].recommendations.list_for_session(
+            SessionId("s-1"), status=RecommendationStatus.APPLIED
+        )
+    )
+    assert applied == []
+
 
 def test_restore_brings_original_bytes_back(wired) -> None:  # type: ignore[no-untyped-def]
     _seed_pending_rec(

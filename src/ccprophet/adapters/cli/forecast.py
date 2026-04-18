@@ -6,9 +6,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ccprophet.domain.entities import Forecast
+    from ccprophet.ports.pricing import PricingProvider
+    from ccprophet.ports.repositories import SessionRepository
     from ccprophet.use_cases.forecast_compact import ForecastCompactUseCase
 
-from ccprophet.domain.errors import SessionNotFound
+from ccprophet.domain.errors import SessionNotFound, UnknownPricingModel
+from ccprophet.domain.services.cost import CostCalculator
 from ccprophet.domain.values import SessionId
 
 
@@ -17,6 +20,9 @@ def run_forecast_command(
     *,
     session: str | None = None,
     as_json: bool = False,
+    with_cost: bool = False,
+    sessions_repo: SessionRepository | None = None,
+    pricing: PricingProvider | None = None,
 ) -> int:
     try:
         forecast = (
@@ -28,11 +34,27 @@ def run_forecast_command(
         _print_error(str(e), as_json=as_json)
         return 2
 
+    payload = _forecast_to_dict(forecast)
+
+    # FR-10.3: annotate forecast with session-to-date $ so users see the cost
+    # trajectory alongside the compact ETA.
+    if with_cost and sessions_repo is not None and pricing is not None:
+        session_obj = sessions_repo.get(forecast.session_id)
+        if session_obj is not None:
+            try:
+                rate = pricing.rate_for(session_obj.model, session_obj.started_at)
+                breakdown = CostCalculator.session_cost(session_obj, rate)
+                payload["cost_to_date_usd"] = float(breakdown.total_cost.amount)
+                payload["pricing_rate_id"] = breakdown.rate_id
+            except UnknownPricingModel:
+                payload["cost_to_date_usd"] = None
+                payload["pricing_rate_id"] = None
+
     if as_json:
-        print(json_module.dumps(_forecast_to_dict(forecast), indent=2))
+        print(json_module.dumps(payload, indent=2))
         return 0
 
-    _render(forecast)
+    _render(forecast, cost_to_date=payload.get("cost_to_date_usd"))
     return 0
 
 
@@ -62,7 +84,7 @@ def _forecast_to_dict(forecast: Forecast) -> dict[str, object]:
     }
 
 
-def _render(forecast: Forecast) -> None:
+def _render(forecast: Forecast, *, cost_to_date: float | None = None) -> None:
     from rich.console import Console
 
     console = Console()
@@ -77,6 +99,8 @@ def _render(forecast: Forecast) -> None:
         f"[bold]{round(forecast.context_usage_at_pred * 100, 1)}%[/]   "
         f"Burn rate: [bold]{forecast.input_token_rate:,.2f}[/] tokens/sec"
     )
+    if cost_to_date is not None:
+        console.print(f"Cost to date: [bold]${cost_to_date:.4f}[/]")
     console.print()
 
     if forecast.predicted_compact_at is None:

@@ -49,10 +49,26 @@ def test_with_pricing_shows_cost(capsys) -> None:  # type: ignore[no-untyped-def
     )
     repos.sessions.upsert(session)
     repos.pricing.add(PricingRateBuilder().for_model("claude-opus-4-7").build())
-    code = run_statusline_command(repos.sessions, repos.pricing)
+    # G3 (FR-10.3): cost is opt-in via `with_cost=True` (i.e. `--cost` flag).
+    code = run_statusline_command(repos.sessions, repos.pricing, with_cost=True)
     out = capsys.readouterr().out.strip()
     assert code == 0
     assert "$15.00" in out
+
+
+def test_without_cost_flag_hides_cost(capsys) -> None:  # type: ignore[no-untyped-def]
+    repos = InMemoryRepositorySet()
+    session = replace(
+        SessionBuilder().with_id("nocost").build(),
+        model="claude-opus-4-7",
+        total_input_tokens=TokenCount(1_000_000),
+    )
+    repos.sessions.upsert(session)
+    repos.pricing.add(PricingRateBuilder().for_model("claude-opus-4-7").build())
+    code = run_statusline_command(repos.sessions, repos.pricing)  # default with_cost=False
+    out = capsys.readouterr().out.strip()
+    assert code == 0
+    assert "$" not in out
 
 
 def test_with_bloat_shows_percent(capsys) -> None:  # type: ignore[no-untyped-def]

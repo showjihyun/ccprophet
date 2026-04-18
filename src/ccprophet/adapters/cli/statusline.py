@@ -25,6 +25,7 @@ def run_statusline_command(
     tool_defs_for: callable | None = None,
     tool_calls_for: callable | None = None,
     as_json: bool = False,
+    with_cost: bool = False,
 ) -> int:
     session = _pick_latest_session(sessions)
     if session is None:
@@ -38,7 +39,8 @@ def run_statusline_command(
         "output_tokens": session.total_output_tokens.value,
     }
 
-    if pricing is not None:
+    # FR-10.3: cost column only when the user opts in via --cost.
+    if with_cost and pricing is not None:
         try:
             rate = pricing.rate_for(session.model, session.started_at)
             breakdown = CostCalculator.session_cost(session, rate)

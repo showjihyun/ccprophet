@@ -158,13 +158,19 @@ class TestMcpScanCommand:
         assert code == 0
         assert "unavailable" in captured.out.lower() or "no mcps" in captured.out.lower()
 
-    def test_empty_lister_json_returns_empty_loaded(self, capsys):
+    def test_empty_lister_json_returns_stable_shape(self, capsys):
         repos = _make_repos_with_calls([])
         lister = FakeLister([])
         code = run_mcp_scan_command(lister, repos.tool_calls, repos.sessions, as_json=True)
         out = json.loads(capsys.readouterr().out)
         assert code == 0
-        assert out == {"loaded": []}
+        # Same 4-key schema as the non-empty path (G17: stable JSON shape).
+        assert out == {
+            "connected_used": [],
+            "connected_unused": [],
+            "failed": [],
+            "needs_auth": [],
+        }
 
     def test_name_normalization_claude_ai_prefix(self, capsys):
         """'claude.ai Gmail' should match mcp__gmail__* calls."""

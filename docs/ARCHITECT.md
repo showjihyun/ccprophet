@@ -44,6 +44,11 @@ DuckDB 단일 파일, HTML 단일 파일, Python 단일 엔트리포인트. `scp
 **AP-5. Readable Beats Clever**
 컴포넌트는 50~300 LOC 범위를 지향. 숨겨진 추상화보다 명시적 데이터 플로우.
 
+**승인된 예외** (2026-04-18 기준):
+- `domain/entities.py` (~460 LOC): 프로젝트의 dataclass 카탈로그. 여러 파일로 쪼개면 circular import + 유지보수 부담. 단일 파일 유지.
+- `use_cases/backfill_from_jsonl.py` (~400 LOC): JSONL 포맷 특이사항 (subagent sidechain, session_id 추론, raw_hash dedup) 이 얽혀 있어 분할 시 오히려 로직 추적이 어려움. 현재 상태 유지, 새 로직은 헬퍼로 분리.
+새 파일은 여전히 300 LOC 미만을 목표로 한다.
+
 **AP-6. Self-Introspective**
 ccprophet 자신이 Claude Code 세션의 분석 대상이 될 수 있어야 한다. 즉 MCP 서버로 노출되는 모든 기능은 CLI로도 동일하게 제공된다.
 
@@ -259,8 +264,8 @@ ccprophet serve
     │   ├─ GET  /api/sessions/{sid}/dag
     │   ├─ GET  /api/sessions/{sid}/bloat
     │   ├─ GET  /api/sessions/{sid}/replay
-    │   ├─ GET  /api/sessions/{sid}/cost
-    │   └─ GET  /api/pattern-diff?a=<sid_a>&b=<sid_b>
+    │   ├─ GET  /api/sessions/{sid}/pattern-diff?b=<sid_b>
+    │   │    (cost_usd 필드는 /api/sessions/{sid} 응답에 embed — 별도 엔드포인트 없음)
     │
     └─ Static assets (src/ccprophet/web/ — 패키지 내부, 빌드 스텝 없음)
         ├─ index.html          (단일 HTML, 캐시버스터 ?v={version})
