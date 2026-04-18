@@ -10,6 +10,7 @@ for kernel design.
 """
 from __future__ import annotations
 
+import math
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -143,12 +144,19 @@ def _confidence_for(sample_count: int) -> float:
 
     Deeper statistics (R², residual stddev) are deferred to Phase 3 where a
     richer `ForecastModel` adapter replaces this kernel.
+
+    Calibration rationale (v0.6): a piecewise curve — fast rise in the low-N
+    range where one more AssistantResponse changes the picture a lot, then
+    logarithmic growth into the plateau. Previous `min(0.95, n/50)` only
+    reached ~0.4 at n=20 (a typical session), making confidence effectively
+    flat for realistic data.
     """
     if sample_count <= 0:
         return 0.1
     if sample_count == 1:
         return 0.3
-    return min(0.95, sample_count / 50)
+    # piecewise: 0.30 (n=1) → ~0.65 (n=5) → ~0.85 (n=20) → ~0.95 (n=60+)
+    return min(0.95, 0.30 + 0.18 * math.log(sample_count))
 
 
 def _clamp_horizon_seconds(seconds: float) -> float:

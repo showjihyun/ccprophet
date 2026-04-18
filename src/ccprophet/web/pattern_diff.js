@@ -177,7 +177,9 @@
   var prevSessionsRefreshed = CCP.onSessionsRefreshed;
   CCP.onSessionsRefreshed = function () {
     if (prevSessionsRefreshed) prevSessionsRefreshed.apply(null, arguments);
-    show();
+    // Only re-render in compare mode; otherwise the 30-second auto-refresh
+    // would clobber state.lastKey and force a needless re-fetch next time.
+    if (CCP.state && CCP.state.mode === "compare") show();
   };
 
   // Observe the compare-mode picker so that switching the right-hand session

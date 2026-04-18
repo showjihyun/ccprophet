@@ -165,17 +165,20 @@
     playBtn.classList.toggle("active", state.playing);
     if (state.playing) {
       var last = performance.now();
-      state.playTimer = setInterval(function () {
+      var tick = function () {
+        if (!state.playing) return;
         var now = performance.now();
         var dt = (now - last) / 1000;
         last = now;
         var duration = activeDuration();
         if (duration <= 0) { stopPlay(); return; }
         state.progress += (dt * state.speed) / duration;
-        if (state.progress >= 1) { state.progress = 1; stopPlay(); }
+        if (state.progress >= 1) { state.progress = 1; stopPlay(); return; }
         setSliderFromProgress();
         render();
-      }, 60);
+        state.playTimer = requestAnimationFrame(tick);
+      };
+      state.playTimer = requestAnimationFrame(tick);
     } else {
       stopPlay();
     }
@@ -185,7 +188,7 @@
     state.playing = false;
     playBtn.textContent = "play";
     playBtn.classList.remove("active");
-    if (state.playTimer) { clearInterval(state.playTimer); state.playTimer = null; }
+    if (state.playTimer) { cancelAnimationFrame(state.playTimer); state.playTimer = null; }
   }
 
   function activeDuration() {
@@ -207,12 +210,15 @@
     CCP.state.mode = mode;
     [modeDagBtn, modeReplayBtn, modeCompareBtn].forEach(function (b) {
       b.classList.remove("active");
+      b.setAttribute("aria-selected", "false");
     });
-    ({
+    var activeBtn = ({
       dag: modeDagBtn,
       replay: modeReplayBtn,
       compare: modeCompareBtn,
-    })[mode].classList.add("active");
+    })[mode];
+    activeBtn.classList.add("active");
+    activeBtn.setAttribute("aria-selected", "true");
 
     stopPlay();
     state.progress = 0;

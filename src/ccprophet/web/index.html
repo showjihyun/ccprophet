@@ -271,10 +271,10 @@
 <body>
   <header class="topbar">
     <span class="brand">ccprophet</span>
-    <span class="mode-toggle" role="tablist">
-      <button id="mode-dag" class="active" type="button">DAG</button>
-      <button id="mode-replay" type="button">Replay</button>
-      <button id="mode-compare" type="button">Compare</button>
+    <span class="mode-toggle" role="tablist" aria-label="View mode">
+      <button id="mode-dag" class="active" type="button" role="tab" aria-selected="true">DAG</button>
+      <button id="mode-replay" type="button" role="tab" aria-selected="false">Replay</button>
+      <button id="mode-compare" type="button" role="tab" aria-selected="false">Compare</button>
     </span>
     <select id="second-session-picker" aria-label="compare against"></select>
     <span class="meta" id="session-meta" role="status" aria-live="polite"><span class="chip">select a session</span></span>

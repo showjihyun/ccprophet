@@ -9,10 +9,11 @@ per-event here because the forecaster needs the *curve*, not the final total.
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from ccprophet.domain.entities import Forecast
+from ccprophet.domain.entities import Event, Forecast
 from ccprophet.domain.errors import SessionNotFound
 from ccprophet.domain.services.forecast import TokenSample
 from ccprophet.domain.values import SessionId
@@ -57,7 +58,7 @@ class ForecastCompactUseCase:
         return self.execute(session.session_id)
 
 
-def _samples_from_events(events) -> list[TokenSample]:  # type: ignore[no-untyped-def]
+def _samples_from_events(events: Iterable[Event]) -> list[TokenSample]:
     """Build the cumulative-input-token curve from AssistantResponse events.
 
     Only AssistantResponse rows carry `message.usage` in Claude Code JSONL,

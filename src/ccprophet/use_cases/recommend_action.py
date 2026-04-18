@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from ccprophet.domain.entities import Recommendation
 from ccprophet.domain.errors import SessionNotFound, UnknownPricingModel
@@ -20,9 +19,6 @@ from ccprophet.ports.repositories import (
     ToolDefRepository,
 )
 from ccprophet.ports.subagents import SubagentRepository
-
-if TYPE_CHECKING:
-    pass
 
 
 @dataclass(frozen=True)

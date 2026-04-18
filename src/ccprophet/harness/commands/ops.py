@@ -120,6 +120,17 @@ def register(app: typer.Typer) -> None:
     query_app = typer.Typer(help="Read-only SQL query against events.duckdb")
     app.add_typer(query_app, name="query")
 
+    def _require_db() -> None:
+        if DB_PATH.exists():
+            return
+        typer.secho(
+            f"ccprophet DB not found at {DB_PATH}\n"
+            "Run `ccprophet install` or trigger a hook first.",
+            err=True,
+            fg="red",
+        )
+        raise typer.Exit(2)
+
     @query_app.command("run")
     def query_run(
         sql: str = typer.Argument(..., help="SQL to run"),
@@ -127,14 +138,7 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Run an ad-hoc read-only SQL query against events.duckdb."""
-        if not DB_PATH.exists():
-            typer.secho(
-                f"ccprophet DB not found at {DB_PATH}\n"
-                "Run `ccprophet install` or trigger a hook first.",
-                err=True,
-                fg="red",
-            )
-            raise typer.Exit(2)
+        _require_db()
         from ccprophet.adapters.cli.query import run_query_command
 
         raise typer.Exit(run_query_command(db_path=DB_PATH, sql=sql, as_json=json, limit=limit))
@@ -144,14 +148,7 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """List all tables in events.duckdb with row counts."""
-        if not DB_PATH.exists():
-            typer.secho(
-                f"ccprophet DB not found at {DB_PATH}\n"
-                "Run `ccprophet install` or trigger a hook first.",
-                err=True,
-                fg="red",
-            )
-            raise typer.Exit(2)
+        _require_db()
         from ccprophet.adapters.cli.query import run_query_tables_command
 
         raise typer.Exit(run_query_tables_command(db_path=DB_PATH, as_json=json))
@@ -162,14 +159,7 @@ def register(app: typer.Typer) -> None:
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Show column types for a table in events.duckdb."""
-        if not DB_PATH.exists():
-            typer.secho(
-                f"ccprophet DB not found at {DB_PATH}\n"
-                "Run `ccprophet install` or trigger a hook first.",
-                err=True,
-                fg="red",
-            )
-            raise typer.Exit(2)
+        _require_db()
         from ccprophet.adapters.cli.query import run_query_schema_command
 
         raise typer.Exit(run_query_schema_command(db_path=DB_PATH, table=table, as_json=json))
@@ -189,7 +179,7 @@ def register(app: typer.Typer) -> None:
         window: int = typer.Option(
             30, "--window", help="Days to look back for applied savings"
         ),
-        json: bool = typer.Option(False, "--json"),
+        json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Token-savings dashboard — applied, pending, and opportunity knobs."""
         from ccprophet.adapters.cli.savings import run_savings_command

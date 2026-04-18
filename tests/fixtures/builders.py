@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -78,11 +79,9 @@ class ToolDefBuilder:
 
 
 class ToolCallBuilder:
-    _counter = 0
-
     def __init__(self) -> None:
-        ToolCallBuilder._counter += 1
-        self._id = f"tc-{ToolCallBuilder._counter}"
+        # uuid per instance — safe under pytest-xdist / reordering / parallel.
+        self._id = f"tc-{uuid.uuid4().hex[:12]}"
         self._session = SessionId("test-session-001")
         self._tool = "Read"
         self._ts = datetime(2026, 4, 16, 9, 1, 0, tzinfo=timezone.utc)
@@ -110,16 +109,14 @@ class ToolCallBuilder:
 
 
 class EventBuilder:
-    _counter = 0
-
     def __init__(self) -> None:
-        EventBuilder._counter += 1
-        self._id = EventId(f"evt-{EventBuilder._counter}")
+        uid = uuid.uuid4().hex[:12]
+        self._id = EventId(f"evt-{uid}")
         self._session = SessionId("test-session-001")
         self._type = "PostToolUse"
         self._ts = datetime(2026, 4, 16, 9, 1, 0, tzinfo=timezone.utc)
         self._payload: dict[str, object] = {}
-        self._hash = RawHash(f"hash-{EventBuilder._counter}")
+        self._hash = RawHash(f"hash-{uid}")
 
     def for_session(self, sid: str) -> EventBuilder:
         self._session = SessionId(sid)
@@ -161,11 +158,8 @@ class EventBuilder:
 
 
 class PhaseBuilder:
-    _counter = 0
-
     def __init__(self) -> None:
-        PhaseBuilder._counter += 1
-        self._id = f"phase-{PhaseBuilder._counter}"
+        self._id = f"phase-{uuid.uuid4().hex[:12]}"
         self._session = SessionId("test-session-001")
         self._type = PhaseType.PLANNING
         self._start = datetime(2026, 4, 16, 9, 0, 0, tzinfo=timezone.utc)
@@ -190,11 +184,8 @@ class PhaseBuilder:
 
 
 class RecommendationBuilder:
-    _counter = 0
-
     def __init__(self) -> None:
-        RecommendationBuilder._counter += 1
-        self._id = f"rec-{RecommendationBuilder._counter}"
+        self._id = f"rec-{uuid.uuid4().hex[:12]}"
         self._session = SessionId("test-session-001")
         self._kind = RecommendationKind.PRUNE_MCP
         self._target: str | None = "mcp__github"
