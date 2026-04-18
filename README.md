@@ -1,12 +1,21 @@
 # ccprophet
 
-**Context Efficiency Advisor for Claude Code** — a local-first auto-optimizer that measures *how well* you use your Claude Code context (not just how much), auto-fixes the waste, and converts the savings into dollars.
+> **Context Efficiency Advisor for Claude Code** — a local-first auto-optimizer that auto-fixes your context waste, reproduces the sessions that actually worked, shows the savings in dollars, and flags silent model downgrades.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-533%20passing-brightgreen)]()
 [![Contracts](https://img.shields.io/badge/import--linter-4%2F4%20kept-6E56CF)]()
 [![Architecture](https://img.shields.io/badge/arch-clean%20%2B%20hexagonal-6E56CF)]()
 [![License](https://img.shields.io/badge/license-MIT-black)]()
+
+### Four sentences, four killer features
+
+| | Promise | Command |
+|---|---|---|
+| 🔧 | **"Don't tell me — fix it."** MCP off, subset config, `/clear` hint — all in one apply. | `ccprophet prune --apply` |
+| 🎯 | **"Not how much you used, but whether the result was better."** Learn success patterns, reproduce them. | `ccprophet reproduce <task>` |
+| 💰 | **"Not tokens — dollars."** Monthly \$, cache-split billing, every rate stamped. | `ccprophet cost --month` |
+| 📊 | **"So Anthropic can't quietly downgrade you."** 7 metrics · your own 30-day baseline · 2σ flag. | `ccprophet quality` |
 
 ## 🌐 Read in your language
 
@@ -78,8 +87,17 @@ Spec (English inside, domain terms shared across languages):
 - [`docs/DESIGN.md`](docs/DESIGN.md) v0.2 — CLI · Web design system
 
 Contributor guides:
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to open a PR and pass the quality gate
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1
+- [`CHANGELOG.md`](CHANGELOG.md) — release notes and Phase 2 roadmap
 - [`CLAUDE.md`](CLAUDE.md) — project instructions for Claude Code
 - [`AGENTS.md`](AGENTS.md) — agent / tooling rules (uv-only, testing, CI)
+
+Launch assets:
+- [`docs/demo/SCRIPT.md`](docs/demo/SCRIPT.md) — 2-min screencast script with commands + narration
+- [`docs/demo/SHOW_HN.md`](docs/demo/SHOW_HN.md) — Show HN post draft + Bluesky thread
+- [`docs/demo/SOCIAL_PREVIEW.md`](docs/demo/SOCIAL_PREVIEW.md) — GitHub social preview spec + SVG source
+- [`scripts/seed_demo_db.py`](scripts/seed_demo_db.py) — reproducible demo DuckDB seed
 
 ## License
 

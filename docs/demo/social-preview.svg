@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0B0D10"/>
+      <stop offset="1" stop-color="#131821"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.28" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#6EE7F2" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#6EE7F2" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+  <g transform="translate(90,180)">
+    <text x="0" y="0" fill="#6EE7F2" font-family="JetBrains Mono, monospace" font-size="72" font-weight="700">&gt;_</text>
+  </g>
+  <text x="90" y="340" fill="#F5F7FA" font-family="JetBrains Mono, monospace" font-size="118" font-weight="800" letter-spacing="-2">ccprophet</text>
+  <text x="90" y="400" fill="#A9B3BD" font-family="Inter, sans-serif" font-size="30" font-weight="500">Context Efficiency Advisor for Claude Code</text>
+  <g font-family="Inter, sans-serif" font-size="22" font-weight="500">
+    <text x="90"  y="470" fill="#34D399">&#128295; auto-fix bloat</text>
+    <text x="340" y="470" fill="#6EE7F2">&#127919; reproduce wins</text>
+    <text x="610" y="470" fill="#FBBF24">&#128176; tokens &#8594; $</text>
+    <text x="860" y="470" fill="#F87171">&#128200; anti-downgrade</text>
+  </g>
+  <text x="90" y="560" fill="#7C8691" font-family="JetBrains Mono, monospace" font-size="22">uv tool install ccprophet  &#183;  local-first  &#183;  zero network  &#183;  MIT</text>
+  <text x="1190" y="605" text-anchor="end" fill="#4B5560" font-family="JetBrains Mono, monospace" font-size="18">github.com/showjihyun/ccprophet</text>
+</svg>
