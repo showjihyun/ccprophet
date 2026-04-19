@@ -1,7 +1,7 @@
 [project]
 name = "ccprophet"
 version = "0.6.0"
-description = "Local-first Context Efficiency Advisor for Claude Code — auto-fix bloat, reproduce best configs, tokens→USD, anti-downgrade"
+description = "Local-first Context Efficiency Advisor for Claude Code — auto-fix bloat, reproduce best configs, tokens→USD, quality regression flag"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

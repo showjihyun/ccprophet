@@ -69,7 +69,7 @@ ccprophet ingest            # 回填过去的 Claude Code JSONL
 ```
 全部数据存放于 `~/.claude-prophet/events.duckdb` 单文件,**不发起任何外部网络请求**。
 
-## 命令总览 (29 条)
+## 命令总览 (30 条)
 
 | 领域 | 命令 |
 |---|---|
@@ -82,7 +82,7 @@ ccprophet ingest            # 回填过去的 Claude Code JSONL
 | MCP | `mcp` (只读 stdio) |
 | 审计 | `claude-md` · `mcp-scan` |
 | 运维 | `doctor` · `query run/tables/schema` · `rollup` |
-| 通用 | `install` · `ingest` · `sessions` · `live` · `statusline` |
+| 通用 | `install` · `uninstall` · `ingest` · `sessions` · `live` · `statusline` |
 
 所有分析类命令支持 `--json`;与成本相关的命令支持 `--cost`。
 

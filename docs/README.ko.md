@@ -69,7 +69,7 @@ ccprophet ingest            # 과거 Claude Code JSONL 백필
 ```
 `~/.claude-prophet/events.duckdb` 한 파일, **외부 네트워크 호출 0회**.
 
-## 명령어 요약 (29종)
+## 명령어 요약 (30종)
 
 | 영역 | 명령 |
 |---|---|
@@ -82,7 +82,7 @@ ccprophet ingest            # 과거 Claude Code JSONL 백필
 | MCP | `mcp` (read-only stdio) |
 | Audit | `claude-md` · `mcp-scan` |
 | Ops | `doctor` · `query run/tables/schema` · `rollup` |
-| 공통 | `install` · `ingest` · `sessions` · `live` · `statusline` |
+| 공통 | `install` · `uninstall` · `ingest` · `sessions` · `live` · `statusline` |
 
 모든 분석 명령은 `--json`, Cost-sensitive 명령은 `--cost` 지원.
 

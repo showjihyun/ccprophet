@@ -635,9 +635,9 @@ uv tool install "ccprophet[web,mcp,forecast]"   # 웹 DAG + MCP + ARIMA 까지
 uvx ccprophet bloat
 
 # 설치 후 한 번 실행
-ccprophet install           # 훅·statusLine 등록, DuckDB 초기화, 퍼미션 0o600
-ccprophet doctor --migrate  # 스키마 최신화 (V1..V5)
+ccprophet install           # 훅·statusLine 등록, DuckDB 초기화, V1..V5 마이그레이션, 퍼미션 0o600
 ccprophet ingest            # 과거 Claude Code JSONL backfill (transactional)
+# 업그레이드 시 스키마 재점검: `ccprophet doctor --migrate`
 ```
 
 `pipx install` 은 내부적으로 pip 를 사용하므로 ccprophet 프로젝트 정책(pip 금지)과 배치된다. 외부 사용자는 `pipx` 를 선택해도 되지만 공식 설치 경로는 `uv` 이다.

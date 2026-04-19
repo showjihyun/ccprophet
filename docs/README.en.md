@@ -69,7 +69,7 @@ ccprophet ingest            # backfill past Claude Code JSONL
 ```
 All data lives in one file at `~/.claude-prophet/events.duckdb`. **Zero external network calls.**
 
-## Command catalog (29)
+## Command catalog (30)
 
 | Area | Commands |
 |---|---|
@@ -82,7 +82,7 @@ All data lives in one file at `~/.claude-prophet/events.duckdb`. **Zero external
 | MCP | `mcp` (read-only stdio) |
 | Audit | `claude-md` · `mcp-scan` |
 | Ops | `doctor` · `query run/tables/schema` · `rollup` |
-| Common | `install` · `ingest` · `sessions` · `live` · `statusline` |
+| Common | `install` · `uninstall` · `ingest` · `sessions` · `live` · `statusline` |
 
 Every analysis command supports `--json`; cost-sensitive commands also accept `--cost`.
 
