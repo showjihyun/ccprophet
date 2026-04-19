@@ -4,6 +4,7 @@ LAYERING.md §7.6 (Hypothesis contract): `BloatCalculator.calculate` must
 preserve token conservation (unused + used == total), produce a ratio in
 [0, 1], and be order-independent with respect to input sequences.
 """
+
 from __future__ import annotations
 
 from hypothesis import assume, given

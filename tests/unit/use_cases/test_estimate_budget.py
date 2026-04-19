@@ -22,9 +22,7 @@ from tests.fixtures.builders import (
 )
 
 
-def _seed_success_cluster(
-    repos: InMemoryRepositorySet, task: str = "refactor", n: int = 3
-) -> None:
+def _seed_success_cluster(repos: InMemoryRepositorySet, task: str = "refactor", n: int = 3) -> None:
     for i in range(n):
         sid = f"s-{i}"
         session = replace(

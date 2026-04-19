@@ -24,16 +24,14 @@ def _wire(old_sid: str = "old-1", started: datetime | None = None):  # type: ign
 
     repos = InMemoryRepositorySet()
     base = SessionBuilder().with_id(old_sid).build()
-    repos.sessions.upsert(replace(
-        base, started_at=started or datetime(2026, 1, 1, tzinfo=timezone.utc)
-    ))
+    repos.sessions.upsert(
+        replace(base, started_at=started or datetime(2026, 1, 1, tzinfo=timezone.utc))
+    )
     repos.tool_defs.bulk_add(
         SessionId(old_sid),
         [ToolDefBuilder().named("Read").with_tokens(100).build()],
     )
-    repos.tool_calls.append(
-        ToolCallBuilder().in_session(old_sid).for_tool("Read").build()
-    )
+    repos.tool_calls.append(ToolCallBuilder().in_session(old_sid).for_tool("Read").build())
     uc = RollupSessionsUseCase(
         sessions=repos.sessions,
         tool_calls=repos.tool_calls,
@@ -59,9 +57,7 @@ class TestRollupCommand:
 
     def test_dry_run_json_has_plan_and_does_not_delete(self, capsys) -> None:  # type: ignore[no-untyped-def]
         repos, uc = _wire()
-        code = run_rollup_command(
-            uc, older_than_days=90, apply=False, as_json=True, now=NOW
-        )
+        code = run_rollup_command(uc, older_than_days=90, apply=False, as_json=True, now=NOW)
         assert code == 0
 
         payload = json.loads(capsys.readouterr().out)
@@ -74,9 +70,7 @@ class TestRollupCommand:
 
     def test_apply_json_deletes_rows(self, capsys) -> None:  # type: ignore[no-untyped-def]
         repos, uc = _wire()
-        code = run_rollup_command(
-            uc, older_than_days=90, apply=True, as_json=True, now=NOW
-        )
+        code = run_rollup_command(uc, older_than_days=90, apply=True, as_json=True, now=NOW)
         assert code == 0
 
         payload = json.loads(capsys.readouterr().out)
@@ -88,10 +82,9 @@ class TestRollupCommand:
         repos = InMemoryRepositorySet()
         # Only a "recent" session; cutoff 90d before NOW excludes it.
         from dataclasses import replace
+
         base = SessionBuilder().with_id("recent").build()
-        repos.sessions.upsert(replace(
-            base, started_at=datetime(2026, 4, 16, tzinfo=timezone.utc)
-        ))
+        repos.sessions.upsert(replace(base, started_at=datetime(2026, 4, 16, tzinfo=timezone.utc)))
         uc = RollupSessionsUseCase(
             sessions=repos.sessions,
             tool_calls=repos.tool_calls,
@@ -101,9 +94,7 @@ class TestRollupCommand:
             hot_pruner=repos.hot_pruner,
             clock=FrozenClock(NOW),
         )
-        code = run_rollup_command(
-            uc, older_than_days=90, apply=True, as_json=True, now=NOW
-        )
+        code = run_rollup_command(uc, older_than_days=90, apply=True, as_json=True, now=NOW)
         assert code == 1
         payload = json.loads(capsys.readouterr().out)
         assert payload["session_count"] == 0
@@ -119,8 +110,6 @@ class TestRollupCommand:
             hot_pruner=repos.hot_pruner,
             clock=FrozenClock(NOW),
         )
-        code = run_rollup_command(
-            uc, older_than_days=0, apply=False, as_json=True, now=NOW
-        )
+        code = run_rollup_command(uc, older_than_days=0, apply=False, as_json=True, now=NOW)
         # Empty dry-run is still a successful plan (no apply attempted).
         assert code == 0

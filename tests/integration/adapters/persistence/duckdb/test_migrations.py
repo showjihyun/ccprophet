@@ -21,8 +21,15 @@ def test_ensure_schema_on_empty_db_applies_all(conn) -> None:  # type: ignore[no
     ensure_schema(conn)
     assert current_version(conn) >= 2
     tables = {r[0] for r in conn.execute("SHOW TABLES").fetchall()}
-    assert {"sessions", "events", "recommendations", "snapshots",
-            "outcome_labels", "subset_profiles", "pricing_rates"} <= tables
+    assert {
+        "sessions",
+        "events",
+        "recommendations",
+        "snapshots",
+        "outcome_labels",
+        "subset_profiles",
+        "pricing_rates",
+    } <= tables
 
 
 def test_apply_migrations_is_idempotent(conn) -> None:  # type: ignore[no-untyped-def]

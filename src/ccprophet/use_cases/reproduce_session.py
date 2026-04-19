@@ -4,6 +4,7 @@
 - With `--apply`: persists them and runs ApplyPruningUseCase using the same
   auto-fix path as `prune --apply` (single code path, single audit trail).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -55,18 +56,13 @@ class ReproduceSessionUseCase:
         apply: bool = False,
         min_samples: int = DEFAULT_MIN_SAMPLES,
     ) -> ReproduceOutcome:
-        cluster = list(
-            self.outcomes.list_sessions_by_label(
-                OutcomeLabelValue.SUCCESS, task_type
-            )
-        )
+        cluster = list(self.outcomes.list_sessions_by_label(OutcomeLabelValue.SUCCESS, task_type))
         tool_calls_by_session = {
             s.session_id.value: list(self.tool_calls.list_for_session(s.session_id))
             for s in cluster
         }
         tool_defs_by_session = {
-            s.session_id.value: list(self.tool_defs.list_for_session(s.session_id))
-            for s in cluster
+            s.session_id.value: list(self.tool_defs.list_for_session(s.session_id)) for s in cluster
         }
 
         best_config = BestConfigExtractor.extract(
@@ -81,9 +77,7 @@ class ReproduceSessionUseCase:
 
         recs = _build_recs(best_config, self.clock, cluster)
         if not recs:
-            return ReproduceOutcome(
-                best_config=best_config, recommendations=(), apply_outcome=None
-            )
+            return ReproduceOutcome(best_config=best_config, recommendations=(), apply_outcome=None)
 
         self.recommendations.save_all(recs)
 
@@ -103,9 +97,7 @@ class ReproduceSessionUseCase:
         )
 
 
-def _build_recs(
-    best_config: BestConfig, clock: Clock, cluster
-) -> list[Recommendation]:
+def _build_recs(best_config: BestConfig, clock: Clock, cluster) -> list[Recommendation]:
     """Convert BestConfig.dropped_mcps → prune_mcp Recommendations.
 
     The session_id attached to each rec is the most-recent success session — this

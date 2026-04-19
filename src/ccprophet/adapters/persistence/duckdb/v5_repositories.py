@@ -2,6 +2,7 @@
 
 Kept in its own module so V1/V2/V3 files stay below the ~300 LOC AP-5 ceiling.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -84,9 +85,7 @@ class DuckDBSessionSummaryRepository:
             return None
         return _row_to_summary(row)
 
-    def list_in_range(
-        self, start: datetime, end: datetime
-    ) -> Sequence[SessionSummary]:
+    def list_in_range(self, start: datetime, end: datetime) -> Sequence[SessionSummary]:
         rows = self._conn.execute(
             "SELECT * FROM session_summary WHERE started_at >= ? AND started_at < ? "
             "ORDER BY started_at",
@@ -100,8 +99,7 @@ class DuckDBSessionSummaryRepository:
             return
         ids = [s.value for s in sids]
         self._conn.execute(
-            "UPDATE session_summary SET source_rows_deleted = TRUE "
-            "WHERE session_id = ANY(?)",
+            "UPDATE session_summary SET source_rows_deleted = TRUE WHERE session_id = ANY(?)",
             [ids],
         )
 

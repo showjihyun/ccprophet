@@ -3,6 +3,7 @@ three new env-var signal fields and delegates them to the Recommender.
 
 Uses InMemory fakes throughout (no IO).
 """
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -62,6 +63,7 @@ def _seed_session(
 
 # ─── Rule 1: thinking_tokens (gated behind opt-in env var) ───────────────────
 
+
 def test_opus_high_output_does_not_trigger_thinking_rule_by_default() -> None:
     repos = InMemoryRepositorySet()
     _seed_session(repos, model=_OPUS_MODEL, total_output_tokens=60_000)
@@ -111,6 +113,7 @@ def test_opus_model_low_output_does_not_trigger_thinking_rule(
 
 # ─── Rule 2: subagent_context_tokens ─────────────────────────────────────────
 
+
 def test_large_subagents_trigger_haiku_rule() -> None:
     repos = InMemoryRepositorySet()
     _seed_session(repos)
@@ -144,15 +147,14 @@ def test_no_subagent_repo_injected_does_not_crash() -> None:
     repos = InMemoryRepositorySet()
     _seed_session(repos)
     # Should not raise even though repos.subagents exists but is not injected
-    recs = _use_case(repos, with_subagents=False).execute(
-        SessionId("s-env"), persist=False
-    )
+    recs = _use_case(repos, with_subagents=False).execute(SessionId("s-env"), persist=False)
     env_recs = [r for r in recs if r.kind == RecommendationKind.SET_ENV_VAR]
     targets = {r.target for r in env_recs}
     assert "CLAUDE_CODE_SUBAGENT_MODEL=haiku" not in targets
 
 
 # ─── Rule 3: mcp_max_output_seen ─────────────────────────────────────────────
+
 
 def _add_mcp_tool_call(
     repos: InMemoryRepositorySet,
@@ -198,6 +200,7 @@ def test_non_mcp_tool_call_does_not_trigger_cap_rule() -> None:
 
 
 # ─── All three rules fire together ───────────────────────────────────────────
+
 
 def test_all_three_env_var_rules_fire_together(
     monkeypatch,

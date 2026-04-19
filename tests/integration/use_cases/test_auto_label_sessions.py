@@ -34,12 +34,7 @@ def _seed_finished(
     calls: int = 8,
     compacted: bool = False,
 ) -> None:
-    session = (
-        SessionBuilder()
-        .with_id(sid)
-        .ended(NOW.replace(hour=10))
-        .build()
-    )
+    session = SessionBuilder().with_id(sid).ended(NOW.replace(hour=10)).build()
     session = replace(
         session,
         started_at=NOW.replace(hour=9),

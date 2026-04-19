@@ -2,6 +2,7 @@
 
 Pure stdlib — no third-party imports.
 """
+
 from __future__ import annotations
 
 import re
@@ -21,7 +22,7 @@ _CODE_BLOCK_INFO = 50
 
 @dataclass(frozen=True, slots=True)
 class ClaudeMdFinding:
-    kind: str      # 'too_long' | 'section_too_long' | 'deep_heading' | 'big_code_block'
+    kind: str  # 'too_long' | 'section_too_long' | 'deep_heading' | 'big_code_block'
     severity: str  # 'info' | 'warn' | 'critical'
     line_range: tuple[int, int]  # (start, end) — 1-indexed inclusive
     detail: str
@@ -63,15 +64,17 @@ class ClaudeMdAuditor:
                 sev = "critical"
             else:
                 sev = "warn"
-            findings.append(ClaudeMdFinding(
-                kind="too_long",
-                severity=sev,
-                line_range=(1, line_count),
-                detail=(
-                    f"{line_count} lines exceeds the recommended 200-line limit. "
-                    "Modularize via @docs/<file>.md imports."
-                ),
-            ))
+            findings.append(
+                ClaudeMdFinding(
+                    kind="too_long",
+                    severity=sev,
+                    line_range=(1, line_count),
+                    detail=(
+                        f"{line_count} lines exceeds the recommended 200-line limit. "
+                        "Modularize via @docs/<file>.md imports."
+                    ),
+                )
+            )
 
         # --- 2. Section spans and deep headings ---
         findings.extend(_check_headings(lines))
@@ -110,15 +113,17 @@ def _check_headings(lines: list[str]) -> list[ClaudeMdFinding]:
             headings.append((i, depth))
             # Deep heading check (#### or deeper)
             if depth >= 4:
-                findings.append(ClaudeMdFinding(
-                    kind="deep_heading",
-                    severity="info",
-                    line_range=(i, i),
-                    detail=(
-                        f"Heading depth {depth} at line {i}. "
-                        "Deep headings suggest sub-sections that could be extracted to docs/."
-                    ),
-                ))
+                findings.append(
+                    ClaudeMdFinding(
+                        kind="deep_heading",
+                        severity="info",
+                        line_range=(i, i),
+                        detail=(
+                            f"Heading depth {depth} at line {i}. "
+                            "Deep headings suggest sub-sections that could be extracted to docs/."
+                        ),
+                    )
+                )
 
     # Section span check for ## and ### headings
     for idx, (start_line, depth) in enumerate(headings):
@@ -126,23 +131,25 @@ def _check_headings(lines: list[str]) -> list[ClaudeMdFinding]:
             continue
         # Find end: the line before the next heading of same or higher level
         end_line = len(lines)
-        for later_line, later_depth in headings[idx + 1:]:
+        for later_line, later_depth in headings[idx + 1 :]:
             if later_depth <= depth:
                 end_line = later_line - 1
                 break
         span = end_line - start_line + 1
         if span > _SECTION_WARN:
             sev = "critical" if span > _SECTION_CRITICAL else "warn"
-            findings.append(ClaudeMdFinding(
-                kind="section_too_long",
-                severity=sev,
-                line_range=(start_line, end_line),
-                detail=(
-                    f"Section at line {start_line} spans {span} lines "
-                    f"(threshold: warn>{_SECTION_WARN}, critical>{_SECTION_CRITICAL}). "
-                    "Consider splitting into separate docs/ files."
-                ),
-            ))
+            findings.append(
+                ClaudeMdFinding(
+                    kind="section_too_long",
+                    severity=sev,
+                    line_range=(start_line, end_line),
+                    detail=(
+                        f"Section at line {start_line} spans {span} lines "
+                        f"(threshold: warn>{_SECTION_WARN}, critical>{_SECTION_CRITICAL}). "
+                        "Consider splitting into separate docs/ files."
+                    ),
+                )
+            )
 
     return findings
 
@@ -161,15 +168,17 @@ def _check_code_blocks(lines: list[str]) -> list[ClaudeMdFinding]:
                 # closing fence
                 block_len = i - block_start - 1  # lines of content inside fences
                 if block_len > _CODE_BLOCK_INFO:
-                    findings.append(ClaudeMdFinding(
-                        kind="big_code_block",
-                        severity="info",
-                        line_range=(block_start, i),
-                        detail=(
-                            f"Code block at lines {block_start}–{i} is {block_len} lines. "
-                            "Consider linking to the file instead of inlining."
-                        ),
-                    ))
+                    findings.append(
+                        ClaudeMdFinding(
+                            kind="big_code_block",
+                            severity="info",
+                            line_range=(block_start, i),
+                            detail=(
+                                f"Code block at lines {block_start}–{i} is {block_len} lines. "
+                                "Consider linking to the file instead of inlining."
+                            ),
+                        )
+                    )
                 in_block = False
 
     return findings

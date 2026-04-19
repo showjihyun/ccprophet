@@ -48,9 +48,7 @@ def run_subagents_command(
     return 0
 
 
-def _resolve_parent(
-    sessions_repo: SessionRepository, session: str | None
-) -> SessionId | None:
+def _resolve_parent(sessions_repo: SessionRepository, session: str | None) -> SessionId | None:
     if session:
         return SessionId(session)
     latest = sessions_repo.latest_active()
@@ -80,10 +78,7 @@ def _render_table(parent_id: str, rows: Sequence[Subagent]) -> None:
 
     console = Console()
     if not rows:
-        console.print(
-            f"[dim]No subagents recorded for parent session[/] "
-            f"[bold]{parent_id[:12]}[/]"
-        )
+        console.print(f"[dim]No subagents recorded for parent session[/] [bold]{parent_id[:12]}[/]")
         return
 
     table = Table(

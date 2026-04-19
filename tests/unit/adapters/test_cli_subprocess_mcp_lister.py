@@ -1,4 +1,5 @@
 """Unit tests for ClaudeCliMcpLister — subprocess.run is always monkeypatched."""
+
 from __future__ import annotations
 
 import subprocess
@@ -29,9 +30,7 @@ plugin:github:github: https://api.githubcopilot.com/mcp/ - \u2717 Failed to conn
 
 class TestClaudeCliMcpLister:
     def test_parses_mixed_statuses(self, monkeypatch):
-        monkeypatch.setattr(
-            subprocess, "run", lambda *a, **kw: _make_result(_SAMPLE_OUTPUT)
-        )
+        monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _make_result(_SAMPLE_OUTPUT))
         servers = ClaudeCliMcpLister().list_servers()
         assert len(servers) == 4
 
@@ -43,18 +42,14 @@ class TestClaudeCliMcpLister:
 
     def test_parses_command_with_colon_in_url(self, monkeypatch):
         stdout = "myserver: https://example.com:8080/path - \u2713 Connected\n"
-        monkeypatch.setattr(
-            subprocess, "run", lambda *a, **kw: _make_result(stdout)
-        )
+        monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _make_result(stdout))
         servers = ClaudeCliMcpLister().list_servers()
         assert len(servers) == 1
         assert servers[0].command_or_url == "https://example.com:8080/path"
         assert servers[0].status == "connected"
 
     def test_empty_stdout_returns_empty(self, monkeypatch):
-        monkeypatch.setattr(
-            subprocess, "run", lambda *a, **kw: _make_result("")
-        )
+        monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _make_result(""))
         servers = ClaudeCliMcpLister().list_servers()
         assert list(servers) == []
 
@@ -102,9 +97,7 @@ class TestClaudeCliMcpLister:
 
     def test_unknown_status_maps_to_unknown(self, monkeypatch):
         stdout = "myserver: cmd arg - ? Weird status\n"
-        monkeypatch.setattr(
-            subprocess, "run", lambda *a, **kw: _make_result(stdout)
-        )
+        monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _make_result(stdout))
         servers = ClaudeCliMcpLister().list_servers()
         assert len(servers) == 1
         assert servers[0].status == "unknown"

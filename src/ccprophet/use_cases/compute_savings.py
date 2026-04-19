@@ -9,6 +9,7 @@ Three buckets:
 
 This is a pure read-only dashboard — no state is mutated.
 """
+
 from __future__ import annotations
 
 import os
@@ -76,9 +77,7 @@ class ComputeSavingsUseCase:
         # +1s buffer so a rec marked applied in the same clock tick as
         # `execute()` still lands inside the range (range is half-open).
         applied = list(
-            self.recommendations.list_applied_in_range(
-                start, now + timedelta(seconds=1)
-            )
+            self.recommendations.list_applied_in_range(start, now + timedelta(seconds=1))
         )
         pending = list(self.recommendations.list_pending(limit=100))
 
@@ -148,9 +147,7 @@ def _compute_opportunities(
     pending_env_targets = {
         r.target.split("=", 1)[0]
         for r in pending
-        if r.kind == RecommendationKind.SET_ENV_VAR
-        and r.target
-        and "=" in r.target
+        if r.kind == RecommendationKind.SET_ENV_VAR and r.target and "=" in r.target
     }
     rows = []
     for name, suggested, note in KNOWN_ENV_VARS:

@@ -42,9 +42,7 @@ def _seed(conn, sid: str) -> None:  # type: ignore[no-untyped-def]
     DuckDBToolCallRepository(conn).append(
         ToolCallBuilder().in_session(sid).for_tool("Read").build()
     )
-    DuckDBEventRepository(conn).append(
-        EventBuilder().for_session(sid).build()
-    )
+    DuckDBEventRepository(conn).append(EventBuilder().for_session(sid).build())
     DuckDBPhaseRepository(conn).replace_for_session(
         SessionId(sid),
         [PhaseBuilder().in_session(sid).build()],
@@ -67,9 +65,7 @@ class TestDuckDBHotTablePruner:
         _seed(db, "target")
         _seed(db, "keep")
 
-        counts = DuckDBHotTablePruner(db).delete_for_sessions(
-            [SessionId("target")]
-        )
+        counts = DuckDBHotTablePruner(db).delete_for_sessions([SessionId("target")])
 
         assert counts.events == 1
         assert counts.tool_calls == 1

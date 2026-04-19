@@ -111,7 +111,7 @@ class TestLinearForecaster:
         # Only the (-30s, -0s) pair falls inside the default 5-minute window,
         # but 600s ago sample must NOT influence slope.
         samples = _samples(
-            (600, 1_000_000),   # far outside window — huge cumulative
+            (600, 1_000_000),  # far outside window — huge cumulative
             (30, 10_000),
             (0, 20_000),
         )
@@ -178,12 +178,8 @@ class TestLinearForecaster:
 
     def test_forecast_id_is_unique_across_calls(self) -> None:
         samples = _samples((0, 50_000))
-        a = LinearForecaster.predict(
-            samples, session_id=SID, context_window_size=200_000, now=NOW
-        )
-        b = LinearForecaster.predict(
-            samples, session_id=SID, context_window_size=200_000, now=NOW
-        )
+        a = LinearForecaster.predict(samples, session_id=SID, context_window_size=200_000, now=NOW)
+        b = LinearForecaster.predict(samples, session_id=SID, context_window_size=200_000, now=NOW)
         assert a.forecast_id != b.forecast_id
 
     def test_context_usage_reports_ratio_against_window(self) -> None:

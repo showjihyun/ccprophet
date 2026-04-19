@@ -35,9 +35,7 @@ def _setup(tmp_path):  # type: ignore[no-untyped-def]
     snap_store = FilesystemSnapshotStore(tmp_path / "snaps")
     (tmp_path / "snaps").mkdir()
 
-    preview = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    preview = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=preview,
         settings=settings,
@@ -71,7 +69,5 @@ def test_restore_returns_zero_and_reverts_file(capsys, tmp_path) -> None:  # typ
 
 def test_restore_unknown_id_returns_2(capsys, tmp_path) -> None:  # type: ignore[no-untyped-def]
     _, _, restore_uc, _, _ = _setup(tmp_path)
-    code = run_snapshot_restore_command(
-        restore_uc, snapshot_id="no-such-snap", as_json=True
-    )
+    code = run_snapshot_restore_command(restore_uc, snapshot_id="no-such-snap", as_json=True)
     assert code == 2

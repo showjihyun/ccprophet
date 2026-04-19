@@ -5,6 +5,7 @@ No IO. The SettingsStore adapter performs the actual write using the plan's
 - `prune_mcp` → adds MCP server names to `disabledMcpjsonServers`
 - `prune_tool` → adds tool names to `disabledTools`
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -33,9 +34,7 @@ class SettingsPatchPlan:
 
 class SettingsPatchPlanner:
     @staticmethod
-    def plan(
-        doc: SettingsDoc, recommendations: Sequence[Recommendation]
-    ) -> SettingsPatchPlan:
+    def plan(doc: SettingsDoc, recommendations: Sequence[Recommendation]) -> SettingsPatchPlan:
         new_content = deepcopy(doc.content)
         applied: list[str] = []
         added_mcps: list[str] = []
@@ -90,7 +89,7 @@ def _mcp_server_from_target(target: str | None) -> str | None:
     if not target:
         return None
     if target.startswith("mcp__"):
-        rest = target[len("mcp__"):]
+        rest = target[len("mcp__") :]
         idx = rest.find("__")
         return rest[:idx] if idx >= 0 else rest
     return target

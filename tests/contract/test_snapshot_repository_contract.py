@@ -15,9 +15,7 @@ def _snapshot(sid: str, reason: str = "prune-test") -> Snapshot:
         captured_at=datetime(2026, 4, 17, 9, 0, tzinfo=timezone.utc),
         reason=reason,
         triggered_by="apply_pruning",
-        files=(
-            SnapshotFileEntry(path=".claude/settings.json", sha256="abc", byte_size=100),
-        ),
+        files=(SnapshotFileEntry(path=".claude/settings.json", sha256="abc", byte_size=100),),
         byte_size=100,
     )
 
@@ -60,4 +58,5 @@ class TestInMemorySnapshotRepository(SnapshotRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemorySnapshotRepository,
         )
+
         return InMemorySnapshotRepository()

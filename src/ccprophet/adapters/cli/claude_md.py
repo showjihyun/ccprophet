@@ -1,4 +1,5 @@
 """CLI adapter: ccprophet claude-md — audit CLAUDE.md files for context rot."""
+
 from __future__ import annotations
 
 import json as json_module
@@ -6,10 +7,7 @@ from pathlib import Path
 
 from ccprophet.domain.services.claude_md_audit import ClaudeMdAuditor, ClaudeMdReport
 
-_GUIDANCE = (
-    "Modularize with @docs/<file>.md imports — "
-    "see https://code.claude.com/docs/en/memory"
-)
+_GUIDANCE = "Modularize with @docs/<file>.md imports — see https://code.claude.com/docs/en/memory"
 
 _SEV_COLOR = {
     "ok": "green",
@@ -79,6 +77,7 @@ def run_claude_md_command(
             print(json_module.dumps({"error": "No CLAUDE.md files found", "files": []}))
         else:
             from rich.console import Console
+
             Console().print("[yellow]No CLAUDE.md files found in:[/] " + str(root))
         return EXIT_NOT_FOUND
 
@@ -92,22 +91,24 @@ def run_claude_md_command(
 def _render_json(reports: list[ClaudeMdReport]) -> int:
     out = []
     for r in reports:
-        out.append({
-            "path": r.path,
-            "line_count": r.line_count,
-            "byte_size": r.byte_size,
-            "estimated_tokens": r.estimated_tokens,
-            "worst_severity": r.worst_severity,
-            "findings": [
-                {
-                    "kind": f.kind,
-                    "severity": f.severity,
-                    "line_range": list(f.line_range),
-                    "detail": f.detail,
-                }
-                for f in r.findings
-            ],
-        })
+        out.append(
+            {
+                "path": r.path,
+                "line_count": r.line_count,
+                "byte_size": r.byte_size,
+                "estimated_tokens": r.estimated_tokens,
+                "worst_severity": r.worst_severity,
+                "findings": [
+                    {
+                        "kind": f.kind,
+                        "severity": f.severity,
+                        "line_range": list(f.line_range),
+                        "detail": f.detail,
+                    }
+                    for f in r.findings
+                ],
+            }
+        )
     print(json_module.dumps(out, indent=2))
     return _exit_code(reports)
 

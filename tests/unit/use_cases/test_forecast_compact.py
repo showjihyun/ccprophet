@@ -20,6 +20,7 @@ NOW = datetime(2026, 4, 17, 12, 0, 0, tzinfo=timezone.utc)
 def _seed_session(repos: InMemoryRepositorySet, *, context_window: int = 200_000) -> None:
     # SessionBuilder doesn't expose context_window_size — patch via replace.
     from dataclasses import replace
+
     session = SessionBuilder().with_id(SID).build()
     repos.sessions.upsert(replace(session, context_window_size=context_window))
 
@@ -141,9 +142,7 @@ class TestForecastCompactUseCase:
         repos = InMemoryRepositorySet()
         _seed_session(repos)
         for i, offset in enumerate((120, 60, 0)):
-            _assistant_event(
-                repos, seconds_before_now=offset, input_tokens=20_000, event_idx=i
-            )
+            _assistant_event(repos, seconds_before_now=offset, input_tokens=20_000, event_idx=i)
         forecast = _use_case(repos).execute_current()
         assert forecast.session_id == SessionId(SID)
 

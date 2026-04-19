@@ -9,6 +9,7 @@ attached in read-only mode`.
 This test exercises the full Web app against a DB opened `read_only=True` and
 asserts both endpoints return 200.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -51,8 +52,15 @@ def _seed_and_reopen_readonly(db_path):  # type: ignore[no-untyped-def]
     for i in range(3):
         rw.execute(
             "INSERT INTO events (event_id, session_id, event_type, ts, payload, raw_hash, ingested_via) VALUES (?,?,?,?,?::JSON,?,?)",
-            [f"e-{i}", "s-ro", "AssistantResponse", t0 + timedelta(minutes=i * 5),
-             '{"message":{"usage":{"input_tokens":1000}}}', f"h-{i}", "hook"],
+            [
+                f"e-{i}",
+                "s-ro",
+                "AssistantResponse",
+                t0 + timedelta(minutes=i * 5),
+                '{"message":{"usage":{"input_tokens":1000}}}',
+                f"h-{i}",
+                "hook",
+            ],
         )
     rw.close()
     return duckdb.connect(str(db_path), read_only=True)

@@ -105,8 +105,6 @@ class RollupSessionsUseCase:
                 continue
             from dataclasses import replace
 
-            self.session_summaries.upsert(
-                replace(existing, source_rows_deleted=True)
-            )
+            self.session_summaries.upsert(replace(existing, source_rows_deleted=True))
 
         return RollupOutcome(plan=plan, applied=True, rows_deleted=counts)

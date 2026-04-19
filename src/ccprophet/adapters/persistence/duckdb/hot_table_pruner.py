@@ -4,6 +4,7 @@ Issues one `DELETE ... WHERE session_id = ANY(?)` per hot table so the use
 case stays SQL-free. Returns a `PruneCounts` whose per-table field equals
 the rowcount each DELETE reported (DuckDB exposes this via the result set).
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

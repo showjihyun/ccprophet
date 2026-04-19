@@ -5,6 +5,7 @@ read/analyze operation — no adapter here writes to the DB or filesystem
 (AP-7, PRD §6.6). Writes (e.g. persisting recommendations) are avoided by
 passing ``persist=False`` to the underlying use case where applicable.
 """
+
 from __future__ import annotations
 
 import json as _json
@@ -306,9 +307,7 @@ class CcprophetMcpServer:
 
     async def run_stdio(self) -> None:
         async with stdio_server() as (read, write):
-            await self._server.run(
-                read, write, self._server.create_initialization_options()
-            )
+            await self._server.run(read, write, self._server.create_initialization_options())
 
 
 def _error(code: str, message: str) -> dict[str, Any]:

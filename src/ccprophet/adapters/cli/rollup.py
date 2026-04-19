@@ -7,6 +7,7 @@ Three modes:
   3. `--apply --archive-parquet PATH` — archive hot-table rows as a directory
      of Parquet files FIRST, then delete.
 """
+
 from __future__ import annotations
 
 import json as json_module
@@ -69,15 +70,12 @@ def run_rollup_command(
     if apply:
         applied = use_case.execute(older_than=cutoff, apply=True)
         outcome_with_archive = _attach_archive(applied, archive_path)
-        _render(outcome_with_archive, as_json=as_json, cutoff=cutoff,
-                archive_path=archive_path)
+        _render(outcome_with_archive, as_json=as_json, cutoff=cutoff, archive_path=archive_path)
         return 0
 
     # Pure dry-run: enrich with a pre-run count of rows that WOULD be deleted.
     preview = (
-        preview_pruner.preview_counts(
-            [_as_sid(v) for v in dry_outcome.plan.session_ids]
-        )
+        preview_pruner.preview_counts([_as_sid(v) for v in dry_outcome.plan.session_ids])
         if preview_pruner is not None
         else None
     )
@@ -103,9 +101,7 @@ def _as_sid(v: str) -> SessionId:
     return _SID(v)
 
 
-def _write_parquet_archive(
-    *, conn: object, out_dir: Path, session_ids: list[str]
-) -> Path:
+def _write_parquet_archive(*, conn: object, out_dir: Path, session_ids: list[str]) -> Path:
     """Export each hot table's rows for these session_ids to a Parquet dir.
 
     One file per hot table under `out_dir/` — a directory rather than a single
@@ -161,10 +157,13 @@ def _render(
     preview: PruneCounts | None = None,
 ) -> None:
     if as_json:
-        print(json_module.dumps(
-            _to_dict(outcome, cutoff=cutoff, archive_path=archive_path, preview=preview),
-            indent=2, default=str,
-        ))
+        print(
+            json_module.dumps(
+                _to_dict(outcome, cutoff=cutoff, archive_path=archive_path, preview=preview),
+                indent=2,
+                default=str,
+            )
+        )
         return
 
     from rich.console import Console

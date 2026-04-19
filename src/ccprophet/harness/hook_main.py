@@ -2,6 +2,7 @@
 
 Only stdlib + duckdb allowed at top level. No typer/rich.
 """
+
 from __future__ import annotations
 
 import os
@@ -28,8 +29,7 @@ def _log_hook_error() -> None:
     """Best-effort append of the current traceback to the hook error log."""
     try:
         log_dir = Path(
-            os.environ.get("CCPROPHET_LOG_DIR")
-            or (Path.home() / ".claude-prophet" / "logs")
+            os.environ.get("CCPROPHET_LOG_DIR") or (Path.home() / ".claude-prophet" / "logs")
         )
         log_dir.mkdir(parents=True, exist_ok=True)
         with (log_dir / "hook_errors.log").open("a", encoding="utf-8") as f:

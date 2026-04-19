@@ -90,17 +90,14 @@ def _render_table(recs: Sequence[Recommendation]) -> None:
                 r.kind.value,
                 r.target or "-",
                 f"{r.est_savings_tokens.value:,}",
-                f"${float(r.est_savings_usd.amount):.4f}"
-                if r.est_savings_usd.amount > 0 else "-",
+                f"${float(r.est_savings_usd.amount):.4f}" if r.est_savings_usd.amount > 0 else "-",
                 f"[{conf_color}]{conf_pct}%[/{conf_color}]",
                 r.rationale,
             )
 
         console.print(table)
         console.print()
-        console.print(
-            "[dim]Run `ccprophet prune --apply` to act on these.[/]"
-        )
+        console.print("[dim]Run `ccprophet prune --apply` to act on these.[/]")
 
     if env_recs:
         env_table = Table(show_header=True, header_style="dim", title="Env-Var Recommendations")
@@ -118,8 +115,7 @@ def _render_table(recs: Sequence[Recommendation]) -> None:
                 "[env]",
                 r.target or "-",
                 f"{r.est_savings_tokens.value:,}",
-                f"${float(r.est_savings_usd.amount):.4f}"
-                if r.est_savings_usd.amount > 0 else "-",
+                f"${float(r.est_savings_usd.amount):.4f}" if r.est_savings_usd.amount > 0 else "-",
                 f"[{conf_color}]{conf_pct}%[/{conf_color}]",
                 r.rationale,
             )

@@ -66,21 +66,23 @@ class SessionSummaryRepositoryContract(ABC):
         repository.upsert(a)
         repository.upsert(b)
 
-        rows = list(repository.list_in_range(
-            datetime(2026, 1, 15, tzinfo=timezone.utc),
-            datetime(2026, 4, 1, tzinfo=timezone.utc),
-        ))
+        rows = list(
+            repository.list_in_range(
+                datetime(2026, 1, 15, tzinfo=timezone.utc),
+                datetime(2026, 4, 1, tzinfo=timezone.utc),
+            )
+        )
 
         assert [r.session_id.value for r in rows] == ["b", "c"]
 
     def test_list_in_range_empty_when_no_match(self, repository) -> None:  # type: ignore[no-untyped-def]
-        repository.upsert(
-            _summary("a", started=datetime(2026, 1, 1, tzinfo=timezone.utc))
+        repository.upsert(_summary("a", started=datetime(2026, 1, 1, tzinfo=timezone.utc)))
+        rows = list(
+            repository.list_in_range(
+                datetime(2027, 1, 1, tzinfo=timezone.utc),
+                datetime(2027, 2, 1, tzinfo=timezone.utc),
+            )
         )
-        rows = list(repository.list_in_range(
-            datetime(2027, 1, 1, tzinfo=timezone.utc),
-            datetime(2027, 2, 1, tzinfo=timezone.utc),
-        ))
         assert rows == []
 
 
@@ -90,6 +92,7 @@ class TestInMemorySessionSummaryRepository(SessionSummaryRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemorySessionSummaryRepository,
         )
+
         return InMemorySessionSummaryRepository()
 
 

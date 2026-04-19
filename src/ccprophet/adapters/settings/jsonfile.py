@@ -4,6 +4,7 @@ AP-7 (Reversible Auto-Fix) — this is the ONLY place ccprophet writes to user
 config files. `write_atomic` refuses to write when the on-disk content drifted
 from what was last read.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -62,8 +63,7 @@ class JsonFileSettingsStore:
             actual = self._hash_of(path)
             if actual != expected_hash:
                 raise SnapshotConflict(
-                    f"{path} changed since read "
-                    f"(expected {expected_hash[:8]}, saw {actual[:8]})"
+                    f"{path} changed since read (expected {expected_hash[:8]}, saw {actual[:8]})"
                 )
 
         data = _serialize(content)

@@ -3,6 +3,7 @@
 Kept in a separate module from V1 and V2 repositories to stay under the
 ~300 LOC-per-file ceiling (AP-5).
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

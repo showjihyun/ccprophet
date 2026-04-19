@@ -127,9 +127,7 @@ def run_bloat_command(
     return 0
 
 
-def _resolve_session(
-    sessions_repo: SessionRepository, sid: SessionId | None
-) -> Session | None:
+def _resolve_session(sessions_repo: SessionRepository, sid: SessionId | None) -> Session | None:
     if sid is not None:
         return sessions_repo.get(sid)
     return sessions_repo.latest_active()

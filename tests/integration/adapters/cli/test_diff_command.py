@@ -1,4 +1,5 @@
 """Integration tests for `ccprophet diff` CLI adapter."""
+
 from __future__ import annotations
 
 import json

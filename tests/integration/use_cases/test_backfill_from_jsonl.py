@@ -27,21 +27,33 @@ def _sample_jsonl(tmp_path, slug: str = "proj-a") -> list:  # type: ignore[no-un
     path.write_text(
         "\n".join(
             [
-                json.dumps({
-                    "type": "user", "sessionId": "s-1", "uuid": "u1",
-                    "timestamp": "2026-04-17T09:00:00Z",
-                    "message": {"role": "user", "content": "start"},
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "s-1", "uuid": "u2",
-                    "timestamp": "2026-04-17T09:01:00Z",
-                    "message": {
-                        "content": [
-                            {"type": "tool_use", "id": "tc-1",
-                             "name": "Read", "input": {"file_path": "/x.py"}}
-                        ]
-                    },
-                }),
+                json.dumps(
+                    {
+                        "type": "user",
+                        "sessionId": "s-1",
+                        "uuid": "u1",
+                        "timestamp": "2026-04-17T09:00:00Z",
+                        "message": {"role": "user", "content": "start"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "s-1",
+                        "uuid": "u2",
+                        "timestamp": "2026-04-17T09:01:00Z",
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "id": "tc-1",
+                                    "name": "Read",
+                                    "input": {"file_path": "/x.py"},
+                                }
+                            ]
+                        },
+                    }
+                ),
             ]
         )
         + "\n",
@@ -97,38 +109,50 @@ def test_accumulates_token_usage_on_sessions(tmp_path) -> None:  # type: ignore[
     path.write_text(
         "\n".join(
             [
-                json.dumps({
-                    "type": "user", "sessionId": "s-u", "uuid": "u1",
-                    "timestamp": "2026-04-17T09:00:00Z",
-                    "message": {"role": "user", "content": "hi"},
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "s-u", "uuid": "a1",
-                    "timestamp": "2026-04-17T09:00:01Z",
-                    "message": {
-                        "model": "claude-opus-4-7",
-                        "content": [],
-                        "usage": {
-                            "input_tokens": 10,
-                            "cache_creation_input_tokens": 1000,
-                            "cache_read_input_tokens": 0,
-                            "output_tokens": 50,
+                json.dumps(
+                    {
+                        "type": "user",
+                        "sessionId": "s-u",
+                        "uuid": "u1",
+                        "timestamp": "2026-04-17T09:00:00Z",
+                        "message": {"role": "user", "content": "hi"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "s-u",
+                        "uuid": "a1",
+                        "timestamp": "2026-04-17T09:00:01Z",
+                        "message": {
+                            "model": "claude-opus-4-7",
+                            "content": [],
+                            "usage": {
+                                "input_tokens": 10,
+                                "cache_creation_input_tokens": 1000,
+                                "cache_read_input_tokens": 0,
+                                "output_tokens": 50,
+                            },
                         },
-                    },
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "s-u", "uuid": "a2",
-                    "timestamp": "2026-04-17T09:01:00Z",
-                    "message": {
-                        "model": "claude-opus-4-7",
-                        "content": [],
-                        "usage": {
-                            "input_tokens": 0,
-                            "cache_read_input_tokens": 1000,
-                            "output_tokens": 70,
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "s-u",
+                        "uuid": "a2",
+                        "timestamp": "2026-04-17T09:01:00Z",
+                        "message": {
+                            "model": "claude-opus-4-7",
+                            "content": [],
+                            "usage": {
+                                "input_tokens": 0,
+                                "cache_read_input_tokens": 1000,
+                                "output_tokens": 70,
+                            },
                         },
-                    },
-                }),
+                    }
+                ),
             ]
         )
         + "\n",
@@ -159,48 +183,75 @@ def _sidechain_jsonl(tmp_path) -> list:  # type: ignore[no-untyped-def]
     path.write_text(
         "\n".join(
             [
-                json.dumps({
-                    "type": "user", "sessionId": "main-1", "uuid": "um1",
-                    "timestamp": "2026-04-17T09:00:00Z",
-                    "message": {"role": "user", "content": "do it"},
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "main-1", "uuid": "am1",
-                    "timestamp": "2026-04-17T09:00:05Z",
-                    "message": {
-                        "content": [
-                            {"type": "tool_use", "id": "task-1",
-                             "name": "Task",
-                             "input": {"subagent_type": "general",
-                                       "prompt": "investigate"}}
-                        ]
-                    },
-                }),
-                json.dumps({
-                    "type": "user", "sessionId": "sub-99", "uuid": "us1",
-                    "timestamp": "2026-04-17T09:00:10Z",
-                    "isSidechain": True, "userType": "sidechain",
-                    "message": {"role": "user", "content": "investigate"},
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "sub-99", "uuid": "as1",
-                    "timestamp": "2026-04-17T09:00:12Z",
-                    "isSidechain": True, "userType": "sidechain",
-                    "message": {
-                        "content": [
-                            {"type": "tool_use", "id": "tc-sub-1",
-                             "name": "Read", "input": {"file_path": "/x.py"}}
-                        ]
-                    },
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "sub-99", "uuid": "as2",
-                    "timestamp": "2026-04-17T09:00:20Z",
-                    "isSidechain": True, "userType": "sidechain",
-                    "message": {"content": [
-                        {"type": "text", "text": "done"}
-                    ]},
-                }),
+                json.dumps(
+                    {
+                        "type": "user",
+                        "sessionId": "main-1",
+                        "uuid": "um1",
+                        "timestamp": "2026-04-17T09:00:00Z",
+                        "message": {"role": "user", "content": "do it"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "main-1",
+                        "uuid": "am1",
+                        "timestamp": "2026-04-17T09:00:05Z",
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "id": "task-1",
+                                    "name": "Task",
+                                    "input": {"subagent_type": "general", "prompt": "investigate"},
+                                }
+                            ]
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "user",
+                        "sessionId": "sub-99",
+                        "uuid": "us1",
+                        "timestamp": "2026-04-17T09:00:10Z",
+                        "isSidechain": True,
+                        "userType": "sidechain",
+                        "message": {"role": "user", "content": "investigate"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "sub-99",
+                        "uuid": "as1",
+                        "timestamp": "2026-04-17T09:00:12Z",
+                        "isSidechain": True,
+                        "userType": "sidechain",
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "id": "tc-sub-1",
+                                    "name": "Read",
+                                    "input": {"file_path": "/x.py"},
+                                }
+                            ]
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "sub-99",
+                        "uuid": "as2",
+                        "timestamp": "2026-04-17T09:00:20Z",
+                        "isSidechain": True,
+                        "userType": "sidechain",
+                        "message": {"content": [{"type": "text", "text": "done"}]},
+                    }
+                ),
             ]
         )
         + "\n",
@@ -242,40 +293,54 @@ def test_subagent_context_tokens_are_accumulated(tmp_path) -> None:  # type: ign
     path.write_text(
         "\n".join(
             [
-                json.dumps({
-                    "type": "user", "sessionId": "main-1", "uuid": "um1",
-                    "timestamp": "2026-04-17T09:00:00Z",
-                    "message": {"role": "user", "content": "do it"},
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "sub-42", "uuid": "as1",
-                    "timestamp": "2026-04-17T09:00:10Z",
-                    "isSidechain": True, "userType": "sidechain",
-                    "message": {
-                        "model": "claude-opus-4-7",
-                        "content": [{"type": "text", "text": "ok"}],
-                        "usage": {
-                            "input_tokens": 10,
-                            "cache_creation_input_tokens": 500,
-                            "cache_read_input_tokens": 100,
-                            "output_tokens": 25,
+                json.dumps(
+                    {
+                        "type": "user",
+                        "sessionId": "main-1",
+                        "uuid": "um1",
+                        "timestamp": "2026-04-17T09:00:00Z",
+                        "message": {"role": "user", "content": "do it"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "sub-42",
+                        "uuid": "as1",
+                        "timestamp": "2026-04-17T09:00:10Z",
+                        "isSidechain": True,
+                        "userType": "sidechain",
+                        "message": {
+                            "model": "claude-opus-4-7",
+                            "content": [{"type": "text", "text": "ok"}],
+                            "usage": {
+                                "input_tokens": 10,
+                                "cache_creation_input_tokens": 500,
+                                "cache_read_input_tokens": 100,
+                                "output_tokens": 25,
+                            },
                         },
-                    },
-                }),
-                json.dumps({
-                    "type": "assistant", "sessionId": "sub-42", "uuid": "as2",
-                    "timestamp": "2026-04-17T09:00:20Z",
-                    "isSidechain": True, "userType": "sidechain",
-                    "message": {
-                        "model": "claude-opus-4-7",
-                        "content": [{"type": "text", "text": "done"}],
-                        "usage": {
-                            "input_tokens": 5,
-                            "cache_read_input_tokens": 1000,
-                            "output_tokens": 40,
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "sessionId": "sub-42",
+                        "uuid": "as2",
+                        "timestamp": "2026-04-17T09:00:20Z",
+                        "isSidechain": True,
+                        "userType": "sidechain",
+                        "message": {
+                            "model": "claude-opus-4-7",
+                            "content": [{"type": "text", "text": "done"}],
+                            "usage": {
+                                "input_tokens": 5,
+                                "cache_read_input_tokens": 1000,
+                                "output_tokens": 40,
+                            },
                         },
-                    },
-                }),
+                    }
+                ),
             ]
         )
         + "\n",
@@ -305,12 +370,18 @@ def test_subagent_without_detectable_parent_is_skipped(tmp_path) -> None:  # typ
     project.mkdir()
     path = project / "orphan.jsonl"
     path.write_text(
-        json.dumps({
-            "type": "user", "sessionId": "orphan-1", "uuid": "uo1",
-            "timestamp": "2026-04-17T09:00:00Z",
-            "isSidechain": True, "userType": "sidechain",
-            "message": {"role": "user", "content": "orphan"},
-        }) + "\n",
+        json.dumps(
+            {
+                "type": "user",
+                "sessionId": "orphan-1",
+                "uuid": "uo1",
+                "timestamp": "2026-04-17T09:00:00Z",
+                "isSidechain": True,
+                "userType": "sidechain",
+                "message": {"role": "user", "content": "orphan"},
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
     repos = InMemoryRepositorySet()

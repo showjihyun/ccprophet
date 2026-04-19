@@ -1,4 +1,5 @@
 """Unit tests for the replay JSON shaper (PRD F9)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -186,9 +187,9 @@ def test_node_ids_use_dag_id_scheme() -> None:
     """UI toggles opacity on the existing DAG graph, so ids must match."""
     session = SessionBuilder().with_id("sX").build()
     phase = _phase("sX", PhaseType.PLANNING, T0, T0 + timedelta(minutes=1))
-    call = ToolCallBuilder().in_session("sX").for_tool("Read").at(
-        T0 + timedelta(seconds=30)
-    ).build()
+    call = (
+        ToolCallBuilder().in_session("sX").for_tool("Read").at(T0 + timedelta(seconds=30)).build()
+    )
 
     payload = build_replay(session, [phase], [call], _empty_bloat())
 

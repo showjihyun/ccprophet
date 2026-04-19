@@ -1,4 +1,5 @@
 """Integration tests for `ccprophet savings` CLI adapter."""
+
 from __future__ import annotations
 
 import json

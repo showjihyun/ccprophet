@@ -10,6 +10,7 @@ Directory layout per snapshot:
 Separated from the DuckDB `snapshots` metadata on purpose (AP-7, DATAMODELING Q7):
 restores and manual inspection stay simple, DB tracks just the manifest entry.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -34,6 +35,7 @@ def _atomic_write_bytes(path: Path, data: bytes) -> None:
     # Windows-safe replace with short retry — AV / indexer can briefly hold
     # the target; no need to fail the whole snapshot.
     import time
+
     for i in range(3):
         try:
             os.replace(tmp, path)
@@ -47,9 +49,7 @@ class FilesystemSnapshotStore:
     def __init__(self, root: Path) -> None:
         self._root = root
 
-    def capture(
-        self, files: Mapping[str, bytes], meta: SnapshotMeta
-    ) -> Snapshot:
+    def capture(self, files: Mapping[str, bytes], meta: SnapshotMeta) -> Snapshot:
         sid = SnapshotId(str(uuid.uuid4()))
         snap_dir = self._root / sid.value
         snap_dir.mkdir(parents=True, exist_ok=True)
@@ -73,9 +73,7 @@ class FilesystemSnapshotStore:
                 }
             )
             entries.append(
-                SnapshotFileEntry(
-                    path=original_path, sha256=digest, byte_size=len(data)
-                )
+                SnapshotFileEntry(path=original_path, sha256=digest, byte_size=len(data))
             )
 
         _atomic_write_bytes(

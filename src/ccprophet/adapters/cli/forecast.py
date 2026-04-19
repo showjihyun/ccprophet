@@ -1,4 +1,5 @@
 """CLI driving adapter for `ccprophet forecast`."""
+
 from __future__ import annotations
 
 import json as json_module
@@ -25,11 +26,7 @@ def run_forecast_command(
     pricing: PricingProvider | None = None,
 ) -> int:
     try:
-        forecast = (
-            use_case.execute(SessionId(session))
-            if session
-            else use_case.execute_current()
-        )
+        forecast = use_case.execute(SessionId(session)) if session else use_case.execute_current()
     except SessionNotFound as e:
         _print_error(str(e), as_json=as_json)
         return 2
@@ -91,8 +88,7 @@ def _render(forecast: Forecast, *, cost_to_date: float | None = None) -> None:
     console.print()
     console.print("[bold]Autocompact Forecast[/]")
     console.print(
-        f"Session: [dim]{forecast.session_id.value}[/]   "
-        f"Model: [dim]{forecast.model_used}[/]"
+        f"Session: [dim]{forecast.session_id.value}[/]   Model: [dim]{forecast.model_used}[/]"
     )
     console.print(
         f"Context usage: "
@@ -104,21 +100,15 @@ def _render(forecast: Forecast, *, cost_to_date: float | None = None) -> None:
     console.print()
 
     if forecast.predicted_compact_at is None:
-        console.print(
-            "[green]No autocompact projected in the usage window.[/]"
-        )
-        console.print(
-            f"[dim]Confidence: {round(forecast.confidence, 2)}[/]"
-        )
+        console.print("[green]No autocompact projected in the usage window.[/]")
+        console.print(f"[dim]Confidence: {round(forecast.confidence, 2)}[/]")
         return
 
     delta = forecast.predicted_compact_at - forecast.predicted_at
     iso = forecast.predicted_compact_at.isoformat()
     human = _humanize_delta(delta.total_seconds())
     color = _confidence_color(forecast.confidence)
-    console.print(
-        f"[bold yellow]Projected autocompact:[/] {iso}"
-    )
+    console.print(f"[bold yellow]Projected autocompact:[/] {iso}")
     console.print(
         f"  in [bold]{human}[/]   "
         f"confidence [{color}]{round(forecast.confidence, 2)}[/{color}]   "

@@ -5,6 +5,7 @@ Clock's `now()` (correct for live hooks) but backfill must preserve the
 original timestamps. Writes go straight to the repositories with
 `ingested_via="jsonl"`.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -102,9 +103,7 @@ class BackfillFromJsonlUseCase:
             try:
                 for record in self.source.read_file(path):
                     summary.records_seen += 1
-                    self._ingest(
-                        record, slug, summary, totals, per_file, file_parent_hint
-                    )
+                    self._ingest(record, slug, summary, totals, per_file, file_parent_hint)
             except OSError as exc:
                 summary.errors.append(f"{path}: {exc}")
                 continue
@@ -131,9 +130,8 @@ class BackfillFromJsonlUseCase:
         # we've already established this key as a subagent in this file
         # (synthetic PostToolUse records drop the flag, so we fall back to
         # the per-file registry).
-        is_sidechain = (
-            _is_sidechain(record)
-            or (subagent_key is not None and subagent_key in per_file.subagents)
+        is_sidechain = _is_sidechain(record) or (
+            subagent_key is not None and subagent_key in per_file.subagents
         )
 
         if not is_sidechain and per_file.main_session_id is None:
@@ -249,9 +247,7 @@ class BackfillFromJsonlUseCase:
             )
             self.sessions.upsert(updated)
 
-    def _ensure_session(
-        self, sid: SessionId, project_slug: str, first_ts: datetime
-    ) -> None:
+    def _ensure_session(self, sid: SessionId, project_slug: str, first_ts: datetime) -> None:
         if self.sessions.get(sid) is not None:
             return
         session = Session(
@@ -363,9 +359,7 @@ def _as_str(value: object) -> str:
     return ""
 
 
-def _accumulate_usage(
-    record: JsonlRecord, totals: dict[str, _SessionTotals]
-) -> None:
+def _accumulate_usage(record: JsonlRecord, totals: dict[str, _SessionTotals]) -> None:
     message = record.payload.get("message")
     if not isinstance(message, dict):
         return
@@ -374,12 +368,8 @@ def _accumulate_usage(
     usage = message.get("usage")
     if isinstance(usage, dict):
         bucket.input_tokens += int_or_zero(usage.get("input_tokens"))
-        bucket.cache_creation_tokens += int_or_zero(
-            usage.get("cache_creation_input_tokens")
-        )
-        bucket.cache_read_tokens += int_or_zero(
-            usage.get("cache_read_input_tokens")
-        )
+        bucket.cache_creation_tokens += int_or_zero(usage.get("cache_creation_input_tokens"))
+        bucket.cache_read_tokens += int_or_zero(usage.get("cache_read_input_tokens"))
         bucket.output_tokens += int_or_zero(usage.get("output_tokens"))
 
     model = message.get("model")

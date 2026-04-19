@@ -5,6 +5,7 @@ LAYERING.md §7.6 requires Hypothesis coverage of the invariant:
 UserPromptSubmit/SessionStart events." Also: detection_confidence ∈ [0, 1],
 phase order preserves event chronology.
 """
+
 from __future__ import annotations
 
 import itertools
@@ -105,7 +106,5 @@ def test_phase_count_matches_prompt_boundaries(spec) -> None:  # type: ignore[no
 
     # A phase starts at the first event AND at each subsequent prompt-like
     # event. Count of phases = 1 + count of prompt events *after* index 0.
-    prompt_after_first = sum(
-        1 for e in events[1:] if e.event_type in PROMPT_EVENTS
-    )
+    prompt_after_first = sum(1 for e in events[1:] if e.event_type in PROMPT_EVENTS)
     assert len(phases) == 1 + prompt_after_first

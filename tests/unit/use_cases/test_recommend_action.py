@@ -36,9 +36,7 @@ def _use_case(repos: InMemoryRepositorySet) -> RecommendActionUseCase:
 
 
 def _seed_bloat_session(repos: InMemoryRepositorySet, sid: str = "s-1") -> None:
-    repos.sessions.upsert(
-        SessionBuilder().with_id(sid).build()
-    )
+    repos.sessions.upsert(SessionBuilder().with_id(sid).build())
     repos.tool_defs.bulk_add(
         SessionId(sid),
         [
@@ -46,9 +44,7 @@ def _seed_bloat_session(repos: InMemoryRepositorySet, sid: str = "s-1") -> None:
             ToolDef("mcp__github_x", TokenCount(1_400), "mcp:github"),
         ],
     )
-    repos.tool_calls.append(
-        ToolCallBuilder().in_session(sid).for_tool("Read").build()
-    )
+    repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool("Read").build())
 
 
 def test_missing_session_raises() -> None:
@@ -91,8 +87,9 @@ def test_execute_current_uses_latest_active() -> None:
     _seed_bloat_session(repos, sid="old")
     _seed_bloat_session(repos, sid="new")
     recs = _use_case(repos).execute_current()
-    assert all(r.session_id == SessionId("new") for r in recs) or \
-           all(r.session_id == SessionId("old") for r in recs)
+    assert all(r.session_id == SessionId("new") for r in recs) or all(
+        r.session_id == SessionId("old") for r in recs
+    )
 
 
 def test_no_bloat_yields_no_recs_and_no_persist() -> None:

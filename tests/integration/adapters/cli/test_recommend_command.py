@@ -15,7 +15,9 @@ from tests.fixtures.builders import SessionBuilder, SubagentBuilder, ToolCallBui
 FROZEN = datetime(2026, 4, 17, 12, 0, 0, tzinfo=timezone.utc)
 
 
-def _use_case(repos: InMemoryRepositorySet, *, with_subagents: bool = False) -> RecommendActionUseCase:
+def _use_case(
+    repos: InMemoryRepositorySet, *, with_subagents: bool = False
+) -> RecommendActionUseCase:
     return RecommendActionUseCase(
         sessions=repos.sessions,
         tool_defs=repos.tool_defs,
@@ -37,9 +39,7 @@ def _seed(repos: InMemoryRepositorySet) -> None:
             ToolDef("mcp__github_x", TokenCount(1_400), "mcp:github"),
         ],
     )
-    repos.tool_calls.append(
-        ToolCallBuilder().in_session(sid).for_tool("Read").build()
-    )
+    repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool("Read").build())
 
 
 def test_no_session_returns_2(capsys) -> None:  # type: ignore[no-untyped-def]
@@ -64,13 +64,12 @@ def test_json_output(capsys) -> None:  # type: ignore[no-untyped-def]
 def test_persist_controls_db_writes(capsys) -> None:  # type: ignore[no-untyped-def]
     repos = InMemoryRepositorySet()
     _seed(repos)
-    run_recommend_command(
-        _use_case(repos), session="s-rec", as_json=True, persist=False
-    )
+    run_recommend_command(_use_case(repos), session="s-rec", as_json=True, persist=False)
     assert list(repos.recommendations.list_pending()) == []
 
 
 # ─── env-var recommendations appear in JSON output ───────────────────────────
+
 
 def _seed_env_var_session(repos: InMemoryRepositorySet) -> None:
     """Seed a session that triggers Rule 2 (heavy subagent use)."""

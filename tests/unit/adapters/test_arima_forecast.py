@@ -6,6 +6,7 @@ suite stays green when the ``forecast`` extra is not installed. Tests that
 exercise the fallback paths (below-min-samples, ImportError, .fit raises)
 never touch statsmodels and always run.
 """
+
 from __future__ import annotations
 
 import sys
@@ -26,8 +27,9 @@ NOW = datetime(2026, 4, 17, 12, 0, 0, tzinfo=timezone.utc)
 CTX = 200_000
 
 
-def _samples(n: int, *, start_tokens: int = 1000, step_tokens: int = 1500,
-             step_seconds: int = 60) -> list[TokenSample]:
+def _samples(
+    n: int, *, start_tokens: int = 1000, step_tokens: int = 1500, step_seconds: int = 60
+) -> list[TokenSample]:
     """Build ``n`` linearly-increasing samples spaced ``step_seconds`` apart."""
     base_ts = NOW - timedelta(seconds=step_seconds * (n - 1))
     return [
@@ -54,9 +56,7 @@ class TestArimaFallbacks:
         assert result.model_used == FALLBACK_MODEL_NAME
         assert result.session_id == SID
 
-    def test_falls_back_when_statsmodels_missing(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_falls_back_when_statsmodels_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Force ImportError for any `import statsmodels...` inside predict().
         # Setting parent + submodule to None in sys.modules makes the `import`
         # statement raise ImportError without touching the real package.
@@ -77,9 +77,7 @@ class TestArimaFallbacks:
 
         assert result.model_used == FALLBACK_MODEL_NAME
 
-    def test_arima_exception_triggers_fallback(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_arima_exception_triggers_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Rather than praying that statsmodels raises on a particular input
         # (it sometimes doesn't), install a stub module that always raises.
         pytest.importorskip("statsmodels")
@@ -111,8 +109,7 @@ class TestArimaHappyPath:
         model = ArimaForecastModel(min_samples=10)
         # 30 points climbing steadily, 1 min apart — clearly trends past
         # the 0.8 * 200k = 160k threshold within the 60-step horizon.
-        samples = _samples(30, start_tokens=10_000, step_tokens=5_000,
-                           step_seconds=60)
+        samples = _samples(30, start_tokens=10_000, step_tokens=5_000, step_seconds=60)
 
         result = model.predict(
             samples,
@@ -130,9 +127,7 @@ class TestArimaHappyPath:
 
 
 class TestConfidenceScaling:
-    def test_confidence_scales_with_sample_count(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_confidence_scales_with_sample_count(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Avoid depending on statsmodels being installed: stub ARIMA with a
         # deterministic fake so the success branch runs everywhere.
         pytest.importorskip("statsmodels")
@@ -150,12 +145,8 @@ class TestConfidenceScaling:
         monkeypatch.setattr(arima_mod, "ARIMA", _FakeARIMA)
 
         model = ArimaForecastModel(min_samples=10)
-        small = model.predict(
-            _samples(12), session_id=SID, context_window_size=CTX, now=NOW
-        )
-        large = model.predict(
-            _samples(200), session_id=SID, context_window_size=CTX, now=NOW
-        )
+        small = model.predict(_samples(12), session_id=SID, context_window_size=CTX, now=NOW)
+        large = model.predict(_samples(200), session_id=SID, context_window_size=CTX, now=NOW)
 
         assert small.model_used == MODEL_NAME
         assert large.model_used == MODEL_NAME

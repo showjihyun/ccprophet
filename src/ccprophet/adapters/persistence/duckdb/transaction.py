@@ -5,6 +5,7 @@ inserts thousands of rows one-by-one (one `Event` + one `ToolCall` per
 JSONL record), the per-insert commit overhead dominates. Wrapping the
 loop in an explicit transaction collapses those N commits into 1.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator

@@ -3,6 +3,7 @@
 All datetimes stored in DuckDB are UTC-naive (no tzinfo).  These two helpers
 handle the round-trip between Python's tz-aware datetimes and the DB format.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

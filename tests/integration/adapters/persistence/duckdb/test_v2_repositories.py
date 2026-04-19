@@ -33,6 +33,7 @@ class TestDuckDBRecommendationRepository(RecommendationRepositoryContract):
         from ccprophet.adapters.persistence.duckdb.v2_repositories import (
             DuckDBRecommendationRepository,
         )
+
         return DuckDBRecommendationRepository(duck_conn)
 
 
@@ -42,6 +43,7 @@ class TestDuckDBSnapshotRepository(SnapshotRepositoryContract):
         from ccprophet.adapters.persistence.duckdb.v2_repositories import (
             DuckDBSnapshotRepository,
         )
+
         return DuckDBSnapshotRepository(duck_conn)
 
 
@@ -51,6 +53,7 @@ class TestDuckDBOutcomeRepository(OutcomeRepositoryContract):
         from ccprophet.adapters.persistence.duckdb.repositories import (
             DuckDBSessionRepository,
         )
+
         return DuckDBSessionRepository(duck_conn)
 
     @pytest.fixture
@@ -58,6 +61,7 @@ class TestDuckDBOutcomeRepository(OutcomeRepositoryContract):
         from ccprophet.adapters.persistence.duckdb.v2_repositories import (
             DuckDBOutcomeRepository,
         )
+
         return DuckDBOutcomeRepository(duck_conn)
 
 
@@ -67,6 +71,7 @@ class TestDuckDBSubsetProfileStore(SubsetProfileStoreContract):
         from ccprophet.adapters.persistence.duckdb.v2_repositories import (
             DuckDBSubsetProfileStore,
         )
+
         return DuckDBSubsetProfileStore(duck_conn)
 
 
@@ -76,6 +81,7 @@ class TestDuckDBSubagentRepository(SubagentRepositoryContract):
         from ccprophet.adapters.persistence.duckdb.v3_repositories import (
             DuckDBSubagentRepository,
         )
+
         return DuckDBSubagentRepository(duck_conn)
 
 
@@ -85,6 +91,7 @@ class TestDuckDBForecastRepository(ForecastRepositoryContract):
         from ccprophet.adapters.persistence.duckdb.v3_repositories import (
             DuckDBForecastRepository,
         )
+
         return DuckDBForecastRepository(duck_conn)
 
 
@@ -95,6 +102,7 @@ class TestDuckDBPricingProvider(PricingProviderContract):
         from ccprophet.adapters.persistence.duckdb.v2_repositories import (
             DuckDBPricingProvider,
         )
+
         return DuckDBPricingProvider(duck_conn)
 
     def upsert(self, provider, rate) -> None:  # type: ignore[no-untyped-def]

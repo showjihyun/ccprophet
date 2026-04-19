@@ -44,9 +44,7 @@ class PricingProviderContract(ABC):
         )
         self.upsert(provider, old)
         self.upsert(provider, new)
-        got = provider.rate_for(
-            "model-x", at=datetime(2026, 2, 1, tzinfo=timezone.utc)
-        )
+        got = provider.rate_for("model-x", at=datetime(2026, 2, 1, tzinfo=timezone.utc))
         assert got.effective_at == old.effective_at
 
 
@@ -56,6 +54,7 @@ class TestInMemoryPricingProvider(PricingProviderContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemoryPricingProvider,
         )
+
         return InMemoryPricingProvider()
 
     def upsert(self, provider, rate) -> None:  # type: ignore[no-untyped-def]

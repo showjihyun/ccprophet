@@ -6,6 +6,7 @@ directly — is so Phase 3 can drop in `ArimaForecastModel` (with statsmodels
 imports that must stay out of `domain/` and `use_cases/`) behind the same
 `ForecastModel` port without touching `ForecastCompactUseCase`.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

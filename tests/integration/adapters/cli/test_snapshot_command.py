@@ -15,11 +15,7 @@ def _snapshot(sid: str, reason: str = "prune") -> Snapshot:
         snapshot_id=SnapshotId(sid),
         captured_at=datetime(2026, 4, 17, 9, 0, tzinfo=timezone.utc),
         reason=reason,
-        files=(
-            SnapshotFileEntry(
-                path=".claude/settings.json", sha256="abc", byte_size=123
-            ),
-        ),
+        files=(SnapshotFileEntry(path=".claude/settings.json", sha256="abc", byte_size=123),),
         byte_size=123,
     )
 

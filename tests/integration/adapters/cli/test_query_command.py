@@ -22,12 +22,8 @@ def db_path(tmp_path: Path) -> Path:
     """Tiny DuckDB with a single table pre-seeded."""
     path = tmp_path / "events.duckdb"
     conn = duckdb.connect(str(path))
-    conn.execute(
-        "CREATE TABLE sessions (session_id VARCHAR, model VARCHAR, tokens INTEGER)"
-    )
-    conn.execute(
-        "INSERT INTO sessions VALUES ('s-abc', 'claude-opus-4-7', 12000)"
-    )
+    conn.execute("CREATE TABLE sessions (session_id VARCHAR, model VARCHAR, tokens INTEGER)")
+    conn.execute("INSERT INTO sessions VALUES ('s-abc', 'claude-opus-4-7', 12000)")
     conn.close()
     return path
 
@@ -66,9 +62,7 @@ def test_basic_select_json(capsys: pytest.CaptureFixture[str], db_path: Path) ->
     assert payload["truncated"] is False
 
 
-def test_basic_select_rich_table(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_basic_select_rich_table(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_command(
         db_path=db_path,
         sql="SELECT session_id FROM sessions",
@@ -80,9 +74,7 @@ def test_basic_select_rich_table(
     # so we only assert the return code here.
 
 
-def test_truncation_json(
-    capsys: pytest.CaptureFixture[str], db_path_many_rows: Path
-) -> None:
+def test_truncation_json(capsys: pytest.CaptureFixture[str], db_path_many_rows: Path) -> None:
     code = run_query_command(
         db_path=db_path_many_rows,
         sql="SELECT * FROM items",
@@ -97,9 +89,7 @@ def test_truncation_json(
     assert len(payload["rows"]) == 10
 
 
-def test_no_truncation_when_within_limit(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_no_truncation_when_within_limit(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_command(
         db_path=db_path,
         sql="SELECT * FROM sessions",
@@ -111,9 +101,7 @@ def test_no_truncation_when_within_limit(
     assert payload["truncated"] is False
 
 
-def test_ddl_rejected_returns_2(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_ddl_rejected_returns_2(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     """DuckDB read_only=True refuses DDL at the engine level."""
     code = run_query_command(
         db_path=db_path,
@@ -124,9 +112,7 @@ def test_ddl_rejected_returns_2(
     # Error message goes to stderr; just confirm exit code.
 
 
-def test_malformed_sql_returns_2(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_malformed_sql_returns_2(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_command(
         db_path=db_path,
         sql="SELECT FROM WHERE ???",
@@ -135,9 +121,7 @@ def test_malformed_sql_returns_2(
     assert code == 2
 
 
-def test_missing_db_returns_2(
-    capsys: pytest.CaptureFixture[str], tmp_path: Path
-) -> None:
+def test_missing_db_returns_2(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     missing = tmp_path / "no_such.duckdb"
     code = run_query_command(db_path=missing, sql="SELECT 1", as_json=False)
     assert code == 2
@@ -148,9 +132,7 @@ def test_missing_db_returns_2(
 # ---------------------------------------------------------------------------
 
 
-def test_tables_command_json(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_tables_command_json(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_tables_command(db_path=db_path, as_json=True)
     out = capsys.readouterr().out
     assert code == 0
@@ -163,16 +145,12 @@ def test_tables_command_json(
             assert entry["row_count"] == 1
 
 
-def test_tables_command_rich(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_tables_command_rich(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_tables_command(db_path=db_path, as_json=False)
     assert code == 0
 
 
-def test_tables_missing_db_returns_2(
-    capsys: pytest.CaptureFixture[str], tmp_path: Path
-) -> None:
+def test_tables_missing_db_returns_2(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     missing = tmp_path / "no_such.duckdb"
     code = run_query_tables_command(db_path=missing, as_json=False)
     assert code == 2
@@ -183,9 +161,7 @@ def test_tables_missing_db_returns_2(
 # ---------------------------------------------------------------------------
 
 
-def test_schema_command_json(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_schema_command_json(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_schema_command(db_path=db_path, table="sessions", as_json=True)
     out = capsys.readouterr().out
     assert code == 0
@@ -197,25 +173,17 @@ def test_schema_command_json(
     assert "tokens" in col_names
 
 
-def test_schema_command_rich(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
+def test_schema_command_rich(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
     code = run_query_schema_command(db_path=db_path, table="sessions", as_json=False)
     assert code == 0
 
 
-def test_schema_unknown_table_returns_2(
-    capsys: pytest.CaptureFixture[str], db_path: Path
-) -> None:
-    code = run_query_schema_command(
-        db_path=db_path, table="nonexistent_table_xyz", as_json=True
-    )
+def test_schema_unknown_table_returns_2(capsys: pytest.CaptureFixture[str], db_path: Path) -> None:
+    code = run_query_schema_command(db_path=db_path, table="nonexistent_table_xyz", as_json=True)
     assert code == 2
 
 
-def test_schema_missing_db_returns_2(
-    capsys: pytest.CaptureFixture[str], tmp_path: Path
-) -> None:
+def test_schema_missing_db_returns_2(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     missing = tmp_path / "no_such.duckdb"
     code = run_query_schema_command(db_path=missing, table="sessions", as_json=False)
     assert code == 2

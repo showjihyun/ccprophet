@@ -19,9 +19,7 @@ def _wire():  # type: ignore[no-untyped-def]
         recommendations=repos.recommendations,
         pricing=repos.pricing,
     )
-    session_uc = ComputeSessionCostUseCase(
-        sessions=repos.sessions, pricing=repos.pricing
-    )
+    session_uc = ComputeSessionCostUseCase(sessions=repos.sessions, pricing=repos.pricing)
     return repos, monthly, session_uc
 
 
@@ -53,9 +51,7 @@ def test_current_month_summary_json(capsys) -> None:  # type: ignore[no-untyped-
 def test_session_flag_shows_single_breakdown(capsys) -> None:  # type: ignore[no-untyped-def]
     repos, monthly, session_uc = _wire()
     _seed(repos)
-    code = run_cost_command(
-        monthly, session_uc, session="s-cost", as_json=True
-    )
+    code = run_cost_command(monthly, session_uc, session="s-cost", as_json=True)
     payload = json.loads(capsys.readouterr().out)
     assert code == 0
     assert payload["session_id"] == "s-cost"
@@ -64,9 +60,7 @@ def test_session_flag_shows_single_breakdown(capsys) -> None:  # type: ignore[no
 
 def test_session_missing_returns_2(capsys) -> None:  # type: ignore[no-untyped-def]
     _repos, monthly, session_uc = _wire()
-    code = run_cost_command(
-        monthly, session_uc, session="nope", as_json=True
-    )
+    code = run_cost_command(monthly, session_uc, session="nope", as_json=True)
     captured = capsys.readouterr()
     assert code == 2
     # Error JSON routes to stderr so `ccprophet cost ... --json | jq` stays clean
@@ -76,9 +70,7 @@ def test_session_missing_returns_2(capsys) -> None:  # type: ignore[no-untyped-d
 
 def test_empty_month_is_zero_summary(capsys) -> None:  # type: ignore[no-untyped-def]
     _repos, monthly, session_uc = _wire()
-    code = run_cost_command(
-        monthly, session_uc, month="2020-01", as_json=True
-    )
+    code = run_cost_command(monthly, session_uc, month="2020-01", as_json=True)
     payload = json.loads(capsys.readouterr().out)
     assert code == 0
     assert payload["session_count"] == 0

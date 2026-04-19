@@ -8,6 +8,7 @@ Pure — stdlib only, no numpy / scipy / statsmodels. Deterministic given the
 same inputs. See PRD.md §6.5 F5 for Phase 1 scope and docs/ARCHITECT.md §4.6
 for kernel design.
 """
+
 from __future__ import annotations
 
 import math
@@ -53,11 +54,7 @@ class LinearForecaster:
     ) -> Forecast:
         threshold = context_window_size * compact_threshold_ratio
         last_cum = samples[-1].cumulative_input_tokens if samples else 0
-        context_usage = (
-            min(1.0, last_cum / context_window_size)
-            if context_window_size > 0
-            else 0.0
-        )
+        context_usage = min(1.0, last_cum / context_window_size) if context_window_size > 0 else 0.0
 
         windowed = _filter_window(samples, now=now, window=window)
         sample_count = len(windowed)

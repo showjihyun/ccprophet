@@ -31,9 +31,7 @@ def test_subagents_json_for_explicit_session(capsys) -> None:  # type: ignore[no
     repos.subagents.upsert(_sub("b", "p1"))
 
     uc = ListSubagentsUseCase(subagents=repos.subagents)
-    code = run_subagents_command(
-        uc, repos.sessions, session="p1", as_json=True
-    )
+    code = run_subagents_command(uc, repos.sessions, session="p1", as_json=True)
     out = capsys.readouterr().out
     payload = json.loads(out)
 

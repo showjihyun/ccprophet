@@ -18,12 +18,7 @@ def _finished_session() -> object:
 
 
 def _call(success: bool = True, tool: str = "Bash", input_hash: str = "h") -> object:
-    tc = (
-        ToolCallBuilder()
-        .in_session(SessionId("s-finished"))
-        .for_tool(tool)
-        .build()
-    )
+    tc = ToolCallBuilder().in_session(SessionId("s-finished")).for_tool(tool).build()
     return replace(tc, success=success, input_hash=input_hash)
 
 
@@ -37,10 +32,7 @@ def test_too_few_calls_returns_none() -> None:
 
 
 def test_all_successful_calls_label_success() -> None:
-    assert (
-        classify(_finished_session(), [_call() for _ in range(6)])
-        is OutcomeLabelValue.SUCCESS
-    )
+    assert classify(_finished_session(), [_call() for _ in range(6)]) is OutcomeLabelValue.SUCCESS
 
 
 def test_compacted_session_labels_fail() -> None:

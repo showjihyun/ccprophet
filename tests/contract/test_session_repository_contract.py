@@ -40,4 +40,5 @@ class TestInMemorySessionRepository(SessionRepositoryContract):
     @pytest.fixture
     def repository(self):  # type: ignore[no-untyped-def]
         from ccprophet.adapters.persistence.inmemory.repositories import InMemorySessionRepository
+
         return InMemorySessionRepository()

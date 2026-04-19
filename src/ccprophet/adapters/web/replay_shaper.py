@@ -5,6 +5,7 @@ already-ingested session's phases + tool_calls into a time-ordered event
 stream plus per-step node-visibility snapshots that the Web DAG viewer can
 scrub through without re-executing anything (FR-9.1).
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -120,13 +121,9 @@ def build_replay(
                 visible.add(f"phase:{bucket.phase_id}")
             visible.add(f"tool:{tc.tool_call_id}")
 
-        entry["bloat_ratio_at"] = round(
-            final_ratio * min(cumulative / total_tokens, 1.0), 4
-        )
+        entry["bloat_ratio_at"] = round(final_ratio * min(cumulative / total_tokens, 1.0), 4)
         timeline.append(entry)
-        snapshots.append(
-            {"ts": iso(ts), "visible_node_ids": sorted(visible)}
-        )
+        snapshots.append({"ts": iso(ts), "visible_node_ids": sorted(visible)})
 
     # Delta markers — UI can draw a spike tick on the slider at these steps.
     prev_ratio = 0.0

@@ -8,6 +8,7 @@ Two pure services:
   and a baseline, computes each metric's z-score, and flags the ones that
   drift ≥ threshold sigma. No IO; the use case loads the inputs.
 """
+
 from __future__ import annotations
 
 import math
@@ -61,8 +62,11 @@ class QualityTracker:
 
         points = tuple(
             _build_point(
-                day, day_sessions, inputs.tool_calls_by_session,
-                inputs.outcomes_by_session, inputs.model,
+                day,
+                day_sessions,
+                inputs.tool_calls_by_session,
+                inputs.outcomes_by_session,
+                inputs.model,
             )
             for day, day_sessions in sorted(sessions_by_day.items())
         )
@@ -101,15 +105,12 @@ def _build_point(
     autocompact_rate = sum(1 for s in sessions if s.compacted) / n
     repeat_read_rate = repeat_read_sessions / n
 
-    labeled = [
-        outcomes_by_session.get(s.session_id.value) for s in sessions
-    ]
+    labeled = [outcomes_by_session.get(s.session_id.value) for s in sessions]
     labeled_nonnull = [label for label in labeled if label is not None]
     fail_rate: float | None = None
     if labeled_nonnull:
         fail_rate = sum(
-            1 for label in labeled_nonnull
-            if label.label == OutcomeLabelValue.FAIL
+            1 for label in labeled_nonnull if label.label == OutcomeLabelValue.FAIL
         ) / len(labeled_nonnull)
 
     return DailyQualityPoint(
@@ -153,7 +154,7 @@ class RegressionDetector:
         points = list(series.points)
         recent = points[-window_days:] if window_days > 0 else []
         baseline = (
-            points[-(window_days + baseline_days):-window_days]
+            points[-(window_days + baseline_days) : -window_days]
             if window_days > 0
             else points[-baseline_days:]
         )
@@ -199,9 +200,7 @@ def _metric_flag(
 
     # Floor stddev at 10% of baseline mean so a perfectly-flat baseline can
     # still trigger a flag when recent drifts meaningfully.
-    effective_stddev = (
-        baseline_stddev if baseline_stddev > 0 else abs(baseline_mean) * 0.1
-    )
+    effective_stddev = baseline_stddev if baseline_stddev > 0 else abs(baseline_mean) * 0.1
     if effective_stddev == 0:
         return None
     z_score = (recent_mean - baseline_mean) / effective_stddev
@@ -210,9 +209,7 @@ def _metric_flag(
     if direction == "stable":
         return None
 
-    explanation = _explain(
-        metric_name, direction, recent_mean, baseline_mean, z_score
-    )
+    explanation = _explain(metric_name, direction, recent_mean, baseline_mean, z_score)
     return RegressionFlag(
         metric_name=metric_name,
         baseline_mean=baseline_mean,
@@ -224,9 +221,7 @@ def _metric_flag(
     )
 
 
-def _metric_values(
-    name: str, points: Sequence[DailyQualityPoint]
-) -> list[float]:
+def _metric_values(name: str, points: Sequence[DailyQualityPoint]) -> list[float]:
     values: list[float] = []
     for p in points:
         v = getattr(p, name)
@@ -243,9 +238,7 @@ def _stddev(values: Sequence[float], mean: float) -> float:
     return math.sqrt(variance)
 
 
-def _direction(
-    z_score: float, higher_is_better: bool, threshold_sigma: float
-) -> str:
+def _direction(z_score: float, higher_is_better: bool, threshold_sigma: float) -> str:
     if abs(z_score) < threshold_sigma:
         return "stable"
     improved = z_score > 0 if higher_is_better else z_score < 0

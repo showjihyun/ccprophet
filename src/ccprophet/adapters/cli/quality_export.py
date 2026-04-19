@@ -7,6 +7,7 @@ a *fresh in-memory DuckDB connection* — never the main application DB.
 Kept here (not in ``use_cases/`` or ``domain/``) because parquet I/O is a
 framework concern and DuckDB is an adapter dependency (LAYERING LP-5).
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -46,15 +47,10 @@ CREATE TABLE quality_series (
 )
 """
 
-_INSERT_SQL = (
-    "INSERT INTO quality_series VALUES "
-    "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-)
+_INSERT_SQL = "INSERT INTO quality_series VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 
-def export_quality_series(
-    reports: Sequence[RegressionReport], path: Path
-) -> int:
+def export_quality_series(reports: Sequence[RegressionReport], path: Path) -> int:
     """Write flattened daily quality points to a Parquet file.
 
     Parameters

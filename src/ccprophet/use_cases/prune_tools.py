@@ -4,6 +4,7 @@ Loads pending `prune_*` recommendations and computes the settings.json patch
 that would be applied. Writes nothing; callers (CLI, ApplyPruningUseCase)
 consume the returned `PrunePreview`.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -19,9 +20,7 @@ from ccprophet.domain.values import RecommendationKind, SessionId
 from ccprophet.ports.recommendations import RecommendationRepository
 from ccprophet.ports.settings import SettingsStore
 
-PRUNE_KINDS = frozenset(
-    {RecommendationKind.PRUNE_MCP, RecommendationKind.PRUNE_TOOL}
-)
+PRUNE_KINDS = frozenset({RecommendationKind.PRUNE_MCP, RecommendationKind.PRUNE_TOOL})
 
 
 @dataclass(frozen=True, slots=True)

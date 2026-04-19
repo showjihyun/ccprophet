@@ -16,9 +16,15 @@ def test_skips_blank_and_invalid_lines(tmp_path) -> None:  # type: ignore[no-unt
         [
             "",
             "not-json",
-            json.dumps({"type": "user", "sessionId": "s-1",
-                        "uuid": "u1", "timestamp": "2026-04-17T09:00:00Z",
-                        "message": {"role": "user", "content": "hi"}}),
+            json.dumps(
+                {
+                    "type": "user",
+                    "sessionId": "s-1",
+                    "uuid": "u1",
+                    "timestamp": "2026-04-17T09:00:00Z",
+                    "message": {"role": "user", "content": "hi"},
+                }
+            ),
         ],
     )
     records = list(JsonlReader().read_file(path))

@@ -14,6 +14,7 @@ Rules (conservative):
   with ≥ 10 calls, or repeat-read rate crossed the quality threshold.
 - **None** — session still active, too few tool calls, or signals conflict.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

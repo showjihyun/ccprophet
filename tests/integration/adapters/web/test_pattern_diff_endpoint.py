@@ -1,4 +1,5 @@
 """Integration tests for the pattern-diff endpoint (PRD F9 / FR-9.3)."""
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -40,11 +41,7 @@ def _seed(repos: InMemoryRepositorySet) -> None:
         SessionId(SID_A),
         [
             ToolDefBuilder().named("Read").with_tokens(100).from_source("system").build(),
-            ToolDefBuilder()
-            .named("mcp__gh")
-            .with_tokens(1000)
-            .from_source("mcp:github")
-            .build(),
+            ToolDefBuilder().named("mcp__gh").with_tokens(1000).from_source("mcp:github").build(),
         ],
     )
     repos.tool_defs.bulk_add(
@@ -56,19 +53,11 @@ def _seed(repos: InMemoryRepositorySet) -> None:
     )
     for i, name in enumerate(["Read"]):
         repos.tool_calls.append(
-            ToolCallBuilder()
-            .in_session(SID_A)
-            .for_tool(name)
-            .at(T0 + timedelta(seconds=i))
-            .build()
+            ToolCallBuilder().in_session(SID_A).for_tool(name).at(T0 + timedelta(seconds=i)).build()
         )
     for i, name in enumerate(["Bash", "Grep"]):
         repos.tool_calls.append(
-            ToolCallBuilder()
-            .in_session(SID_B)
-            .for_tool(name)
-            .at(T0 + timedelta(seconds=i))
-            .build()
+            ToolCallBuilder().in_session(SID_B).for_tool(name).at(T0 + timedelta(seconds=i)).build()
         )
 
 

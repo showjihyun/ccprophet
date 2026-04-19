@@ -27,8 +27,7 @@ def run_mark_command(
         label_value = OutcomeLabelValue(outcome.lower())
     except ValueError:
         _err(
-            f"--outcome must be one of: "
-            f"{', '.join(v.value for v in OutcomeLabelValue)}",
+            f"--outcome must be one of: {', '.join(v.value for v in OutcomeLabelValue)}",
             as_json=as_json,
         )
         return 2
@@ -118,9 +117,7 @@ def _render_auto(summary: AutoLabelSummary, *, dry_run: bool) -> None:
     )
     if dry_run and summary.applied_session_ids:
         console.print()
-        console.print(
-            "[dim]Re-run without --dry-run to persist these labels.[/]"
-        )
+        console.print("[dim]Re-run without --dry-run to persist these labels.[/]")
     if summary.labeled_success + summary.labeled_fail == 0:
         console.print()
         console.print(

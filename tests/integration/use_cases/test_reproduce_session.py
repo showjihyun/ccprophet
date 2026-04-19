@@ -72,9 +72,7 @@ def _wire(tmp_path):  # type: ignore[no-untyped-def]
     settings = JsonFileSettingsStore()
     snap_store = FilesystemSnapshotStore(tmp_path / "snaps")
     (tmp_path / "snaps").mkdir()
-    preview = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    preview = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=preview,
         settings=settings,

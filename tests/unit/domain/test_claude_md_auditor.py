@@ -1,4 +1,5 @@
 """Unit tests for ClaudeMdAuditor domain service."""
+
 from __future__ import annotations
 
 from ccprophet.domain.services.claude_md_audit import ClaudeMdAuditor

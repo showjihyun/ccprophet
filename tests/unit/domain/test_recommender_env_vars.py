@@ -6,6 +6,7 @@ Each rule is tested independently with:
   - est_savings_usd flows through when pricing is present
   - all three rules can fire simultaneously
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -49,12 +50,12 @@ def _ctx(**kwargs: object) -> RecommendationContext:
 
 def _env_recs(ctx: RecommendationContext) -> list:
     return [
-        r for r in Recommender.recommend(ctx, now=NOW)
-        if r.kind == RecommendationKind.SET_ENV_VAR
+        r for r in Recommender.recommend(ctx, now=NOW) if r.kind == RecommendationKind.SET_ENV_VAR
     ]
 
 
 # ─── Rule 1: MAX_THINKING_TOKENS ─────────────────────────────────────────────
+
 
 def test_rule1_no_trigger_below_threshold() -> None:
     ctx = _ctx(thinking_tokens=_THINKING_TRIGGER - 1)
@@ -101,6 +102,7 @@ def test_rule1_usd_nonzero_with_pricing() -> None:
 
 # ─── Rule 2: CLAUDE_CODE_SUBAGENT_MODEL=haiku ────────────────────────────────
 
+
 def test_rule2_no_trigger_below_threshold() -> None:
     ctx = _ctx(subagent_context_tokens=_SUBAGENT_TRIGGER - 1)
     assert _env_recs(ctx) == []
@@ -139,6 +141,7 @@ def test_rule2_usd_nonzero_with_pricing() -> None:
 
 
 # ─── Rule 3: MAX_MCP_OUTPUT_TOKENS ───────────────────────────────────────────
+
 
 def test_rule3_no_trigger_below_threshold() -> None:
     ctx = _ctx(mcp_max_output_seen=_MCP_OUTPUT_TRIGGER - 1)
@@ -180,6 +183,7 @@ def test_rule3_usd_nonzero_with_pricing() -> None:
 
 # ─── All three rules fire simultaneously ─────────────────────────────────────
 
+
 def test_all_three_rules_fire_simultaneously() -> None:
     pricing = PricingRateBuilder().for_model("claude-opus-4-6").build()
     ctx = _ctx(
@@ -212,6 +216,7 @@ def test_all_three_rules_usd_nonzero_when_pricing() -> None:
 
 
 # ─── Confidence is always in [0.0, 1.0] ─────────────────────────────────────
+
 
 def test_confidence_bounds_all_rules() -> None:
     ctx = _ctx(

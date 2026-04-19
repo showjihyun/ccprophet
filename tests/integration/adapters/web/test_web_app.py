@@ -45,13 +45,13 @@ def seeded_repos() -> InMemoryRepositorySet:
     )
 
     # Two tool_calls in chronological order so they map to the detected phase.
-    for _i, ts in enumerate([
-        datetime(2026, 4, 16, 9, 1, 0, tzinfo=timezone.utc),
-        datetime(2026, 4, 16, 9, 2, 0, tzinfo=timezone.utc),
-    ]):
-        repos.tool_calls.append(
-            ToolCallBuilder().in_session(SID).for_tool("Read").at(ts).build()
-        )
+    for _i, ts in enumerate(
+        [
+            datetime(2026, 4, 16, 9, 1, 0, tzinfo=timezone.utc),
+            datetime(2026, 4, 16, 9, 2, 0, tzinfo=timezone.utc),
+        ]
+    ):
+        repos.tool_calls.append(ToolCallBuilder().in_session(SID).for_tool("Read").at(ts).build())
 
     # UserPromptSubmit + two PostToolUse events so PhaseDetector emits >=1 phase.
     repos.events.append(

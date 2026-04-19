@@ -19,13 +19,7 @@ class PruneCounts:
 
     @property
     def total(self) -> int:
-        return (
-            self.events
-            + self.tool_calls
-            + self.tool_defs_loaded
-            + self.file_reads
-            + self.phases
-        )
+        return self.events + self.tool_calls + self.tool_defs_loaded + self.file_reads + self.phases
 
 
 class HotTablePruner(Protocol):

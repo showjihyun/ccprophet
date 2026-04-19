@@ -33,9 +33,7 @@ class RecommendActionUseCase:
     # Optional: if absent, subagent_context_tokens will be 0 (Rule 2 won't fire)
     subagents: SubagentRepository | None = field(default=None)
 
-    def execute(
-        self, session_id: SessionId, *, persist: bool = True
-    ) -> list[Recommendation]:
+    def execute(self, session_id: SessionId, *, persist: bool = True) -> list[Recommendation]:
         session = self.sessions.get(session_id)
         if session is None:
             raise SessionNotFound(session_id)
@@ -59,10 +57,9 @@ class RecommendActionUseCase:
         # Set CCPROPHET_EXPERIMENTAL_THINKING_PROXY=1 to re-enable the old
         # heuristic for your own dogfooding.
         thinking_tokens = 0
-        if (
-            os.environ.get("CCPROPHET_EXPERIMENTAL_THINKING_PROXY") == "1"
-            and session.model.startswith("claude-opus")
-        ):
+        if os.environ.get(
+            "CCPROPHET_EXPERIMENTAL_THINKING_PROXY"
+        ) == "1" and session.model.startswith("claude-opus"):
             thinking_tokens = session.total_output_tokens.value
 
         # Rule 2: subagent_context_tokens — sum across child subagents.
@@ -73,11 +70,7 @@ class RecommendActionUseCase:
 
         # Rule 3: mcp_max_output_seen — largest output_tokens on an mcp__ tool call.
         mcp_max_output_seen = max(
-            (
-                tc.output_tokens.value
-                for tc in called
-                if tc.tool_name.startswith("mcp__")
-            ),
+            (tc.output_tokens.value for tc in called if tc.tool_name.startswith("mcp__")),
             default=0,
         )
 

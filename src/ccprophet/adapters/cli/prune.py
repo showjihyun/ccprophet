@@ -37,9 +37,7 @@ def run_prune_command(
 
     if not assume_yes:
         confirm = confirm or _prompt_confirm
-        if not confirm(
-            f"Apply {len(preview.plan.applied_rec_ids)} change(s) to {target_path}?"
-        ):
+        if not confirm(f"Apply {len(preview.plan.applied_rec_ids)} change(s) to {target_path}?"):
             _print_info("aborted", as_json=as_json)
             return 1
 
@@ -61,9 +59,7 @@ def _prompt_confirm(message: str) -> bool:
     return answer in {"y", "yes"}
 
 
-def _render_preview(
-    preview: PrunePreview, *, as_json: bool, would_apply: bool
-) -> None:
+def _render_preview(preview: PrunePreview, *, as_json: bool, would_apply: bool) -> None:
     if as_json:
         print(
             json_module.dumps(
@@ -99,9 +95,7 @@ def _render_preview(
     console.print(table)
     if not would_apply:
         console.print()
-        console.print(
-            "[dim]Dry-run. Re-run with `--apply` to write these changes.[/]"
-        )
+        console.print("[dim]Dry-run. Re-run with `--apply` to write these changes.[/]")
 
 
 def _render_outcome(outcome: PruningOutcome, *, as_json: bool) -> None:

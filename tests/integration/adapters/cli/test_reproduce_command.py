@@ -6,6 +6,7 @@ Verifies:
 - `--apply` routes through the same snapshot + atomic-write machinery as
   `prune --apply` (FR-11.4).
 """
+
 from __future__ import annotations
 
 import json
@@ -36,9 +37,7 @@ def _wire(tmp_path) -> tuple[InMemoryRepositorySet, ReproduceSessionUseCase, obj
     (tmp_path / "snapshots").mkdir()
     repos = InMemoryRepositorySet()
 
-    prune = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    prune = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=prune,
         settings=settings,
@@ -58,9 +57,7 @@ def _wire(tmp_path) -> tuple[InMemoryRepositorySet, ReproduceSessionUseCase, obj
     return repos, uc, settings
 
 
-def _seed_success_cluster(
-    repos: InMemoryRepositorySet, task: str, n: int = 3
-) -> None:
+def _seed_success_cluster(repos: InMemoryRepositorySet, task: str, n: int = 3) -> None:
     for i in range(n):
         sid = f"succ-{i}"
         repos.sessions.upsert(SessionBuilder().with_id(sid).build())
@@ -123,9 +120,7 @@ def test_reproduce_apply_writes_snapshot(tmp_path, capsys) -> None:  # type: ign
     # apply_pruning has nothing to write.
     # Instead, seed a settings file with an MCP that can be pruned.
     settings_path = tmp_path / "settings.json"
-    settings_path.write_text(
-        '{"mcpServers": {"unused": {}}}\n', encoding="utf-8"
-    )
+    settings_path.write_text('{"mcpServers": {"unused": {}}}\n', encoding="utf-8")
 
     code = run_reproduce_command(
         uc, task="refactor", target_path=settings_path, apply=True, as_json=True

@@ -117,19 +117,19 @@ def run_mcp_scan_command(
         if as_json:
             # Keep the JSON shape stable with the non-empty path — consumers
             # shouldn't need to branch on "loaded vs connected_used" keys.
-            print(json_module.dumps(
-                {
-                    "connected_used": [],
-                    "connected_unused": [],
-                    "failed": [],
-                    "needs_auth": [],
-                },
-                indent=2,
-            ))
-        else:
             print(
-                "Claude Code `claude mcp list` unavailable or no MCPs loaded."
+                json_module.dumps(
+                    {
+                        "connected_used": [],
+                        "connected_unused": [],
+                        "failed": [],
+                        "needs_auth": [],
+                    },
+                    indent=2,
+                )
             )
+        else:
+            print("Claude Code `claude mcp list` unavailable or no MCPs loaded.")
         return 0
 
     recent_sessions = sessions_repo.list_recent(recent_limit)
@@ -223,8 +223,7 @@ def _render_rich(
     )
     if connected_unused:
         console.print(
-            "[dim]  \u2192 consider `ccprophet prune` or disable via"
-            " `.claude/settings.json`[/]"
+            "[dim]  \u2192 consider `ccprophet prune` or disable via `.claude/settings.json`[/]"
         )
     _section("\u2717 Failed servers", failed, style="red")
     _section("! Needs auth", needs_auth, style="magenta")
@@ -240,6 +239,4 @@ def _render_rich(
             "disable to save bootstrap tokens."
         )
     else:
-        console.print(
-            f"[bold green]{total}[/] servers loaded, all connected servers active."
-        )
+        console.print(f"[bold green]{total}[/] servers loaded, all connected servers active.")

@@ -126,18 +126,14 @@ class InMemoryRecommendationRepository:
         return sorted(rows, key=lambda r: r.created_at, reverse=True)
 
     def list_pending(self, limit: int = 50) -> Iterable[Recommendation]:
-        rows = [
-            r for r in self._store.values()
-            if r.status == RecommendationStatus.PENDING
-        ]
+        rows = [r for r in self._store.values() if r.status == RecommendationStatus.PENDING]
         rows.sort(key=lambda r: r.created_at, reverse=True)
         return rows[:limit]
 
-    def list_applied_in_range(
-        self, start: datetime, end: datetime
-    ) -> Iterable[Recommendation]:
+    def list_applied_in_range(self, start: datetime, end: datetime) -> Iterable[Recommendation]:
         rows = [
-            r for r in self._store.values()
+            r
+            for r in self._store.values()
             if r.status == RecommendationStatus.APPLIED
             and r.applied_at is not None
             and start <= r.applied_at < end
@@ -146,9 +142,7 @@ class InMemoryRecommendationRepository:
         # checker needs the assertion to narrow `datetime | None` -> `datetime`.
         return sorted(rows, key=lambda r: r.applied_at)  # type: ignore[arg-type,return-value]
 
-    def mark_applied(
-        self, rec_ids: Sequence[str], snapshot_id: SnapshotId
-    ) -> None:
+    def mark_applied(self, rec_ids: Sequence[str], snapshot_id: SnapshotId) -> None:
         now = datetime.now(timezone.utc)
         for rid in rec_ids:
             r = self._store.get(rid)
@@ -176,6 +170,7 @@ class InMemoryRecommendationRepository:
 
 def _replace_rec(rec: Recommendation, **changes: object) -> Recommendation:
     from dataclasses import replace
+
     return replace(rec, **changes)  # type: ignore[arg-type]
 
 
@@ -190,9 +185,7 @@ class InMemorySnapshotRepository:
         return self._store.get(sid.value)
 
     def list_recent(self, limit: int = 20) -> Sequence[Snapshot]:
-        ordered = sorted(
-            self._store.values(), key=lambda s: s.captured_at, reverse=True
-        )
+        ordered = sorted(self._store.values(), key=lambda s: s.captured_at, reverse=True)
         return ordered[:limit]
 
     def mark_restored(self, sid: SnapshotId) -> None:
@@ -200,6 +193,7 @@ class InMemorySnapshotRepository:
         if snap is None:
             return
         from dataclasses import replace
+
         self._store[sid.value] = replace(snap, restored_at=datetime.now(timezone.utc))
 
 
@@ -208,9 +202,7 @@ class InMemorySnapshotStore:
         self._blobs: dict[str, dict[str, bytes]] = {}
         self._meta: dict[str, Snapshot] = {}
 
-    def capture(
-        self, files: Mapping[str, bytes], meta: SnapshotMeta
-    ) -> Snapshot:
+    def capture(self, files: Mapping[str, bytes], meta: SnapshotMeta) -> Snapshot:
         import hashlib
         import uuid
 
@@ -258,9 +250,9 @@ class InMemoryOutcomeRepository:
         task_type: TaskType | None = None,
     ) -> Sequence[Session]:
         matching_ids = [
-            sid for sid, lbl in self._labels.items()
-            if lbl.label == label
-            and (task_type is None or lbl.task_type == task_type)
+            sid
+            for sid, lbl in self._labels.items()
+            if lbl.label == label and (task_type is None or lbl.task_type == task_type)
         ]
         result = []
         for sid in matching_ids:
@@ -346,13 +338,8 @@ class InMemorySessionSummaryRepository:
     def get(self, sid: SessionId) -> SessionSummary | None:
         return self._store.get(sid.value)
 
-    def list_in_range(
-        self, start: datetime, end: datetime
-    ) -> Sequence[SessionSummary]:
-        rows = [
-            s for s in self._store.values()
-            if start <= s.started_at < end
-        ]
+    def list_in_range(self, start: datetime, end: datetime) -> Sequence[SessionSummary]:
+        rows = [s for s in self._store.values() if start <= s.started_at < end]
         return sorted(rows, key=lambda s: s.started_at)
 
 
@@ -377,4 +364,5 @@ class InMemoryRepositorySet:
         from ccprophet.adapters.persistence.inmemory.hot_table_pruner import (
             InMemoryHotTablePruner,
         )
+
         self.hot_pruner = InMemoryHotTablePruner(self)

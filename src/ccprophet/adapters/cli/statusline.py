@@ -3,6 +3,7 @@
 Called frequently → keep work minimal and never fail. If the DB doesn't exist
 or no session has been recorded yet, print a placeholder and exit 0 (AP-3).
 """
+
 from __future__ import annotations
 
 import json as json_module

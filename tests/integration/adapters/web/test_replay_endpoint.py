@@ -1,4 +1,5 @@
 """Integration tests for the Replay endpoint (PRD F9 Phase 1)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -37,11 +38,7 @@ def seeded_repos() -> InMemoryRepositorySet:
         SessionId(SID),
         [
             ToolDefBuilder().named("Read").with_tokens(200).from_source("system").build(),
-            ToolDefBuilder()
-            .named("mcp__unused")
-            .with_tokens(800)
-            .from_source("mcp:jira")
-            .build(),
+            ToolDefBuilder().named("mcp__unused").with_tokens(800).from_source("mcp:jira").build(),
         ],
     )
 
@@ -185,9 +182,7 @@ def test_replay_total_duration_matches_first_last_event(client: TestClient) -> N
     assert len(body["timeline"]) >= 2
     first = datetime.fromisoformat(body["timeline"][0]["ts"])
     last = datetime.fromisoformat(body["timeline"][-1]["ts"])
-    assert body["total_duration_sec"] == pytest.approx(
-        (last - first).total_seconds()
-    )
+    assert body["total_duration_sec"] == pytest.approx((last - first).total_seconds())
 
 
 def test_replay_node_snapshots_grow_and_match_timeline_length(client: TestClient) -> None:

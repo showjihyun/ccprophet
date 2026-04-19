@@ -2,6 +2,7 @@
 
 Operational adapter-layer command. Talks to DuckDB directly; no use-case layer.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -23,9 +24,11 @@ class MigrationOps:
     Decouples the doctor CLI adapter from the persistence adapter (LAYERING
     §4.4 adapter-family independence).
     """
+
     migrations_dir: Path
     current_version: Callable[[duckdb.DuckDBPyConnection], int]
     apply_migrations: Callable[..., int]
+
 
 OK, WARN, CRITICAL = "ok", "warn", "critical"
 _RANK = {OK: 0, WARN: 1, CRITICAL: 2}
@@ -54,6 +57,7 @@ class DoctorReport:
 
 # ── helpers ──────────────────────────────────────────────────────────────── #
 
+
 def _table_exists(conn: duckdb.DuckDBPyConnection, table: str) -> bool:
     import duckdb as _duckdb  # local import to narrow the except
 
@@ -79,6 +83,7 @@ def _check_db_file(db_path: Path) -> CheckResult:
         return CheckResult("db_file", CRITICAL, f"File not found: {db_path}")
     try:
         import duckdb
+
         conn = duckdb.connect(str(db_path), read_only=True)
         conn.execute("SELECT 1").fetchone()
         conn.close()
@@ -106,7 +111,8 @@ def _check_schema_version(
     info = {"current": current, "latest_available": latest, "needs_migration": needs}
     if needs:
         result = CheckResult(
-            "schema_version", WARN,
+            "schema_version",
+            WARN,
             f"Schema at V{current}, latest V{latest} — run --migrate",
         )
     else:
@@ -164,6 +170,7 @@ def _snapshot_dir_mb(snapshot_dir: Path) -> float:
 
 # ── main ─────────────────────────────────────────────────────────────────── #
 
+
 def run_doctor_command(
     *,
     db_path: Path,
@@ -186,12 +193,11 @@ def run_doctor_command(
         return _finish(report, as_json=as_json)
 
     import duckdb
+
     ro_conn = duckdb.connect(str(db_path), read_only=True)
     try:
         # 2: schema version
-        schema_check, minfo = _check_schema_version(
-            ro_conn, mdir, migration_ops.current_version
-        )
+        schema_check, minfo = _check_schema_version(ro_conn, mdir, migration_ops.current_version)
         report.checks.append(schema_check)
         report.worst(schema_check.status)
         report.migration = minfo
@@ -216,7 +222,8 @@ def run_doctor_command(
         orp_status = WARN if total_orphans > 0 else OK
         orp_detail = (
             ", ".join(f"{t}:{n}" for t, n in orphan_counts.items() if n > 0)
-            if total_orphans > 0 else "None"
+            if total_orphans > 0
+            else "None"
         )
         report.checks.append(CheckResult("orphan_records", orp_status, orp_detail))
         report.worst(orp_status)
@@ -241,9 +248,7 @@ def run_doctor_command(
 
         # 4: negative tokens
         neg_checks = {
-            "tool_calls_neg_tokens": (
-                "tool_calls", "input_tokens < 0 OR output_tokens < 0"
-            ),
+            "tool_calls_neg_tokens": ("tool_calls", "input_tokens < 0 OR output_tokens < 0"),
             "sessions_neg_tokens": (
                 "sessions",
                 "total_input_tokens < 0 OR total_output_tokens < 0",
@@ -258,9 +263,7 @@ def run_doctor_command(
             for k, (t, cond) in neg_checks.items()
         }
         neg_sum = sum(neg_totals.values())
-        neg_detail = (
-            ", ".join(f"{k}:{v}" for k, v in neg_totals.items() if v > 0) or "None"
-        )
+        neg_detail = ", ".join(f"{k}:{v}" for k, v in neg_totals.items() if v > 0) or "None"
         neg_status = WARN if neg_sum > 0 else OK
         report.checks.append(CheckResult("negative_tokens", neg_status, neg_detail))
         report.worst(neg_status)
@@ -287,13 +290,17 @@ def run_doctor_command(
         # 6: duplicate event hash
         dup = (
             _count(ro_conn, "SELECT COUNT(*) - COUNT(DISTINCT raw_hash) FROM events")
-            if _table_exists(ro_conn, "events") else 0
+            if _table_exists(ro_conn, "events")
+            else 0
         )
         dup_status = WARN if dup > 0 else OK
-        report.checks.append(CheckResult(
-            "duplicate_event_hash", dup_status,
-            f"{dup} duplicate(s)" if dup > 0 else "None",
-        ))
+        report.checks.append(
+            CheckResult(
+                "duplicate_event_hash",
+                dup_status,
+                f"{dup} duplicate(s)" if dup > 0 else "None",
+            )
+        )
         report.worst(dup_status)
 
         # 7: disk usage
@@ -316,18 +323,21 @@ def run_doctor_command(
         cwd_claude_md = Path.cwd() / "CLAUDE.md"
         if cwd_claude_md.is_file():
             from ccprophet.domain.services.claude_md_audit import ClaudeMdAuditor
+
             try:
                 content = cwd_claude_md.read_text(encoding="utf-8")
                 cmd_report = ClaudeMdAuditor.audit(str(cwd_claude_md), content)
                 if cmd_report.worst_severity == CRITICAL:
-                    report.checks.append(CheckResult(
-                        "claude_md_health",
-                        WARN,
-                        f"CLAUDE.md has critical context-rot findings "
-                        f"({cmd_report.line_count} lines, "
-                        f"{len(cmd_report.findings)} finding(s)). "
-                        "Run `ccprophet claude-md` for details.",
-                    ))
+                    report.checks.append(
+                        CheckResult(
+                            "claude_md_health",
+                            WARN,
+                            f"CLAUDE.md has critical context-rot findings "
+                            f"({cmd_report.line_count} lines, "
+                            f"{len(cmd_report.findings)} finding(s)). "
+                            "Run `ccprophet claude-md` for details.",
+                        )
+                    )
                     report.worst(WARN)
             except Exception:
                 pass  # AP-3: silent fail
@@ -346,19 +356,25 @@ def run_doctor_command(
 
 def _finish(report: DoctorReport, *, as_json: bool) -> int:
     if as_json:
-        print(json_module.dumps({
-            "overall": report.overall,
-            "db_path": report.db_path,
-            "checks": [
-                {"name": c.name, "status": c.status, "detail": c.detail}
-                for c in report.checks
-            ],
-            "migration": report.migration,
-            "repair": report.repair,
-        }, indent=2))
+        print(
+            json_module.dumps(
+                {
+                    "overall": report.overall,
+                    "db_path": report.db_path,
+                    "checks": [
+                        {"name": c.name, "status": c.status, "detail": c.detail}
+                        for c in report.checks
+                    ],
+                    "migration": report.migration,
+                    "repair": report.repair,
+                },
+                indent=2,
+            )
+        )
     else:
         from rich.console import Console
         from rich.table import Table
+
         console = Console()
         style = {OK: "bold green", WARN: "bold yellow", CRITICAL: "bold red"}[report.overall]
         console.print(f"[{style}]Overall: {report.overall.upper()}[/]  —  {report.db_path}")

@@ -43,9 +43,7 @@ def test_mark_invalid_outcome_returns_2(capsys) -> None:  # type: ignore[no-unty
 
 def test_mark_unknown_session_returns_2(capsys) -> None:  # type: ignore[no-untyped-def]
     _, uc = _wire()
-    code = run_mark_command(
-        uc, session_id="missing", outcome="success", as_json=True
-    )
+    code = run_mark_command(uc, session_id="missing", outcome="success", as_json=True)
     assert code == 2
 
 

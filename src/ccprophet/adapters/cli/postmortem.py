@@ -48,9 +48,7 @@ def _report_dict(r: PostmortemReport) -> dict[str, object]:
         "task_type": r.task_type.value if r.task_type else None,
         "sample_size": r.sample_size,
         "rationale": r.rationale,
-        "findings": [
-            {"kind": f.kind, "detail": f.detail} for f in r.findings
-        ],
+        "findings": [{"kind": f.kind, "detail": f.detail} for f in r.findings],
         "suggestions": list(r.suggestions),
     }
 

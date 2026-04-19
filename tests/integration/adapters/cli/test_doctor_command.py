@@ -1,4 +1,5 @@
 """Integration tests for ccprophet doctor command."""
+
 from __future__ import annotations
 
 import json
@@ -27,6 +28,7 @@ def _migration_ops() -> MigrationOps:
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
+
 
 def _fresh_db(path: Path) -> duckdb.DuckDBPyConnection:
     """Create a DB with full schema applied, then close and return path info."""
@@ -65,6 +67,7 @@ def _seed_tool_call(
 # Test: orphan check triggers warn, repair removes them
 # --------------------------------------------------------------------------- #
 
+
 def test_orphan_triggers_warn(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     db = tmp_path / "events.duckdb"
     conn = _fresh_db(db)
@@ -79,8 +82,7 @@ def test_orphan_triggers_warn(tmp_path: Path, capsys: pytest.CaptureFixture) -> 
     conn.close()
 
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=False, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=False, migrate=False
     )
     out = json.loads(capsys.readouterr().out)
 
@@ -105,8 +107,7 @@ def test_repair_removes_orphans(tmp_path: Path, capsys: pytest.CaptureFixture) -
 
     # First run with repair
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=True, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=True, migrate=False
     )
     out = json.loads(capsys.readouterr().out)
 
@@ -119,8 +120,7 @@ def test_repair_removes_orphans(tmp_path: Path, capsys: pytest.CaptureFixture) -
     # Second run should confirm ok
     capsys.readouterr()
     code2 = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=False, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=False, migrate=False
     )
     out2 = json.loads(capsys.readouterr().out)
     assert code2 == 0
@@ -132,12 +132,12 @@ def test_repair_removes_orphans(tmp_path: Path, capsys: pytest.CaptureFixture) -
 # Test: missing DB file → critical
 # --------------------------------------------------------------------------- #
 
+
 def test_missing_db_critical(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     db = tmp_path / "nonexistent.duckdb"
 
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=False, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=False, migrate=False
     )
     out = json.loads(capsys.readouterr().out)
 
@@ -153,6 +153,7 @@ def test_missing_db_critical(tmp_path: Path, capsys: pytest.CaptureFixture) -> N
 # Test: --migrate on empty DB applies all V* migrations
 # --------------------------------------------------------------------------- #
 
+
 def test_migrate_on_empty_db(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     db = tmp_path / "events.duckdb"
     # Create an empty DuckDB (no tables at all)
@@ -160,8 +161,7 @@ def test_migrate_on_empty_db(tmp_path: Path, capsys: pytest.CaptureFixture) -> N
     conn.close()
 
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=False, migrate=True
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=False, migrate=True
     )
     out = json.loads(capsys.readouterr().out)
 
@@ -174,15 +174,14 @@ def test_migrate_on_empty_db(tmp_path: Path, capsys: pytest.CaptureFixture) -> N
     ver = current_version(conn2)
     conn2.close()
     sql_files = sorted(MIGRATIONS_DIR.glob("V*__*.sql"))
-    latest = max(
-        int(f.name.split("__")[0].removeprefix("V")) for f in sql_files
-    )
+    latest = max(int(f.name.split("__")[0].removeprefix("V")) for f in sql_files)
     assert ver == latest
 
 
 # --------------------------------------------------------------------------- #
 # Test: --json output shape
 # --------------------------------------------------------------------------- #
+
 
 def test_json_output_shape(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     db = tmp_path / "events.duckdb"
@@ -192,8 +191,7 @@ def test_json_output_shape(tmp_path: Path, capsys: pytest.CaptureFixture) -> Non
     conn.close()
 
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=False, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=False, migrate=False
     )
     out = json.loads(capsys.readouterr().out)
 
@@ -220,14 +218,14 @@ def test_json_output_shape(tmp_path: Path, capsys: pytest.CaptureFixture) -> Non
 # Test: schema already up-to-date reports ok
 # --------------------------------------------------------------------------- #
 
+
 def test_schema_up_to_date(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     db = tmp_path / "events.duckdb"
     conn = _fresh_db(db)
     conn.close()
 
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=False, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=False, migrate=False
     )
     out = json.loads(capsys.readouterr().out)
 
@@ -242,6 +240,7 @@ def test_schema_up_to_date(tmp_path: Path, capsys: pytest.CaptureFixture) -> Non
 # Test: repair with no orphans → nothing_to_repair
 # --------------------------------------------------------------------------- #
 
+
 def test_repair_no_orphans(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     db = tmp_path / "events.duckdb"
     conn = _fresh_db(db)
@@ -250,8 +249,7 @@ def test_repair_no_orphans(tmp_path: Path, capsys: pytest.CaptureFixture) -> Non
     conn.close()
 
     code = run_doctor_command(
-        migration_ops=_migration_ops(),
-        db_path=db, as_json=True, repair=True, migrate=False
+        migration_ops=_migration_ops(), db_path=db, as_json=True, repair=True, migrate=False
     )
     out = json.loads(capsys.readouterr().out)
 
