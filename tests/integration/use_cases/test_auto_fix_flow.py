@@ -4,6 +4,7 @@ These operate against real files in `tmp_path` and real FilesystemSnapshotStore
 but with InMemory repositories — matches the contract for the DuckDB variant
 while keeping the test surface focused on the orchestration logic.
 """
+
 from __future__ import annotations
 
 import json
@@ -57,9 +58,7 @@ def wired(settings_path, snapshot_root):  # type: ignore[no-untyped-def]
     repos.sessions.upsert(SessionBuilder().with_id("s-1").build())
     settings = JsonFileSettingsStore()
     snap_store = FilesystemSnapshotStore(snapshot_root)
-    prune = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    prune = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=prune,
         settings=settings,
@@ -82,13 +81,7 @@ def wired(settings_path, snapshot_root):  # type: ignore[no-untyped-def]
 
 
 def _seed_pending_rec(repos, kind, target: str):  # type: ignore[no-untyped-def]
-    rec = (
-        RecommendationBuilder()
-        .in_session("s-1")
-        .kind(kind)
-        .target(target)
-        .build()
-    )
+    rec = RecommendationBuilder().in_session("s-1").kind(kind).target(target).build()
     repos.recommendations.save_all([rec])
     return rec
 
@@ -100,9 +93,7 @@ def test_preview_returns_no_changes_when_no_recs(wired) -> None:  # type: ignore
 
 
 def test_preview_computes_plan_without_writing(wired) -> None:  # type: ignore[no-untyped-def]
-    _seed_pending_rec(
-        wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x"
-    )
+    _seed_pending_rec(wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x")
     original_bytes = wired["path"].read_bytes()
     preview = wired["prune"].execute(target_path=wired["path"])
     assert preview.has_changes is True
@@ -111,9 +102,7 @@ def test_preview_computes_plan_without_writing(wired) -> None:  # type: ignore[n
 
 
 def test_apply_writes_and_records_snapshot(wired) -> None:  # type: ignore[no-untyped-def]
-    rec = _seed_pending_rec(
-        wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x"
-    )
+    rec = _seed_pending_rec(wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x")
     outcome = wired["apply"].execute(target_path=wired["path"])
     assert outcome.written is True
     assert outcome.snapshot is not None
@@ -142,9 +131,7 @@ def test_apply_is_noop_when_nothing_to_do(wired) -> None:  # type: ignore[no-unt
 def test_apply_propagates_settings_conflict(wired, snapshot_root) -> None:  # type: ignore[no-untyped-def]
     """If the SettingsStore raises SnapshotConflict, apply propagates it but
     the Snapshot is already saved — that's intentional audit behaviour."""
-    _seed_pending_rec(
-        wired["repos"], RecommendationKind.PRUNE_TOOL, "WebFetch"
-    )
+    _seed_pending_rec(wired["repos"], RecommendationKind.PRUNE_TOOL, "WebFetch")
 
     class ConflictingStore:
         def __init__(self, real):
@@ -198,9 +185,7 @@ def test_apply_propagates_settings_conflict(wired, snapshot_root) -> None:  # ty
 
 
 def test_restore_brings_original_bytes_back(wired) -> None:  # type: ignore[no-untyped-def]
-    _seed_pending_rec(
-        wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x"
-    )
+    _seed_pending_rec(wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x")
     original = wired["path"].read_bytes()
     outcome = wired["apply"].execute(target_path=wired["path"])
     assert outcome.snapshot is not None
@@ -224,9 +209,7 @@ def test_already_disabled_items_no_longer_dirty(wired) -> None:  # type: ignore[
         json.dumps({KEY_DISABLED_MCPS: ["github"]}, indent=2) + "\n",
         encoding="utf-8",
     )
-    _seed_pending_rec(
-        wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x"
-    )
+    _seed_pending_rec(wired["repos"], RecommendationKind.PRUNE_MCP, "mcp__github__x")
     outcome = wired["apply"].execute(target_path=wired["path"])
     assert outcome.written is False
 

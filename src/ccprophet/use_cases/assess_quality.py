@@ -1,4 +1,5 @@
 """Roll up recent sessions into per-model quality series + regression flags."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -41,9 +42,7 @@ class AssessQualityUseCase:
 
         models = sorted({s.model for s in sessions})
         tool_calls_by_session = {
-            s.session_id.value: list(
-                self.tool_calls.list_for_session(s.session_id)
-            )
+            s.session_id.value: list(self.tool_calls.list_for_session(s.session_id))
             for s in sessions
         }
         outcomes_by_session = {}

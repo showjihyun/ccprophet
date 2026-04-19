@@ -7,7 +7,13 @@ from tests.fixtures.builders import ToolCallBuilder, ToolDefBuilder
 
 class TestBloatCalculator:
     def test_all_loaded_never_called_is_full_bloat(self) -> None:
-        loaded = [ToolDefBuilder().named("mcp__github").with_tokens(1400).from_source("mcp:github").build()]
+        loaded = [
+            ToolDefBuilder()
+            .named("mcp__github")
+            .with_tokens(1400)
+            .from_source("mcp:github")
+            .build()
+        ]
         called = []
 
         report = BloatCalculator.calculate(loaded, called)

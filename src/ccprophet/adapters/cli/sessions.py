@@ -50,9 +50,7 @@ def _count_subagents(
         return {}
     counts: dict[str, int] = {}
     for s in rows:
-        counts[s.session_id.value] = len(
-            list(subagents_repo.list_for_parent(s.session_id))
-        )
+        counts[s.session_id.value] = len(list(subagents_repo.list_for_parent(s.session_id)))
     return counts
 
 
@@ -70,9 +68,7 @@ def _to_dict(s: Session, subagent_count: int = 0) -> dict[str, object]:
     }
 
 
-def _render_table(
-    rows: Sequence[Session], subagent_counts: dict[str, int]
-) -> None:
+def _render_table(rows: Sequence[Session], subagent_counts: dict[str, int]) -> None:
     from rich.console import Console
     from rich.table import Table
 

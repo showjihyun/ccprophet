@@ -29,9 +29,24 @@ def test_execute_persists_detected_phases(inmemory_repos: InMemoryRepositorySet)
     session = SessionBuilder().with_id("s-1").build()
     inmemory_repos.sessions.upsert(session)
     for e in (
-        EventBuilder().for_session("s-1").of_type("UserPromptSubmit").at(_at(0)).with_hash("a").build(),
-        EventBuilder().for_session("s-1").tool_use("Edit", "/x.py").at(_at(1)).with_hash("b").build(),
-        EventBuilder().for_session("s-1").tool_use("Write", "/y.py").at(_at(2)).with_hash("c").build(),
+        EventBuilder()
+        .for_session("s-1")
+        .of_type("UserPromptSubmit")
+        .at(_at(0))
+        .with_hash("a")
+        .build(),
+        EventBuilder()
+        .for_session("s-1")
+        .tool_use("Edit", "/x.py")
+        .at(_at(1))
+        .with_hash("b")
+        .build(),
+        EventBuilder()
+        .for_session("s-1")
+        .tool_use("Write", "/y.py")
+        .at(_at(2))
+        .with_hash("c")
+        .build(),
     ):
         inmemory_repos.events.append(e)
 
@@ -53,7 +68,12 @@ def test_execute_replaces_previous_phases(inmemory_repos: InMemoryRepositorySet)
     session = SessionBuilder().with_id("s-2").build()
     inmemory_repos.sessions.upsert(session)
     inmemory_repos.events.append(
-        EventBuilder().for_session("s-2").of_type("UserPromptSubmit").at(_at(0)).with_hash("x").build()
+        EventBuilder()
+        .for_session("s-2")
+        .of_type("UserPromptSubmit")
+        .at(_at(0))
+        .with_hash("x")
+        .build()
     )
     uc = _uc(inmemory_repos)
     first = uc.execute(SessionId("s-2"))

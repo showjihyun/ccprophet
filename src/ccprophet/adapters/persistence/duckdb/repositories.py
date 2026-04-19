@@ -85,8 +85,7 @@ class DuckDBSessionRepository:
 
     def list_in_range(self, start: datetime, end: datetime) -> Sequence[Session]:
         rows = self._conn.execute(
-            "SELECT * FROM sessions WHERE started_at >= ? AND started_at < ? "
-            "ORDER BY started_at",
+            "SELECT * FROM sessions WHERE started_at >= ? AND started_at < ? ORDER BY started_at",
             [_to_utc_naive(start), _to_utc_naive(end)],
         ).fetchall()
         return [self._row_to_session(r) for r in rows]
@@ -184,10 +183,7 @@ class DuckDBToolDefRepository:
         self._conn = conn
 
     def bulk_add(self, sid: SessionId, defs: Sequence[ToolDef]) -> None:
-        rows = [
-            [sid.value, td.tool_name, td.tokens.value, td.source]
-            for td in defs
-        ]
+        rows = [[sid.value, td.tool_name, td.tokens.value, td.source] for td in defs]
         if not rows:
             return
         self._conn.executemany(
@@ -285,9 +281,7 @@ class DuckDBPhaseRepository:
         ]
         self._conn.execute("BEGIN")
         try:
-            self._conn.execute(
-                "DELETE FROM phases WHERE session_id = ?", [sid.value]
-            )
+            self._conn.execute("DELETE FROM phases WHERE session_id = ?", [sid.value])
             if rows:
                 self._conn.executemany(
                     """

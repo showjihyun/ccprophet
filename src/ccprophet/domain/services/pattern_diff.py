@@ -12,6 +12,7 @@ Design notes:
   next to a severity dot, and the CLI ``diff`` command can reuse them without
   re-formatting.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -23,13 +24,13 @@ from ccprophet.domain.services.bloat import BloatCalculator
 from ccprophet.domain.values import SessionId
 
 # Rule thresholds (FR-9.3). Change here, not in callers.
-TOKEN_DELTA_WARN = 0.25            # ±25% relative change → 'info'
-TOKEN_DELTA_WARN_SEVERE = 0.50     # ±50% → 'warn'
-TOKEN_DELTA_CRITICAL = 1.00        # ±100% → 'critical'
-TOOL_MIX_JACCARD_THRESHOLD = 0.5   # Jaccard distance ≥ 0.5 → fire
-BLOAT_DELTA_PP = 0.10              # ≥ 10 percentage points in bloat ratio
-READ_LOOP_MIN_REPEAT = 5           # same input_hash seen ≥ N times
-PHASE_SHIFT_PP = 0.20              # any phase fraction differs by ≥ 20pp
+TOKEN_DELTA_WARN = 0.25  # ±25% relative change → 'info'
+TOKEN_DELTA_WARN_SEVERE = 0.50  # ±50% → 'warn'
+TOKEN_DELTA_CRITICAL = 1.00  # ±100% → 'critical'
+TOOL_MIX_JACCARD_THRESHOLD = 0.5  # Jaccard distance ≥ 0.5 → fire
+BLOAT_DELTA_PP = 0.10  # ≥ 10 percentage points in bloat ratio
+READ_LOOP_MIN_REPEAT = 5  # same input_hash seen ≥ N times
+PHASE_SHIFT_PP = 0.20  # any phase fraction differs by ≥ 20pp
 
 SEVERITY_RANK = {"info": 0, "warn": 1, "critical": 2}
 
@@ -53,11 +54,7 @@ class PatternDiffReport:
 
 
 def _mcps_called(calls: Sequence[ToolCall], defs: Sequence[ToolDef]) -> set[str]:
-    lookup = {
-        td.tool_name: td.source[len("mcp:"):]
-        for td in defs
-        if td.source.startswith("mcp:")
-    }
+    lookup = {td.tool_name: td.source[len("mcp:") :] for td in defs if td.source.startswith("mcp:")}
     return {s for tc in calls if (s := lookup.get(tc.tool_name)) is not None}
 
 
@@ -160,8 +157,7 @@ class PatternDiffAnalyzer:
                     kind="token_delta",
                     severity=_token_severity(rel),
                     detail=(
-                        f"input tokens {tok_a} -> {tok_b} "
-                        f"({'+' if rel >= 0 else ''}{_pct(rel)})"
+                        f"input tokens {tok_a} -> {tok_b} ({'+' if rel >= 0 else ''}{_pct(rel)})"
                     ),
                 )
             )
@@ -175,8 +171,7 @@ class PatternDiffAnalyzer:
                     kind="autocompact_changed",
                     severity="critical",
                     detail=(
-                        f"{who_a} compacted, {who_b} did not — "
-                        "context-window pressure differs"
+                        f"{who_a} compacted, {who_b} did not — context-window pressure differs"
                     ),
                 )
             )
@@ -192,9 +187,7 @@ class PatternDiffAnalyzer:
                 f"tool-mix shift (Jaccard distance {jdist:.2f}); "
                 f"only A: {only_a or '[]'}; only B: {only_b or '[]'}"
             )
-            findings.append(
-                PatternFinding(kind="tool_mix_shift", severity="warn", detail=detail)
-            )
+            findings.append(PatternFinding(kind="tool_mix_shift", severity="warn", detail=detail))
 
         # Rule 4 — bloat ratio delta.
         bloat_a = BloatCalculator.calculate(defs_a, calls_a).bloat_ratio.value
@@ -225,8 +218,7 @@ class PatternDiffAnalyzer:
                     kind="mcp_subset_changed",
                     severity="info",
                     detail=(
-                        f"MCP servers only A: {only_mcp_a or '[]'}; "
-                        f"only B: {only_mcp_b or '[]'}"
+                        f"MCP servers only A: {only_mcp_a or '[]'}; only B: {only_mcp_b or '[]'}"
                     ),
                 )
             )

@@ -3,6 +3,7 @@
 Covers happy path, SessionNotFound, JSON shape, rationale surface (FR-11.3),
 and `--md` Markdown export (FR-11.5).
 """
+
 from __future__ import annotations
 
 import json
@@ -54,9 +55,7 @@ def test_md_export_writes_file(tmp_path, capsys) -> None:  # type: ignore[no-unt
     repos.sessions.upsert(SessionBuilder().with_id("s-md").build())
     md_path = tmp_path / "report.md"
 
-    code = run_postmortem_command(
-        uc, session_id="s-md", as_json=False, output_markdown=md_path
-    )
+    code = run_postmortem_command(uc, session_id="s-md", as_json=False, output_markdown=md_path)
     assert code == 0
     assert md_path.exists()
     body = md_path.read_text(encoding="utf-8")
@@ -70,9 +69,7 @@ def test_md_export_with_json_also_writes(tmp_path, capsys) -> None:  # type: ign
     repos.sessions.upsert(SessionBuilder().with_id("s-both").build())
     md_path = tmp_path / "both.md"
 
-    code = run_postmortem_command(
-        uc, session_id="s-both", as_json=True, output_markdown=md_path
-    )
+    code = run_postmortem_command(uc, session_id="s-both", as_json=True, output_markdown=md_path)
     assert code == 0
     # JSON still goes to stdout.
     assert json.loads(capsys.readouterr().out)["failed_session_id"] == "s-both"

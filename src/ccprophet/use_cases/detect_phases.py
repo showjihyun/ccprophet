@@ -19,9 +19,7 @@ class DetectPhasesUseCase:
     events: EventRepository
     phases: PhaseRepository
 
-    def execute(
-        self, session_id: SessionId, *, persist: bool = True
-    ) -> list[Phase]:
+    def execute(self, session_id: SessionId, *, persist: bool = True) -> list[Phase]:
         """Detect phases for `session_id`.
 
         When `persist=False` the detected phases are returned without writing

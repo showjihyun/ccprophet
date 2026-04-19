@@ -39,8 +39,20 @@ class EventRepositoryContract(ABC):
         assert list(repository.list_by_session(SessionId("nope"))) == []
 
     def test_chronological_order(self, repository) -> None:  # type: ignore[no-untyped-def]
-        e1 = EventBuilder().for_session("s1").at(datetime(2026, 1, 1, 9, 0, tzinfo=timezone.utc)).with_hash("h1").build()
-        e2 = EventBuilder().for_session("s1").at(datetime(2026, 1, 1, 9, 1, tzinfo=timezone.utc)).with_hash("h2").build()
+        e1 = (
+            EventBuilder()
+            .for_session("s1")
+            .at(datetime(2026, 1, 1, 9, 0, tzinfo=timezone.utc))
+            .with_hash("h1")
+            .build()
+        )
+        e2 = (
+            EventBuilder()
+            .for_session("s1")
+            .at(datetime(2026, 1, 1, 9, 1, tzinfo=timezone.utc))
+            .with_hash("h2")
+            .build()
+        )
         repository.append(e2)
         repository.append(e1)
         events = list(repository.list_by_session(SessionId("s1")))
@@ -51,4 +63,5 @@ class TestInMemoryEventRepository(EventRepositoryContract):
     @pytest.fixture
     def repository(self):  # type: ignore[no-untyped-def]
         from ccprophet.adapters.persistence.inmemory.repositories import InMemoryEventRepository
+
         return InMemoryEventRepository()

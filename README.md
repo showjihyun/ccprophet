@@ -1,6 +1,6 @@
 # ccprophet
 
-> **Context Efficiency Advisor for Claude Code** — a local-first auto-optimizer that auto-fixes your context waste, reproduces the sessions that actually worked, shows the savings in dollars, and flags silent model downgrades.
+> **Context Efficiency Advisor for Claude Code** — a local-first auto-optimizer that auto-fixes your context waste, reproduces the sessions that actually worked, shows the savings in dollars, and flags week-over-week quality regressions.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-533%20passing-brightgreen)]()
@@ -15,7 +15,7 @@
 | 🔧 | **"Don't tell me — fix it."** MCP off, subset config, `/clear` hint — all in one apply. | `ccprophet prune --apply` |
 | 🎯 | **"Not how much you used, but whether the result was better."** Learn success patterns, reproduce them. | `ccprophet reproduce <task>` |
 | 💰 | **"Not tokens — dollars."** Monthly \$, cache-split billing, every rate stamped. | `ccprophet cost --month` |
-| 📊 | **"So Anthropic can't quietly downgrade you."** 7 metrics · your own 30-day baseline · 2σ flag. | `ccprophet quality` |
+| 📊 | **"Spot regressions week-over-week."** 7 metrics · your own 30-day baseline · 2σ flag. Metrics reflect workload + model — use as an early-warning signal, not a verdict. | `ccprophet quality` |
 
 ## 🌐 Read in your language
 
@@ -34,8 +34,9 @@
 uv tool install "ccprophet[web,mcp,forecast] @ git+https://github.com/showjihyun/ccprophet.git"
 
 # 2. Wire into Claude Code + create the local DuckDB
+#    `install` creates the DB and runs all schema migrations — no separate step.
+#    (`ccp` is a shorter alias for `ccprophet` — either one works.)
 ccprophet install
-ccprophet doctor --migrate
 ccprophet ingest                 # backfill past sessions
 
 # 3. The four killer features
@@ -43,8 +44,27 @@ ccprophet bloat                  # 🔧 Auto Fix: measure waste
 ccprophet prune --apply          #    snapshot → atomic write → 1-step rollback
 ccprophet reproduce refactor --apply   # 🎯 Session Optimizer: apply best config
 ccprophet cost --month           # 💰 Cost Dashboard: tokens → $
-ccprophet quality                # 📊 Quality Watch: anti-downgrade
+ccprophet quality                # 📊 Quality Watch: week-over-week regression flag
 ```
+
+<details>
+<summary><b>Try the deterministic demo (no hook setup required)</b></summary>
+
+The seed script builds a byte-identical demo DB so the "bloat 89%" and "save \$0.18" figures in screenshots are reproducible:
+
+```bash
+uv sync --all-extras --dev
+uv run python scripts/seed_demo_db.py --db /tmp/demo.duckdb
+export CCPROPHET_DB=/tmp/demo.duckdb
+
+uv run ccprophet bloat --session sess-bloat --cost   # → bloat 89.1%, waste $0.18
+uv run ccprophet recommend --session sess-bloat      # → 3 MCP prunes + /clear hint
+uv run ccprophet quality --window 7 --baseline 30    # → workload note + sparklines
+```
+
+Numbers above are the exact output against the seeded DB — use them to sanity-check your install.
+
+</details>
 
 <details>
 <summary><b>Windows: one-liner installer</b> (no Python/uv required)</summary>
@@ -65,6 +85,10 @@ The script installs `uv` via winget (or Astral's bootstrap) if missing, then run
 
 All data lives in `~/.claude-prophet/events.duckdb` — a single file, **zero external network calls**.
 
+> **File permissions.** On macOS and Linux the DB is `chmod 0o600` after install (owner-only). On Windows the file inherits ACLs from your user profile directory — effectively owner-only on a single-user machine, but it is **not** forced to 0o600-equivalent explicitly. Restrict the parent directory manually if you share the account.
+>
+> **Network.** ccprophet itself makes no network calls. The Windows one-liner installer above (and `scripts/install.bat`) does download `uv` and the package from GitHub / Astral — that is the installer, not the running tool.
+
 ## Killer features at a glance
 
 | | Feature | One-liner |
@@ -72,7 +96,7 @@ All data lives in `~/.claude-prophet/events.duckdb` — a single file, **zero ex
 | 🔧 | **Auto Fix** | `bloat` → `recommend` → `prune --apply` → `snapshot restore` (AP-7 reversible) |
 | 🎯 | **Session Optimizer** | `mark` successes, `reproduce` best config, `postmortem --md` failures (FR-11.5) |
 | 💰 | **Cost Dashboard** | tokens → \$ with cache billing split; every rate stamped (AP-9) |
-| 📊 | **Quality Watch** | 7 metrics · daily · z-score ≥ 2σ flag with 1-line "why" (AP-8) |
+| 📊 | **Quality Watch** | 7 metrics · daily · z-score ≥ 2σ flag with 1-line "why" (AP-8). Workload-sensitive — signal, not verdict. |
 
 ## Architecture (one picture)
 

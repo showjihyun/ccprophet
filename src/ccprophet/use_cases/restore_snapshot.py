@@ -4,6 +4,7 @@ Writes raw bytes verbatim (preserves original formatting). Marks the snapshot's
 `restored_at` so the audit log shows it. Does NOT take a fresh pre-restore
 snapshot in the MVP — advanced "undo restore" is future work.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -39,6 +40,4 @@ class RestoreSnapshotUseCase:
             paths.append(original_path)
 
         self.snapshots.mark_restored(snapshot_id)
-        return RestoreOutcome(
-            snapshot_id=snapshot_id, restored_paths=tuple(paths)
-        )
+        return RestoreOutcome(snapshot_id=snapshot_id, restored_paths=tuple(paths))

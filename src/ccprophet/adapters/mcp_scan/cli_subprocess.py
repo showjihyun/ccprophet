@@ -18,6 +18,7 @@ split(":") would break.  Strategy:
 Name normalisation (for the match inside the CLI adapter) lives in the CLI
 adapter; this module only returns raw strings.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -28,8 +29,8 @@ from ccprophet.domain.entities import McpServerInfo
 
 # Map from observed status suffixes to canonical values.
 _STATUS_MAP: dict[str, str] = {
-    "\u2713 Connected": "connected",           # ✓ Connected
-    "\u2717 Failed to connect": "failed",      # ✗ Failed to connect
+    "\u2713 Connected": "connected",  # ✓ Connected
+    "\u2717 Failed to connect": "failed",  # ✗ Failed to connect
     "! Needs authentication": "needs_auth",
 }
 
@@ -60,7 +61,7 @@ def _parse_line(line: str) -> McpServerInfo | None:
     if idx < 0:
         return None
     raw_name = stripped[:idx].strip()
-    rest = stripped[idx + len(sep):].strip()
+    rest = stripped[idx + len(sep) :].strip()
 
     if not raw_name:
         return None

@@ -28,9 +28,7 @@ def _march(day: int, hour: int = 12) -> datetime:
 
 def test_empty_month_returns_zero_summary() -> None:
     repos = InMemoryRepositorySet()
-    summary = _uc(repos).execute(
-        month_start=_march(1), month_end=_march(31) + timedelta(days=1)
-    )
+    summary = _uc(repos).execute(month_start=_march(1), month_end=_march(31) + timedelta(days=1))
     assert summary.session_count == 0
     assert summary.total_cost == Money.zero()
 
@@ -78,7 +76,5 @@ def test_unknown_pricing_session_is_skipped() -> None:
         started_at=_march(5),
     )
     repos.sessions.upsert(weird)
-    summary = _uc(repos).execute(
-        month_start=_march(1), month_end=_march(31) + timedelta(days=1)
-    )
+    summary = _uc(repos).execute(month_start=_march(1), month_end=_march(31) + timedelta(days=1))
     assert summary.session_count == 0

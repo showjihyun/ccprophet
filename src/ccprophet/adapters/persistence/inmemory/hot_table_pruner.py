@@ -3,6 +3,7 @@
 Peers with `InMemoryRepositorySet`: directly pokes each repository's internal
 list/dict so tests can assert "rows are really gone" after a rollup.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -28,19 +29,15 @@ class InMemoryHotTablePruner:
 
         events_before = len(self._repos.events._events)
         self._repos.events._events = [
-            e for e in self._repos.events._events
-            if e.session_id.value not in targets
+            e for e in self._repos.events._events if e.session_id.value not in targets
         ]
         # Rebuild dedup hash set so the pruned rows can be re-ingested later.
-        self._repos.events._hashes = {
-            e.raw_hash.value for e in self._repos.events._events
-        }
+        self._repos.events._hashes = {e.raw_hash.value for e in self._repos.events._events}
         events_deleted = events_before - len(self._repos.events._events)
 
         tcalls_before = len(self._repos.tool_calls._store)
         self._repos.tool_calls._store = [
-            tc for tc in self._repos.tool_calls._store
-            if tc.session_id.value not in targets
+            tc for tc in self._repos.tool_calls._store if tc.session_id.value not in targets
         ]
         tcalls_deleted = tcalls_before - len(self._repos.tool_calls._store)
 

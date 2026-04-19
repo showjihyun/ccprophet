@@ -15,9 +15,15 @@ from ccprophet.domain.values import SessionId, TaskType, TokenCount
 from tests.fixtures.builders import SessionBuilder, ToolCallBuilder
 
 
-def _session(sid: str, *, compacted: bool = False, project: str = "p1",
-             model: str = "claude-opus-4-6", input_tok: int = 100_000,
-             output_tok: int = 10_000):
+def _session(
+    sid: str,
+    *,
+    compacted: bool = False,
+    project: str = "p1",
+    model: str = "claude-opus-4-6",
+    input_tok: int = 100_000,
+    output_tok: int = 10_000,
+):
     base = SessionBuilder().with_id(sid).build()
     return replace(
         base,
@@ -35,9 +41,7 @@ def test_find_similar_filters_by_project_and_model() -> None:
         _session("b", project="p2", model="claude-opus-4-6"),
         _session("c", project="p1", model="claude-sonnet-4-6"),
     ]
-    got = SessionClusterer.find_similar(
-        sessions, project_slug="p1", model="claude-opus-4-6"
-    )
+    got = SessionClusterer.find_similar(sessions, project_slug="p1", model="claude-opus-4-6")
     assert [s.session_id.value for s in got] == ["a"]
 
 
@@ -81,15 +85,9 @@ def test_dropped_mcps_are_loaded_but_underused() -> None:
         for sid in ("s0", "s1", "s2")
     }
     tool_calls = {
-        "s0": [
-            ToolCallBuilder().in_session(SessionId("s0")).for_tool("mcp__github_x").build()
-        ],
-        "s1": [
-            ToolCallBuilder().in_session(SessionId("s1")).for_tool("mcp__github_x").build()
-        ],
-        "s2": [
-            ToolCallBuilder().in_session(SessionId("s2")).for_tool("mcp__github_x").build()
-        ],
+        "s0": [ToolCallBuilder().in_session(SessionId("s0")).for_tool("mcp__github_x").build()],
+        "s1": [ToolCallBuilder().in_session(SessionId("s1")).for_tool("mcp__github_x").build()],
+        "s2": [ToolCallBuilder().in_session(SessionId("s2")).for_tool("mcp__github_x").build()],
     }
     inputs = ClusterInputs(
         task_type=TaskType("t"),

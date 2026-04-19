@@ -168,8 +168,7 @@ class BloatReport:
         for item in self.items:
             groups.setdefault(item.source, []).append(item)
         return {
-            source: SourceBloatSummary.from_items(source, items)
-            for source, items in groups.items()
+            source: SourceBloatSummary.from_items(source, items) for source, items in groups.items()
         }
 
 
@@ -220,9 +219,7 @@ class Recommendation:
         # "why", so reject at construction time rather than shipping a silent
         # blank to the CLI / Web / MCP.
         if not self.rationale or not self.rationale.strip():
-            raise ValueError(
-                "Recommendation.rationale must be a non-empty explanation (AP-8)"
-            )
+            raise ValueError("Recommendation.rationale must be a non-empty explanation (AP-8)")
 
 
 @dataclass(frozen=True, slots=True)

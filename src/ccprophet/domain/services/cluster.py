@@ -4,6 +4,7 @@ Pure domain. Raises `InsufficientSamples` when the success-labelled cluster
 has fewer than `min_samples` sessions — callers must decide whether to degrade
 to "insufficient data" messaging.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -63,9 +64,7 @@ class BestConfigExtractor:
 
         for session in inputs.sessions:
             sid = session.session_id.value
-            called_tools = {
-                tc.tool_name for tc in inputs.tool_calls_by_session.get(sid, [])
-            }
+            called_tools = {tc.tool_name for tc in inputs.tool_calls_by_session.get(sid, [])}
             for tool in called_tools:
                 tool_frequency[tool] = tool_frequency.get(tool, 0) + 1
 
@@ -78,21 +77,15 @@ class BestConfigExtractor:
 
             for td in inputs.tool_defs_by_session.get(sid, []):
                 if td.source.startswith("mcp:"):
-                    mcp_loaded_in_any.add(td.source[len("mcp:"):])
+                    mcp_loaded_in_any.add(td.source[len("mcp:") :])
 
         threshold_count = max(1, round(n * common_threshold))
         common_tools = tuple(
-            sorted(
-                name for name, freq in tool_frequency.items()
-                if freq >= threshold_count
-            )
+            sorted(name for name, freq in tool_frequency.items() if freq >= threshold_count)
         )
         # MCPs that were loaded across the cluster but never crossed the threshold
         dropped_mcps = tuple(
-            sorted(
-                mcp for mcp in mcp_loaded_in_any
-                if mcp_frequency.get(mcp, 0) < threshold_count
-            )
+            sorted(mcp for mcp in mcp_loaded_in_any if mcp_frequency.get(mcp, 0) < threshold_count)
         )
 
         total_input = sum(s.total_input_tokens.value for s in inputs.sessions)
@@ -113,16 +106,10 @@ class BestConfigExtractor:
         )
 
 
-def _mcp_servers_called(
-    tool_calls: Sequence[ToolCall], tool_defs: Sequence[ToolDef]
-) -> set[str]:
+def _mcp_servers_called(tool_calls: Sequence[ToolCall], tool_defs: Sequence[ToolDef]) -> set[str]:
     """Map a tool_call's tool_name back to its MCP server (via tool_defs.source)."""
     source_lookup: dict[str, str] = {}
     for td in tool_defs:
         if td.source.startswith("mcp:"):
-            source_lookup[td.tool_name] = td.source[len("mcp:"):]
-    return {
-        server
-        for tc in tool_calls
-        if (server := source_lookup.get(tc.tool_name)) is not None
-    }
+            source_lookup[td.tool_name] = td.source[len("mcp:") :]
+    return {server for tc in tool_calls if (server := source_lookup.get(tc.tool_name)) is not None}

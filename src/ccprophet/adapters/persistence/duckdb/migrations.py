@@ -34,9 +34,7 @@ def current_version(conn: duckdb.DuckDBPyConnection) -> int:
     import duckdb as _duckdb
 
     try:
-        result = conn.execute(
-            "SELECT MAX(version) FROM schema_migrations"
-        ).fetchone()
+        result = conn.execute("SELECT MAX(version) FROM schema_migrations").fetchone()
         return result[0] if result and result[0] is not None else 0
     except _duckdb.CatalogException:
         # Fresh DB — `schema_migrations` table doesn't exist yet. Callers
@@ -70,5 +68,6 @@ def apply_migrations(
     return applied
 
 
-def ensure_schema(conn: duckdb.DuckDBPyConnection) -> None:
-    apply_migrations(conn)
+def ensure_schema(conn: duckdb.DuckDBPyConnection) -> int:
+    """Apply any pending migrations. Returns the count actually applied."""
+    return apply_migrations(conn)

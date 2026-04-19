@@ -41,4 +41,5 @@ class TestInMemorySubsetProfileStore(SubsetProfileStoreContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemorySubsetProfileStore,
         )
+
         return InMemorySubsetProfileStore()

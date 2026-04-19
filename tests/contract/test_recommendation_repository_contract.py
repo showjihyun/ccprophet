@@ -41,9 +41,7 @@ class RecommendationRepositoryContract(ABC):
         repository.save_all([r])
         repository.mark_applied([r.rec_id], SnapshotId("snap-9"))
         applied = list(
-            repository.list_for_session(
-                SessionId("s3"), status=RecommendationStatus.APPLIED
-            )
+            repository.list_for_session(SessionId("s3"), status=RecommendationStatus.APPLIED)
         )
         assert len(applied) == 1
         assert applied[0].snapshot_id is not None
@@ -55,9 +53,7 @@ class RecommendationRepositoryContract(ABC):
         repository.save_all([r])
         repository.mark_dismissed([r.rec_id])
         dismissed = list(
-            repository.list_for_session(
-                SessionId("s4"), status=RecommendationStatus.DISMISSED
-            )
+            repository.list_for_session(SessionId("s4"), status=RecommendationStatus.DISMISSED)
         )
         assert len(dismissed) == 1
         assert dismissed[0].dismissed_at is not None
@@ -68,19 +64,12 @@ class RecommendationRepositoryContract(ABC):
         repository.mark_applied([r.rec_id], SnapshotId("snap-r"))
         now = datetime.now(timezone.utc)
         got = list(
-            repository.list_applied_in_range(
-                now - timedelta(minutes=5), now + timedelta(minutes=5)
-            )
+            repository.list_applied_in_range(now - timedelta(minutes=5), now + timedelta(minutes=5))
         )
         assert any(x.rec_id == r.rec_id for x in got)
 
     def test_kinds_roundtrip(self, repository) -> None:  # type: ignore[no-untyped-def]
-        r = (
-            RecommendationBuilder()
-            .in_session("s5")
-            .kind(RecommendationKind.RUN_CLEAR)
-            .build()
-        )
+        r = RecommendationBuilder().in_session("s5").kind(RecommendationKind.RUN_CLEAR).build()
         repository.save_all([r])
         got = list(repository.list_for_session(SessionId("s5")))
         assert got[0].kind == RecommendationKind.RUN_CLEAR
@@ -92,4 +81,5 @@ class TestInMemoryRecommendationRepository(RecommendationRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemoryRecommendationRepository,
         )
+
         return InMemoryRecommendationRepository()

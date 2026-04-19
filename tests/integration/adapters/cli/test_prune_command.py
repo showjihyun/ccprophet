@@ -27,9 +27,7 @@ def _wire(tmp_path):  # type: ignore[no-untyped-def]
     settings = JsonFileSettingsStore()
     snap_store = FilesystemSnapshotStore(tmp_path / "snaps")
     (tmp_path / "snaps").mkdir()
-    preview = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    preview = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=preview,
         settings=settings,
@@ -56,9 +54,7 @@ def test_dry_run_default_does_not_write(capsys, tmp_path) -> None:  # type: igno
     repos, preview, apply, path = _wire(tmp_path)
     _seed(repos)
     before = path.read_bytes()
-    code = run_prune_command(
-        preview, apply, target_path=path, as_json=True
-    )
+    code = run_prune_command(preview, apply, target_path=path, as_json=True)
     assert code == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["dry_run"] is True
@@ -70,7 +66,8 @@ def test_apply_yes_writes_and_records_snapshot(capsys, tmp_path) -> None:  # typ
     repos, preview, apply, path = _wire(tmp_path)
     _seed(repos)
     code = run_prune_command(
-        preview, apply,
+        preview,
+        apply,
         target_path=path,
         apply=True,
         assume_yes=True,
@@ -89,7 +86,8 @@ def test_apply_confirm_declined_returns_1(capsys, tmp_path) -> None:  # type: ig
     before = path.read_bytes()
 
     code = run_prune_command(
-        preview, apply,
+        preview,
+        apply,
         target_path=path,
         apply=True,
         assume_yes=False,
@@ -103,7 +101,8 @@ def test_apply_confirm_declined_returns_1(capsys, tmp_path) -> None:  # type: ig
 def test_apply_with_no_changes_is_noop(capsys, tmp_path) -> None:  # type: ignore[no-untyped-def]
     _repos, preview, apply, path = _wire(tmp_path)
     code = run_prune_command(
-        preview, apply,
+        preview,
+        apply,
         target_path=path,
         apply=True,
         assume_yes=True,

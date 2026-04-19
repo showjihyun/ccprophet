@@ -4,6 +4,7 @@ Split out from ``app.py`` to keep the FastAPI module under the AP-5 LOC
 guideline. These functions are stateless and framework-free apart from the
 dataclasses they read.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -20,11 +21,11 @@ from ccprophet.domain.entities import (
 from ccprophet.domain.values import PhaseType
 
 PHASE_COLORS: dict[str, str] = {
-    PhaseType.PLANNING.value: "#22d3ee",        # cyan
+    PhaseType.PLANNING.value: "#22d3ee",  # cyan
     PhaseType.IMPLEMENTATION.value: "#4ade80",  # green
-    PhaseType.DEBUGGING.value: "#f87171",       # red
-    PhaseType.REVIEW.value: "#60a5fa",          # blue
-    PhaseType.UNKNOWN.value: "#94a3b8",         # slate
+    PhaseType.DEBUGGING.value: "#f87171",  # red
+    PhaseType.REVIEW.value: "#60a5fa",  # blue
+    PhaseType.UNKNOWN.value: "#94a3b8",  # slate
 }
 SESSION_COLOR = "#a78bfa"
 
@@ -106,9 +107,7 @@ def build_dag(
     edges: list[dict[str, Any]] = []
 
     sid = session.session_id.value
-    total_tokens = (
-        session.total_input_tokens.value + session.total_output_tokens.value
-    )
+    total_tokens = session.total_input_tokens.value + session.total_output_tokens.value
     nodes.append(
         {
             "id": f"session:{sid}",

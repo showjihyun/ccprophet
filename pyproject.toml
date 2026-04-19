@@ -1,7 +1,7 @@
 [project]
 name = "ccprophet"
 version = "0.6.0"
-description = "Local-first Context Efficiency Advisor for Claude Code — auto-fix bloat, reproduce best configs, tokens→USD, anti-downgrade"
+description = "Local-first Context Efficiency Advisor for Claude Code — auto-fix bloat, reproduce best configs, tokens→USD, quality regression flag"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -42,6 +42,7 @@ forecast = ["statsmodels>=0.14"]
 
 [project.scripts]
 ccprophet = "ccprophet.harness.cli_main:main"
+ccp = "ccprophet.harness.cli_main:main"  # short alias — same entrypoint
 ccprophet-hook = "ccprophet.harness.hook_main:main"
 ccprophet-mcp = "ccprophet.harness.mcp_main:main"
 

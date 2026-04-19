@@ -3,6 +3,7 @@
 Wires DuckDB repositories behind read-only use cases and runs the MCP stdio
 server. Keeps zero business logic — any branching lives inside use cases.
 """
+
 from __future__ import annotations
 
 import sys
@@ -10,8 +11,7 @@ import sys
 from ccprophet.harness.commands._shared import connect_readonly as _connect_readonly
 
 _MCP_MISSING_HINT = (
-    "ccprophet mcp requires the optional `mcp` extra.\n"
-    "Install with:  uv sync --extra mcp\n"
+    "ccprophet mcp requires the optional `mcp` extra.\nInstall with:  uv sync --extra mcp\n"
 )
 
 
@@ -54,12 +54,8 @@ def _build_server():  # type: ignore[no-untyped-def]
         analyze_bloat=AnalyzeBloatUseCase(
             sessions=sessions, tool_defs=tool_defs, tool_calls=tool_calls
         ),
-        detect_phases=DetectPhasesUseCase(
-            sessions=sessions, events=events, phases=phases
-        ),
-        list_recommendations=ListRecommendationsUseCase(
-            recommendations=recommendations
-        ),
+        detect_phases=DetectPhasesUseCase(sessions=sessions, events=events, phases=phases),
+        list_recommendations=ListRecommendationsUseCase(recommendations=recommendations),
         estimate_budget=EstimateBudgetUseCase(
             outcomes=outcomes,
             tool_calls=tool_calls,

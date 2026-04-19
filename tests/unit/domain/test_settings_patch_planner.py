@@ -40,38 +40,21 @@ def test_prune_mcp_adds_server_to_disabled_list() -> None:
 
 
 def test_prune_tool_adds_name_to_disabled_tools() -> None:
-    rec = (
-        RecommendationBuilder()
-        .kind(RecommendationKind.PRUNE_TOOL)
-        .target("WebFetch")
-        .build()
-    )
+    rec = RecommendationBuilder().kind(RecommendationKind.PRUNE_TOOL).target("WebFetch").build()
     plan = SettingsPatchPlanner.plan(_doc(), [rec])
     assert plan.added_tools == ("WebFetch",)
     assert plan.new_content[KEY_DISABLED_TOOLS] == ["WebFetch"]
 
 
 def test_already_disabled_is_idempotent() -> None:
-    rec = (
-        RecommendationBuilder()
-        .kind(RecommendationKind.PRUNE_MCP)
-        .target("mcp__already")
-        .build()
-    )
-    plan = SettingsPatchPlanner.plan(
-        _doc({KEY_DISABLED_MCPS: ["already"]}), [rec]
-    )
+    rec = RecommendationBuilder().kind(RecommendationKind.PRUNE_MCP).target("mcp__already").build()
+    plan = SettingsPatchPlanner.plan(_doc({KEY_DISABLED_MCPS: ["already"]}), [rec])
     assert plan.added_mcps == ()
     assert plan.has_changes is False
 
 
 def test_preserves_unrelated_keys() -> None:
-    rec = (
-        RecommendationBuilder()
-        .kind(RecommendationKind.PRUNE_TOOL)
-        .target("Noisy")
-        .build()
-    )
+    rec = RecommendationBuilder().kind(RecommendationKind.PRUNE_TOOL).target("Noisy").build()
     plan = SettingsPatchPlanner.plan(
         _doc({"mcpServers": {"a": {"command": "x"}}, "theme": "dark"}),
         [rec],
@@ -83,14 +66,8 @@ def test_preserves_unrelated_keys() -> None:
 
 def test_mixed_kinds_batched() -> None:
     recs = [
-        RecommendationBuilder()
-        .kind(RecommendationKind.PRUNE_MCP)
-        .target("mcp__a__x")
-        .build(),
-        RecommendationBuilder()
-        .kind(RecommendationKind.PRUNE_TOOL)
-        .target("Bash")
-        .build(),
+        RecommendationBuilder().kind(RecommendationKind.PRUNE_MCP).target("mcp__a__x").build(),
+        RecommendationBuilder().kind(RecommendationKind.PRUNE_TOOL).target("Bash").build(),
     ]
     plan = SettingsPatchPlanner.plan(_doc(), recs)
     assert plan.added_mcps == ("a",)
@@ -112,12 +89,7 @@ def test_ignores_other_recommendation_kinds() -> None:
 
 def test_original_doc_is_not_mutated() -> None:
     doc = _doc({KEY_DISABLED_TOOLS: ["existing"]})
-    rec = (
-        RecommendationBuilder()
-        .kind(RecommendationKind.PRUNE_TOOL)
-        .target("new")
-        .build()
-    )
+    rec = RecommendationBuilder().kind(RecommendationKind.PRUNE_TOOL).target("new").build()
     plan = SettingsPatchPlanner.plan(doc, [rec])
     assert doc.content[KEY_DISABLED_TOOLS] == ["existing"]
     assert plan.new_content[KEY_DISABLED_TOOLS] == ["existing", "new"]

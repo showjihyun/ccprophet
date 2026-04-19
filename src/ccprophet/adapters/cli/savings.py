@@ -1,4 +1,5 @@
 """Render the token-savings dashboard."""
+
 from __future__ import annotations
 
 import json as json_module
@@ -54,8 +55,7 @@ def _summary_dict(s: SavingsSummary) -> dict:  # type: ignore[type-arg]
             ],
         },
         "active_env_vars": [
-            {"name": e.name, "value": e.value, "source": e.source}
-            for e in s.active_env_vars
+            {"name": e.name, "value": e.value, "source": e.source} for e in s.active_env_vars
         ],
         "opportunities": [
             {"name": o.name, "suggested_value": o.suggested_value, "note": o.note}
@@ -99,9 +99,7 @@ def _render(s: SavingsSummary) -> None:
     if s.active_env_vars:
         console.print("  [dim]Active env vars:[/]")
         for e in s.active_env_vars:
-            console.print(
-                f"    [cyan]{e.name}={e.value}[/]  [dim]({e.source})[/]"
-            )
+            console.print(f"    [cyan]{e.name}={e.value}[/]  [dim]({e.source})[/]")
 
     # Pending
     console.print()
@@ -129,16 +127,11 @@ def _render(s: SavingsSummary) -> None:
     if s.opportunity_env_vars:
         console.print()
         console.print(
-            f"[bold cyan]Opportunities[/]  "
-            f"{len(s.opportunity_env_vars)} knob(s) not yet set"
+            f"[bold cyan]Opportunities[/]  {len(s.opportunity_env_vars)} knob(s) not yet set"
         )
         for o in s.opportunity_env_vars:
-            console.print(
-                f"  [cyan]{o.name}={o.suggested_value}[/]  [dim]{o.note}[/]"
-            )
-        console.print(
-            "  [dim]Add to `.claude/settings.json` env block or your shell profile.[/]"
-        )
+            console.print(f"  [cyan]{o.name}={o.suggested_value}[/]  [dim]{o.note}[/]")
+        console.print("  [dim]Add to `.claude/settings.json` env block or your shell profile.[/]")
 
     # Total
     console.print()

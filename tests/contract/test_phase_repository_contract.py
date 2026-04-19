@@ -41,4 +41,5 @@ class TestInMemoryPhaseRepository(PhaseRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemoryPhaseRepository,
         )
+
         return InMemoryPhaseRepository()

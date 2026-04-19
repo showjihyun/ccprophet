@@ -25,9 +25,13 @@ class TestSessionAggregator:
         report = BloatCalculator.calculate(tool_defs, tool_calls)
 
         summary = SessionAggregator.summarize(
-            session, tool_calls, tool_defs,
-            phases_count=2, file_reads_count=5,
-            bloat_report=report, summarized_at=NOW,
+            session,
+            tool_calls,
+            tool_defs,
+            phases_count=2,
+            file_reads_count=5,
+            bloat_report=report,
+            summarized_at=NOW,
         )
 
         assert summary.tool_call_count == 3
@@ -47,9 +51,13 @@ class TestSessionAggregator:
         report = BloatCalculator.calculate(tool_defs, tool_calls)
 
         summary = SessionAggregator.summarize(
-            session, tool_calls, tool_defs,
-            phases_count=0, file_reads_count=0,
-            bloat_report=report, summarized_at=NOW,
+            session,
+            tool_calls,
+            tool_defs,
+            phases_count=0,
+            file_reads_count=0,
+            bloat_report=report,
+            summarized_at=NOW,
         )
 
         assert summary.loaded_tool_def_tokens.value == 400
@@ -64,9 +72,13 @@ class TestSessionAggregator:
         report = BloatCalculator.calculate(tool_defs, tool_calls)
 
         summary = SessionAggregator.summarize(
-            session, tool_calls, tool_defs,
-            phases_count=0, file_reads_count=0,
-            bloat_report=report, summarized_at=NOW,
+            session,
+            tool_calls,
+            tool_defs,
+            phases_count=0,
+            file_reads_count=0,
+            bloat_report=report,
+            summarized_at=NOW,
         )
 
         assert summary.bloat_tokens.value == 300
@@ -77,9 +89,13 @@ class TestSessionAggregator:
         report = BloatCalculator.calculate([], [])
 
         summary = SessionAggregator.summarize(
-            session, [], [],
-            phases_count=0, file_reads_count=0,
-            bloat_report=report, summarized_at=NOW,
+            session,
+            [],
+            [],
+            phases_count=0,
+            file_reads_count=0,
+            bloat_report=report,
+            summarized_at=NOW,
         )
 
         assert summary.tool_call_count == 0
@@ -93,9 +109,13 @@ class TestSessionAggregator:
         report = BloatCalculator.calculate([], [])
 
         summary = SessionAggregator.summarize(
-            session, [], [],
-            phases_count=0, file_reads_count=0,
-            bloat_report=report, summarized_at=NOW,
+            session,
+            [],
+            [],
+            phases_count=0,
+            file_reads_count=0,
+            bloat_report=report,
+            summarized_at=NOW,
         )
 
         assert summary.total_input_tokens.value == session.total_input_tokens.value

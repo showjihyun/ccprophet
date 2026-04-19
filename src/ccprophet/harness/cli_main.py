@@ -17,8 +17,10 @@ from ccprophet.harness.commands._shared import (  # noqa: F401
 
 
 def main() -> None:
+    # `name=` omitted on purpose: Typer then picks the invoked command name
+    # (`ccprophet` or the `ccp` short alias) from argv[0], so `--help` always
+    # shows the name the user actually typed.
     app = typer.Typer(
-        name="ccprophet",
         help="Context Efficiency Profiler for Claude Code",
         no_args_is_help=True,
     )

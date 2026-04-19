@@ -85,4 +85,5 @@ class TestInMemoryForecastRepository(ForecastRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemoryForecastRepository,
         )
+
         return InMemoryForecastRepository()

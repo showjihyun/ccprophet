@@ -3,6 +3,7 @@
 Tokens → Money conversion + realized-savings aggregation. No IO; PricingRate
 is passed in by the use case that knows which rate was active when.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
@@ -24,12 +25,8 @@ class CostCalculator:
     @staticmethod
     def session_cost(session: Session, rate: PricingRate) -> CostBreakdown:
         currency = rate.currency
-        input_cost = _tokens_to_money(
-            session.total_input_tokens, rate.input_per_mtok, currency
-        )
-        output_cost = _tokens_to_money(
-            session.total_output_tokens, rate.output_per_mtok, currency
-        )
+        input_cost = _tokens_to_money(session.total_input_tokens, rate.input_per_mtok, currency)
+        output_cost = _tokens_to_money(session.total_output_tokens, rate.output_per_mtok, currency)
         cache_write_cost = _tokens_to_money(
             session.total_cache_creation_tokens,
             rate.cache_write_per_mtok,
@@ -51,9 +48,7 @@ class CostCalculator:
         )
 
     @staticmethod
-    def realized_savings(
-        applied: Iterable[Recommendation], currency: str = "USD"
-    ) -> Money:
+    def realized_savings(applied: Iterable[Recommendation], currency: str = "USD") -> Money:
         total = Money.zero(currency)
         for rec in applied:
             if rec.est_savings_usd.currency != currency:
@@ -94,8 +89,7 @@ class CostCalculator:
                         prev.total_input_tokens.value + session.total_input_tokens.value
                     ),
                     total_output_tokens=TokenCount(
-                        prev.total_output_tokens.value
-                        + session.total_output_tokens.value
+                        prev.total_output_tokens.value + session.total_output_tokens.value
                     ),
                     total_cost=prev.total_cost + bd.total_cost,
                 )

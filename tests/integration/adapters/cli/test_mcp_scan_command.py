@@ -3,6 +3,7 @@
 Uses a FakeLister (hand-rolled) plus InMemoryRepositorySet.
 No real `claude` binary is invoked.
 """
+
 from __future__ import annotations
 
 import json
@@ -36,9 +37,7 @@ def _make_repos_with_calls(tool_names: list[str]) -> InMemoryRepositorySet:
     sid = "session-001"
     repos.sessions.upsert(SessionBuilder().with_id(sid).build())
     for tool in tool_names:
-        repos.tool_calls.append(
-            ToolCallBuilder().in_session(sid).for_tool(tool).build()
-        )
+        repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool(tool).build())
     return repos
 
 

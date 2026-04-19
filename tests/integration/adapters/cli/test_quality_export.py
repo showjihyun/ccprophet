@@ -48,9 +48,7 @@ def _wire(
 def _read_parquet_rows(path: Path) -> list[tuple[object, ...]]:
     conn = duckdb.connect(":memory:")
     try:
-        return conn.execute(
-            "SELECT * FROM read_parquet(?)", [str(path)]
-        ).fetchall()
+        return conn.execute("SELECT * FROM read_parquet(?)", [str(path)]).fetchall()
     finally:
         conn.close()
 

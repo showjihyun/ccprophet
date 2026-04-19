@@ -31,6 +31,7 @@ def _wire() -> tuple[RollupSessionsUseCase, InMemoryRepositorySet]:
 
 def _session(sid: str, *, started: datetime):  # type: ignore[no-untyped-def]
     from dataclasses import replace
+
     base = SessionBuilder().with_id(sid).build()
     return replace(base, started_at=started)
 
@@ -53,17 +54,11 @@ class TestRollupSessionsUseCase:
     def test_dry_run_does_not_delete_hot_rows(self) -> None:
         uc, repos = _wire()
         sid = SessionId("old-1")
-        repos.sessions.upsert(
-            _session("old-1", started=datetime(2026, 1, 1, tzinfo=timezone.utc))
-        )
+        repos.sessions.upsert(_session("old-1", started=datetime(2026, 1, 1, tzinfo=timezone.utc)))
         repos.tool_defs.bulk_add(sid, [ToolDefBuilder().named("Read").build()])
-        repos.tool_calls.append(
-            ToolCallBuilder().in_session(sid).for_tool("Read").build()
-        )
+        repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool("Read").build())
 
-        uc.execute(
-            older_than=datetime(2026, 2, 1, tzinfo=timezone.utc), apply=False
-        )
+        uc.execute(older_than=datetime(2026, 2, 1, tzinfo=timezone.utc), apply=False)
 
         assert list(repos.tool_calls.list_for_session(sid))  # still there
         assert list(repos.tool_defs.list_for_session(sid))
@@ -71,20 +66,17 @@ class TestRollupSessionsUseCase:
     def test_apply_deletes_hot_rows_and_upserts_summary(self) -> None:
         uc, repos = _wire()
         sid = SessionId("old-1")
-        repos.sessions.upsert(
-            _session("old-1", started=datetime(2026, 1, 1, tzinfo=timezone.utc))
+        repos.sessions.upsert(_session("old-1", started=datetime(2026, 1, 1, tzinfo=timezone.utc)))
+        repos.tool_defs.bulk_add(
+            sid,
+            [
+                ToolDefBuilder().named("Read").with_tokens(100).build(),
+                ToolDefBuilder().named("Bash").with_tokens(200).build(),
+            ],
         )
-        repos.tool_defs.bulk_add(sid, [
-            ToolDefBuilder().named("Read").with_tokens(100).build(),
-            ToolDefBuilder().named("Bash").with_tokens(200).build(),
-        ])
-        repos.tool_calls.append(
-            ToolCallBuilder().in_session(sid).for_tool("Read").build()
-        )
+        repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool("Read").build())
 
-        outcome = uc.execute(
-            older_than=datetime(2026, 2, 1, tzinfo=timezone.utc), apply=True
-        )
+        outcome = uc.execute(older_than=datetime(2026, 2, 1, tzinfo=timezone.utc), apply=True)
 
         assert outcome.applied is True
         assert outcome.rows_deleted.tool_calls == 1
@@ -104,9 +96,7 @@ class TestRollupSessionsUseCase:
             _session("recent", started=datetime(2026, 4, 16, tzinfo=timezone.utc))
         )
 
-        outcome = uc.execute(
-            older_than=datetime(2026, 3, 1, tzinfo=timezone.utc), apply=True
-        )
+        outcome = uc.execute(older_than=datetime(2026, 3, 1, tzinfo=timezone.utc), apply=True)
 
         assert outcome.plan.is_empty
         assert outcome.applied is False  # short-circuit: nothing to apply
@@ -115,13 +105,9 @@ class TestRollupSessionsUseCase:
     def test_summaries_use_clock_for_summarized_at(self) -> None:
         uc, repos = _wire()
         sid = SessionId("old-1")
-        repos.sessions.upsert(
-            _session("old-1", started=datetime(2026, 1, 1, tzinfo=timezone.utc))
-        )
+        repos.sessions.upsert(_session("old-1", started=datetime(2026, 1, 1, tzinfo=timezone.utc)))
 
-        uc.execute(
-            older_than=datetime(2026, 2, 1, tzinfo=timezone.utc), apply=False
-        )
+        uc.execute(older_than=datetime(2026, 2, 1, tzinfo=timezone.utc), apply=False)
 
         summary = repos.session_summaries.get(sid)
         assert summary is not None

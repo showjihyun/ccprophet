@@ -54,9 +54,7 @@ class IngestEventUseCase:
 
         self._accumulate_usage(sid, payload)
 
-    def _ensure_session(
-        self, sid: SessionId, payload: dict[str, object], now: datetime
-    ) -> None:
+    def _ensure_session(self, sid: SessionId, payload: dict[str, object], now: datetime) -> None:
         existing = self.sessions.get(sid)
         if existing is None:
             session = Session(
@@ -67,9 +65,7 @@ class IngestEventUseCase:
             )
             self.sessions.upsert(session)
 
-    def _ingest_tool_call(
-        self, sid: SessionId, payload: dict[str, object], now: datetime
-    ) -> None:
+    def _ingest_tool_call(self, sid: SessionId, payload: dict[str, object], now: datetime) -> None:
         tool_name = str(payload.get("tool_name", "unknown"))
         input_hash_raw = str(payload.get("tool_input", ""))
         input_hash = hashlib.sha256(input_hash_raw.encode()).hexdigest()[:16]
@@ -103,9 +99,7 @@ class IngestEventUseCase:
         if usage is not None:
             added_input = int_or_zero(usage.get("input_tokens"))
             added_output = int_or_zero(usage.get("output_tokens"))
-            added_cache_creation = int_or_zero(
-                usage.get("cache_creation_input_tokens")
-            )
+            added_cache_creation = int_or_zero(usage.get("cache_creation_input_tokens"))
             added_cache_read = int_or_zero(usage.get("cache_read_input_tokens"))
 
         new_model = session.model
@@ -123,12 +117,8 @@ class IngestEventUseCase:
 
         updated = replace(
             session,
-            total_input_tokens=TokenCount(
-                session.total_input_tokens.value + added_input
-            ),
-            total_output_tokens=TokenCount(
-                session.total_output_tokens.value + added_output
-            ),
+            total_input_tokens=TokenCount(session.total_input_tokens.value + added_input),
+            total_output_tokens=TokenCount(session.total_output_tokens.value + added_output),
             total_cache_creation_tokens=TokenCount(
                 session.total_cache_creation_tokens.value + added_cache_creation
             ),
@@ -166,5 +156,3 @@ def _extract_usage_and_model(
                 model = nested_model
 
     return usage, model
-
-

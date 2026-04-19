@@ -6,6 +6,7 @@ is rooted at keys like `hook_event_name`, `session_id`, `tool_name`,
 fall back to that. Returns None on blank stdin or parse error so the hook
 process silently exits (AP-3).
 """
+
 from __future__ import annotations
 
 import json

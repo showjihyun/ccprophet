@@ -41,15 +41,14 @@ I've been using Claude Code daily for the past few months and kept hitting the s
 
 ```bash
 uv tool install "ccprophet[web,mcp,forecast]"
-ccprophet install               # registers hooks + statusLine, initializes DB
-ccprophet doctor --migrate      # applies schema V1..V5
+ccprophet install               # hooks + statusLine + DB + schema migrations
 ccprophet ingest                # backfills past Claude Code JSONL transcripts
 
 # Then the four headline commands
 ccprophet bloat --cost          # measure waste
 ccprophet prune --apply         # fix it (snapshot + atomic)
 ccprophet cost --month          # dollars, not tokens
-ccprophet quality               # anti-downgrade watch
+ccprophet quality               # week-over-week quality regression flag
 ```
 
 A local Web DAG viewer is one command away: `ccprophet serve` on `127.0.0.1:8765`.

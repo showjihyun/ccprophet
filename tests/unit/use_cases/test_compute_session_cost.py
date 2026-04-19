@@ -13,9 +13,7 @@ from tests.fixtures.builders import PricingRateBuilder, SessionBuilder
 
 
 def _uc(repos: InMemoryRepositorySet) -> ComputeSessionCostUseCase:
-    return ComputeSessionCostUseCase(
-        sessions=repos.sessions, pricing=repos.pricing
-    )
+    return ComputeSessionCostUseCase(sessions=repos.sessions, pricing=repos.pricing)
 
 
 def test_returns_breakdown_for_known_session() -> None:

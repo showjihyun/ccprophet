@@ -1,6 +1,7 @@
 """Recommender domain service — turns BloatReport + PricingRate into actionable
 Recommendations. Pure; no IO. See ARCHITECT.md §4.6 and PRD.md §6.7 (F7).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -39,16 +40,14 @@ class RecommendationContext:
     pricing: PricingRate | None = None
     min_tokens: int = DEFAULT_MIN_TOKENS
     # NEW: env-var signal fields populated by the use case layer
-    thinking_tokens: int = 0            # extended-thinking output tokens this session
-    subagent_context_tokens: int = 0    # sum of subagent context_tokens for this session
-    mcp_max_output_seen: int = 0        # max output_tokens from any mcp__ tool call
+    thinking_tokens: int = 0  # extended-thinking output tokens this session
+    subagent_context_tokens: int = 0  # sum of subagent context_tokens for this session
+    mcp_max_output_seen: int = 0  # max output_tokens from any mcp__ tool call
 
 
 class Recommender:
     @staticmethod
-    def recommend(
-        ctx: RecommendationContext, *, now: datetime
-    ) -> list[Recommendation]:
+    def recommend(ctx: RecommendationContext, *, now: datetime) -> list[Recommendation]:
         recs = [
             _pruning_rec(ctx, item, now)
             for item in ctx.bloat_report.items
@@ -62,9 +61,7 @@ class Recommender:
         return recs
 
 
-def _pruning_rec(
-    ctx: RecommendationContext, item: BloatItem, now: datetime
-) -> Recommendation:
+def _pruning_rec(ctx: RecommendationContext, item: BloatItem, now: datetime) -> Recommendation:
     is_mcp = item.source.startswith("mcp:")
     kind = RecommendationKind.PRUNE_MCP if is_mcp else RecommendationKind.PRUNE_TOOL
     usd = _estimate_usd(item.tokens, ctx.pricing)
@@ -89,11 +86,7 @@ def _pruning_rec(
 def _estimate_usd(tokens: TokenCount, pricing: PricingRate | None) -> Money:
     if pricing is None or tokens.value == 0:
         return Money.zero()
-    amount = (
-        Decimal(str(pricing.input_per_mtok))
-        * Decimal(tokens.value)
-        / Decimal(1_000_000)
-    )
+    amount = Decimal(str(pricing.input_per_mtok)) * Decimal(tokens.value) / Decimal(1_000_000)
     return Money(amount, pricing.currency)
 
 
@@ -101,11 +94,7 @@ def _estimate_output_usd(tokens: int, pricing: PricingRate | None) -> Money:
     """Estimate USD savings using the output token rate (for thinking/subagent tokens)."""
     if pricing is None or tokens == 0:
         return Money.zero()
-    amount = (
-        Decimal(str(pricing.output_per_mtok))
-        * Decimal(tokens)
-        / Decimal(1_000_000)
-    )
+    amount = Decimal(str(pricing.output_per_mtok)) * Decimal(tokens) / Decimal(1_000_000)
     return Money(amount, pricing.currency)
 
 

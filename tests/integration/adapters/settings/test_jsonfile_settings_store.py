@@ -30,9 +30,7 @@ def test_write_atomic_persists_and_returns_new_hash(tmp_path) -> None:  # type: 
     store = JsonFileSettingsStore()
     original = store.read(p)
 
-    new_doc = store.write_atomic(
-        p, {"a": 2, "b": [1, 2]}, expected_hash=original.sha256
-    )
+    new_doc = store.write_atomic(p, {"a": 2, "b": [1, 2]}, expected_hash=original.sha256)
     reloaded = store.read(p)
     assert reloaded.content == {"a": 2, "b": [1, 2]}
     assert reloaded.sha256 == new_doc.sha256

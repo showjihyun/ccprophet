@@ -5,6 +5,7 @@ configured on purpose (NFR-2). Business logic lives in use cases — this
 adapter only shapes domain objects into JSON (see ``shapers``) and serves
 the bundled HTML assets from ``src/ccprophet/web/`` (inside the package).
 """
+
 from __future__ import annotations
 
 import importlib.metadata
@@ -89,9 +90,7 @@ class WebUseCases:
     tool_defs: ToolDefRepository
 
 
-def _safe_cost(
-    session: Session, uc: ComputeSessionCostUseCase
-) -> CostBreakdown | None:
+def _safe_cost(session: Session, uc: ComputeSessionCostUseCase) -> CostBreakdown | None:
     """Return None when pricing is missing — keeps the UI usable without rates."""
     try:
         return uc.execute(session.session_id)

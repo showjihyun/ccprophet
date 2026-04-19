@@ -134,8 +134,7 @@ def test_repeat_read_counted() -> None:
     sid = "r"
     session = _session_on_day(1, sid)
     calls = [
-        ToolCallBuilder().in_session(SessionId(sid)).for_tool("Read").build()
-        for _ in range(5)
+        ToolCallBuilder().in_session(SessionId(sid)).for_tool("Read").build() for _ in range(5)
     ]
     # all same input_hash (builder default) → triggers repeat_read
     series = QualityTracker.series_from_sessions(

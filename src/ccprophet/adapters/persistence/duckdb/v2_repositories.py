@@ -3,6 +3,7 @@ subset_profiles, pricing_rates.
 
 Kept in a separate module from V1 repositories to avoid one-file bloat.
 """
+
 from __future__ import annotations
 
 import json
@@ -80,9 +81,7 @@ class DuckDBRecommendationRepository:
     def list_for_session(
         self, sid: SessionId, *, status: RecommendationStatus | None = None
     ) -> Iterable[Recommendation]:
-        query = (
-            "SELECT * FROM recommendations WHERE session_id = ?"
-        )
+        query = "SELECT * FROM recommendations WHERE session_id = ?"
         params: list[object] = [sid.value]
         if status is not None:
             query += " AND status = ?"
@@ -99,9 +98,7 @@ class DuckDBRecommendationRepository:
         ).fetchall()
         return [_row_to_recommendation(r) for r in rows]
 
-    def list_applied_in_range(
-        self, start: datetime, end: datetime
-    ) -> Iterable[Recommendation]:
+    def list_applied_in_range(self, start: datetime, end: datetime) -> Iterable[Recommendation]:
         rows = self._conn.execute(
             "SELECT * FROM recommendations WHERE status = 'applied' "
             "AND applied_at >= ? AND applied_at < ? "
@@ -110,9 +107,7 @@ class DuckDBRecommendationRepository:
         ).fetchall()
         return [_row_to_recommendation(r) for r in rows]
 
-    def mark_applied(
-        self, rec_ids: Sequence[str], snapshot_id: SnapshotId
-    ) -> None:
+    def mark_applied(self, rec_ids: Sequence[str], snapshot_id: SnapshotId) -> None:
         if not rec_ids:
             return
         now_utc = _to_utc_naive(datetime.now(timezone.utc))
@@ -166,10 +161,9 @@ class DuckDBSnapshotRepository:
         self._conn = conn
 
     def save(self, snap: Snapshot) -> None:
-        manifest = json.dumps([
-            {"path": f.path, "sha256": f.sha256, "bytes": f.byte_size}
-            for f in snap.files
-        ])
+        manifest = json.dumps(
+            [{"path": f.path, "sha256": f.sha256, "bytes": f.byte_size} for f in snap.files]
+        )
         self._conn.execute(
             """
             INSERT OR REPLACE INTO snapshots
@@ -319,17 +313,13 @@ class DuckDBSubsetProfileStore:
         )
 
     def load(self, name: str) -> SubsetProfile | None:
-        row = self._conn.execute(
-            "SELECT * FROM subset_profiles WHERE name = ?", [name]
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM subset_profiles WHERE name = ?", [name]).fetchone()
         if row is None:
             return None
         return _row_to_subset_profile(row)
 
     def list_all(self) -> Sequence[SubsetProfile]:
-        rows = self._conn.execute(
-            "SELECT * FROM subset_profiles ORDER BY name"
-        ).fetchall()
+        rows = self._conn.execute("SELECT * FROM subset_profiles ORDER BY name").fetchall()
         return [_row_to_subset_profile(r) for r in rows]
 
     def delete(self, name: str) -> None:
@@ -358,8 +348,7 @@ class DuckDBPricingProvider:
     def rate_for(self, model: str, at: datetime | None = None) -> PricingRate:
         if at is None:
             row = self._conn.execute(
-                "SELECT * FROM pricing_rates WHERE model = ? "
-                "ORDER BY effective_at DESC LIMIT 1",
+                "SELECT * FROM pricing_rates WHERE model = ? ORDER BY effective_at DESC LIMIT 1",
                 [model],
             ).fetchone()
         else:

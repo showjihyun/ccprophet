@@ -3,6 +3,7 @@
 Splits a session's event stream into phases along UserPromptSubmit boundaries,
 then classifies each segment per docs/DATAMODELING.md §4.6.
 """
+
 from __future__ import annotations
 
 import uuid

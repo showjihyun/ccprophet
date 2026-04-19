@@ -37,9 +37,7 @@ def run_cost_command(
     return 0
 
 
-def _run_session(
-    session_uc: ComputeSessionCostUseCase, session_id: str, *, as_json: bool
-) -> int:
+def _run_session(session_uc: ComputeSessionCostUseCase, session_id: str, *, as_json: bool) -> int:
     try:
         cost = session_uc.execute(SessionId(session_id))
     except SessionNotFound as e:
@@ -68,9 +66,7 @@ def _resolve_month_range(month: str | None) -> tuple[datetime, datetime]:
         try:
             start = datetime.strptime(month, "%Y-%m").replace(tzinfo=timezone.utc)
         except ValueError as exc:
-            raise _InvalidMonthFormat(
-                f"--month expects YYYY-MM, got {month!r}"
-            ) from exc
+            raise _InvalidMonthFormat(f"--month expects YYYY-MM, got {month!r}") from exc
     end = (start + timedelta(days=32)).replace(day=1, hour=0, minute=0, second=0)
     return start, end
 
@@ -173,6 +169,5 @@ def _render_breakdown(b: CostBreakdown) -> None:
         f"cache: ${float(b.cache_cost.amount):.4f}"
     )
     console.print(
-        f"  [bold green]total: ${float(b.total_cost.amount):.4f}[/] "
-        f"{b.total_cost.currency}"
+        f"  [bold green]total: ${float(b.total_cost.amount):.4f}[/] {b.total_cost.currency}"
     )

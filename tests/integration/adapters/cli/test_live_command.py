@@ -36,14 +36,28 @@ def test_live_renders_phases(capsys) -> None:  # type: ignore[no-untyped-def]
     session = SessionBuilder().with_id("s-live").build()
     repos.sessions.upsert(session)
     t0 = datetime(2026, 4, 17, 12, 0, 0, tzinfo=timezone.utc)
-    for _i, ev in enumerate((
-        EventBuilder().for_session("s-live").of_type("UserPromptSubmit")
-            .at(t0).with_hash("a").build(),
-        EventBuilder().for_session("s-live").tool_use("Edit", "/x.py")
-            .at(t0 + timedelta(minutes=1)).with_hash("b").build(),
-        EventBuilder().for_session("s-live").tool_use("Write", "/y.py")
-            .at(t0 + timedelta(minutes=2)).with_hash("c").build(),
-    )):
+    for _i, ev in enumerate(
+        (
+            EventBuilder()
+            .for_session("s-live")
+            .of_type("UserPromptSubmit")
+            .at(t0)
+            .with_hash("a")
+            .build(),
+            EventBuilder()
+            .for_session("s-live")
+            .tool_use("Edit", "/x.py")
+            .at(t0 + timedelta(minutes=1))
+            .with_hash("b")
+            .build(),
+            EventBuilder()
+            .for_session("s-live")
+            .tool_use("Write", "/y.py")
+            .at(t0 + timedelta(minutes=2))
+            .with_hash("c")
+            .build(),
+        )
+    ):
         repos.events.append(ev)
 
     detect, analyze = _use_cases(repos)

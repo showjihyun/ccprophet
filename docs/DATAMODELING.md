@@ -1162,7 +1162,7 @@ COMMIT;
 
 Breaking change (예: 필드 타입 변경)는:
 1. minor 버전 bump (0.x.0 → 0.{x+1}.0)
-2. `ccprophet doctor --migrate` 수동 실행 요구
+2. 기존 유저는 다음 `ccprophet install` 시 자동 적용 — 수동 `ccprophet doctor --migrate` 도 가능 (idempotent)
 3. 자동 Parquet 백업 후 진행
 4. 실패 시 백업에서 자동 복구
 

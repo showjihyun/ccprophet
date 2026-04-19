@@ -48,8 +48,9 @@ def test_empty_report_yields_no_recommendations() -> None:
 
 def test_unused_mcp_yields_prune_mcp() -> None:
     report = _report(
-        BloatItem(tool_name="mcp__github_x", source="mcp:github",
-                  tokens=TokenCount(1_400), used=False),
+        BloatItem(
+            tool_name="mcp__github_x", source="mcp:github", tokens=TokenCount(1_400), used=False
+        ),
     )
     [rec] = Recommender.recommend(_ctx(report), now=NOW)
     assert rec.kind == RecommendationKind.PRUNE_MCP
@@ -60,8 +61,7 @@ def test_unused_mcp_yields_prune_mcp() -> None:
 
 def test_unused_system_tool_yields_prune_tool() -> None:
     report = _report(
-        BloatItem(tool_name="WebFetch", source="system",
-                  tokens=TokenCount(3_000), used=False),
+        BloatItem(tool_name="WebFetch", source="system", tokens=TokenCount(3_000), used=False),
     )
     [rec] = Recommender.recommend(_ctx(report), now=NOW)
     assert rec.kind == RecommendationKind.PRUNE_TOOL
@@ -70,16 +70,14 @@ def test_unused_system_tool_yields_prune_tool() -> None:
 
 def test_used_items_are_ignored() -> None:
     report = _report(
-        BloatItem(tool_name="Read", source="system",
-                  tokens=TokenCount(2_000), used=True),
+        BloatItem(tool_name="Read", source="system", tokens=TokenCount(2_000), used=True),
     )
     assert Recommender.recommend(_ctx(report), now=NOW) == []
 
 
 def test_items_below_min_tokens_skipped() -> None:
     report = _report(
-        BloatItem(tool_name="tiny", source="system",
-                  tokens=TokenCount(50), used=False),
+        BloatItem(tool_name="tiny", source="system", tokens=TokenCount(50), used=False),
     )
     assert Recommender.recommend(_ctx(report, min_tokens=100), now=NOW) == []
 
@@ -115,7 +113,7 @@ def test_confidence_tiers() -> None:
     report = _report(
         BloatItem(tool_name="low", source="mcp:a", tokens=TokenCount(100), used=False),
         BloatItem(tool_name="mid", source="mcp:b", tokens=TokenCount(500), used=False),
-        BloatItem(tool_name="hi",  source="mcp:c", tokens=TokenCount(2_000), used=False),
+        BloatItem(tool_name="hi", source="mcp:c", tokens=TokenCount(2_000), used=False),
     )
     recs = {r.target: r.confidence for r in Recommender.recommend(_ctx(report), now=NOW)}
     assert recs["low"] == Confidence(0.5)

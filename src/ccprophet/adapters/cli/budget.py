@@ -84,13 +84,9 @@ def _render(e: BudgetEnvelope) -> None:
         f"{e.estimated_cost.currency}"
     )
     if e.best_config.common_tools:
-        console.print(
-            "  recommended subset: " + ", ".join(e.best_config.common_tools)
-        )
+        console.print("  recommended subset: " + ", ".join(e.best_config.common_tools))
     if e.best_config.dropped_mcps:
-        console.print(
-            "  drop MCPs: [dim]" + ", ".join(e.best_config.dropped_mcps) + "[/]"
-        )
+        console.print("  drop MCPs: [dim]" + ", ".join(e.best_config.dropped_mcps) + "[/]")
     if e.risk_flags:
         console.print()
         for flag in e.risk_flags:

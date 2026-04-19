@@ -33,9 +33,7 @@ class AnalyzePostmortemUseCase:
         task_type = failed_label.task_type if failed_label else None
 
         success_sessions = (
-            list(self.outcomes.list_sessions_by_label(
-                OutcomeLabelValue.SUCCESS, task_type
-            ))
+            list(self.outcomes.list_sessions_by_label(OutcomeLabelValue.SUCCESS, task_type))
             if task_type is not None
             else []
         )
@@ -48,15 +46,11 @@ class AnalyzePostmortemUseCase:
                 failed_tool_defs=list(self.tool_defs.list_for_session(session_id)),
                 success_sessions=success_sessions,
                 success_tool_calls={
-                    s.session_id.value: list(
-                        self.tool_calls.list_for_session(s.session_id)
-                    )
+                    s.session_id.value: list(self.tool_calls.list_for_session(s.session_id))
                     for s in success_sessions
                 },
                 success_tool_defs={
-                    s.session_id.value: list(
-                        self.tool_defs.list_for_session(s.session_id)
-                    )
+                    s.session_id.value: list(self.tool_defs.list_for_session(s.session_id))
                     for s in success_sessions
                 },
             )

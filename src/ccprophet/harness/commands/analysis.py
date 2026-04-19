@@ -12,13 +12,11 @@ from ccprophet.harness.commands._shared import (
 
 
 def register(app: typer.Typer) -> None:
-    @app.command()
+    @app.command(rich_help_panel="Getting started")
     def bloat(
         session: str | None = typer.Option(None, "--session", "-s", help="Session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
-        cost: bool = typer.Option(
-            False, "--cost", help="Include $ estimate for bloat tokens"
-        ),
+        cost: bool = typer.Option(False, "--cost", help="Include $ estimate for bloat tokens"),
     ) -> None:
         """Loaded vs Referenced bloat report."""
         from ccprophet.adapters.cli.bloat import run_bloat_command
@@ -49,12 +47,10 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Getting started")
     def live(
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
-        cost: bool = typer.Option(
-            False, "--cost", help="Include session $ estimate"
-        ),
+        cost: bool = typer.Option(False, "--cost", help="Include session $ estimate"),
     ) -> None:
         """Snapshot of the current active session (phases + bloat)."""
         from ccprophet.adapters.cli.live import run_live_command
@@ -93,12 +89,10 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Getting started")
     def statusline(
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
-        cost: bool = typer.Option(
-            False, "--cost", help="Include session $ estimate"
-        ),
+        cost: bool = typer.Option(False, "--cost", help="Include session $ estimate"),
     ) -> None:
         """One-line session status for Claude Code statusLine integration."""
         if not DB_PATH.exists():
@@ -133,11 +127,9 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Outcome / Quality")
     def quality(
-        model: str | None = typer.Option(
-            None, "--model", help="Filter to a single model"
-        ),
+        model: str | None = typer.Option(None, "--model", help="Filter to a single model"),
         window: int = typer.Option(7, "--window", help="Recent window (days)"),
         baseline: int = typer.Option(
             30, "--baseline", help="Baseline window (days, prior to recent)"
@@ -186,15 +178,13 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Auto-fix")
     def forecast(
         session: str | None = typer.Option(
             None, "--session", "-s", help="Session ID (default: latest active)"
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
-        cost: bool = typer.Option(
-            False, "--cost", help="Include session-to-date $"
-        ),
+        cost: bool = typer.Option(False, "--cost", help="Include session-to-date $"),
     ) -> None:
         """Forecast when this session will hit the autocompact threshold."""
         from ccprophet.adapters.cli.forecast import run_forecast_command

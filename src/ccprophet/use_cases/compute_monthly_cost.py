@@ -35,9 +35,7 @@ class ComputeMonthlyCostUseCase:
                 continue
             breakdowns.append(CostCalculator.session_cost(session, rate))
 
-        applied_recs = list(
-            self.recommendations.list_applied_in_range(month_start, month_end)
-        )
+        applied_recs = list(self.recommendations.list_applied_in_range(month_start, month_end))
 
         return CostCalculator.monthly_summary(
             month_start=month_start,

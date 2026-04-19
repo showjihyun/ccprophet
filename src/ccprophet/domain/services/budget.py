@@ -4,6 +4,7 @@ Input: the success-labelled cluster (already found by the use case) +
 optional PricingRate for cost estimation. Output: envelope with stats and
 risk flags the CLI can render verbatim.
 """
+
 from __future__ import annotations
 
 import math
@@ -42,13 +43,10 @@ class BudgetAnalyzer:
         flags: list[str] = []
         if best_config.autocompact_hit_rate >= HIGH_AUTOCOMPACT_RATE:
             rate_pct = round(best_config.autocompact_hit_rate * 100)
-            flags.append(
-                f"high autocompact rate: {rate_pct}% of similar sessions"
-            )
+            flags.append(f"high autocompact rate: {rate_pct}% of similar sessions")
         if best_config.dropped_mcps:
             flags.append(
-                f"{len(best_config.dropped_mcps)} unused MCP(s) detected — "
-                "consider subset profile"
+                f"{len(best_config.dropped_mcps)} unused MCP(s) detected — consider subset profile"
             )
 
         return BudgetEnvelope(
@@ -70,9 +68,7 @@ def _stddev(values: Sequence[int], mean: int) -> int:
     return round(math.sqrt(variance))
 
 
-def _estimate_cost(
-    input_mean: int, output_mean: int, pricing: PricingRate | None
-) -> Money:
+def _estimate_cost(input_mean: int, output_mean: int, pricing: PricingRate | None) -> Money:
     if pricing is None:
         return Money.zero()
     input_usd = Decimal(str(pricing.input_per_mtok)) * Decimal(input_mean) / Decimal(1_000_000)

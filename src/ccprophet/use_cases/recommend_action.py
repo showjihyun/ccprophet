@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from ccprophet.domain.entities import Recommendation
@@ -32,9 +33,7 @@ class RecommendActionUseCase:
     # Optional: if absent, subagent_context_tokens will be 0 (Rule 2 won't fire)
     subagents: SubagentRepository | None = field(default=None)
 
-    def execute(
-        self, session_id: SessionId, *, persist: bool = True
-    ) -> list[Recommendation]:
+    def execute(self, session_id: SessionId, *, persist: bool = True) -> list[Recommendation]:
         session = self.sessions.get(session_id)
         if session is None:
             raise SessionNotFound(session_id)
@@ -50,12 +49,17 @@ class RecommendActionUseCase:
 
         # --- env-var signal derivation ---
 
-        # Rule 1: thinking_tokens proxy.
-        # Phase 3 can wire up actual per-event thinking token tracking. For now,
-        # treat total_output_tokens as thinking tokens when the model is Opus
-        # (Opus output tends to be thinking-heavy). This is a conservative proxy.
+        # Rule 1: thinking_tokens.
+        # A real signal requires per-event tracking of the `thinking` block
+        # token count (Phase 3 work). Until that exists we keep this at 0 and
+        # skip the rec — the previous "Opus output_tokens is a proxy" shortcut
+        # over-triggered on any Opus session doing heavy work and eroded trust.
+        # Set CCPROPHET_EXPERIMENTAL_THINKING_PROXY=1 to re-enable the old
+        # heuristic for your own dogfooding.
         thinking_tokens = 0
-        if session.model.startswith("claude-opus"):
+        if os.environ.get(
+            "CCPROPHET_EXPERIMENTAL_THINKING_PROXY"
+        ) == "1" and session.model.startswith("claude-opus"):
             thinking_tokens = session.total_output_tokens.value
 
         # Rule 2: subagent_context_tokens — sum across child subagents.
@@ -66,11 +70,7 @@ class RecommendActionUseCase:
 
         # Rule 3: mcp_max_output_seen — largest output_tokens on an mcp__ tool call.
         mcp_max_output_seen = max(
-            (
-                tc.output_tokens.value
-                for tc in called
-                if tc.tool_name.startswith("mcp__")
-            ),
+            (tc.output_tokens.value for tc in called if tc.tool_name.startswith("mcp__")),
             default=0,
         )
 

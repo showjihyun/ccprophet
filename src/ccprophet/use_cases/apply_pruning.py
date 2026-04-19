@@ -6,6 +6,7 @@ AP-7 invariants enforced here:
 3. `SettingsStore.write_atomic` with expected_hash — rejects concurrent edits.
 4. Only after write succeeds do we mark the recommendations as applied.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -45,9 +46,7 @@ class ApplyPruningUseCase:
         session_id: SessionId | None = None,
         reason: str | None = None,
     ) -> PruningOutcome:
-        preview = self.prune.execute(
-            target_path=target_path, session_id=session_id
-        )
+        preview = self.prune.execute(target_path=target_path, session_id=session_id)
         if not preview.has_changes:
             return PruningOutcome(
                 snapshot=None,

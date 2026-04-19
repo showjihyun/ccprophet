@@ -29,23 +29,14 @@ class EstimateBudgetUseCase:
         *,
         min_samples: int = DEFAULT_MIN_SAMPLES,
     ) -> BudgetEnvelope:
-        cluster = list(
-            self.outcomes.list_sessions_by_label(
-                OutcomeLabelValue.SUCCESS, task_type
-            )
-        )
+        cluster = list(self.outcomes.list_sessions_by_label(OutcomeLabelValue.SUCCESS, task_type))
 
         tool_calls_by_session = {
-            s.session_id.value: list(
-                self.tool_calls.list_for_session(s.session_id)
-            )
+            s.session_id.value: list(self.tool_calls.list_for_session(s.session_id))
             for s in cluster
         }
         tool_defs_by_session = {
-            s.session_id.value: list(
-                self.tool_defs.list_for_session(s.session_id)
-            )
-            for s in cluster
+            s.session_id.value: list(self.tool_defs.list_for_session(s.session_id)) for s in cluster
         }
 
         best_config = BestConfigExtractor.extract(
@@ -59,9 +50,7 @@ class EstimateBudgetUseCase:
         )
 
         pricing = _resolve_pricing(self.pricing, cluster)
-        return BudgetAnalyzer.analyze(
-            best_config=best_config, sessions=cluster, pricing=pricing
-        )
+        return BudgetAnalyzer.analyze(best_config=best_config, sessions=cluster, pricing=pricing)
 
 
 def _resolve_pricing(provider: PricingProvider, sessions):  # type: ignore[no-untyped-def]

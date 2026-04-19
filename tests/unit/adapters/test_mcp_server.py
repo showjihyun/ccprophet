@@ -4,6 +4,7 @@ Tests go through `dispatch()` to exercise the same path an MCP call-tool
 request would take, while skipping the async stdio transport. Use-case
 dependencies are real in-memory Fakes (per LAYERING §7.3 — Fake ≫ Mock).
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -51,9 +52,7 @@ def _build_server(repos: InMemoryRepositorySet) -> CcprophetMcpServer:
             events=repos.events,
             phases=repos.phases,
         ),
-        list_recommendations=ListRecommendationsUseCase(
-            recommendations=repos.recommendations
-        ),
+        list_recommendations=ListRecommendationsUseCase(recommendations=repos.recommendations),
         estimate_budget=EstimateBudgetUseCase(
             outcomes=repos.outcomes,
             tool_calls=repos.tool_calls,
@@ -69,9 +68,7 @@ def _build_server(repos: InMemoryRepositorySet) -> CcprophetMcpServer:
     )
 
 
-def _seed_active_bloat_session(
-    repos: InMemoryRepositorySet, sid: str = "s-live"
-) -> None:
+def _seed_active_bloat_session(repos: InMemoryRepositorySet, sid: str = "s-live") -> None:
     repos.sessions.upsert(SessionBuilder().with_id(sid).build())
     repos.tool_defs.bulk_add(
         SessionId(sid),
@@ -80,9 +77,7 @@ def _seed_active_bloat_session(
             ToolDef("mcp__github_x", TokenCount(1_400), "mcp:github"),
         ],
     )
-    repos.tool_calls.append(
-        ToolCallBuilder().in_session(sid).for_tool("Read").build()
-    )
+    repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool("Read").build())
 
 
 # -- get_current_bloat --------------------------------------------------------
@@ -116,17 +111,13 @@ class TestGetCurrentBloat:
 class TestGetPhaseBreakdown:
     def test_explicit_sid_unknown_session_returns_error(self) -> None:
         repos = InMemoryRepositorySet()
-        payload = _build_server(repos).dispatch(
-            "get_phase_breakdown", {"sid": "nope"}
-        )
+        payload = _build_server(repos).dispatch("get_phase_breakdown", {"sid": "nope"})
         assert payload["code"] == "session_not_found"
 
     def test_null_sid_uses_active_session(self) -> None:
         repos = InMemoryRepositorySet()
         _seed_active_bloat_session(repos)
-        payload = _build_server(repos).dispatch(
-            "get_phase_breakdown", {"sid": None}
-        )
+        payload = _build_server(repos).dispatch("get_phase_breakdown", {"sid": None})
         assert "phases" in payload
         assert isinstance(payload["phases"], list)
 
@@ -142,12 +133,8 @@ class TestRecommendAction:
 
     def test_returns_pending_recommendations(self) -> None:
         repos = InMemoryRepositorySet()
-        repos.recommendations.save_all(
-            [RecommendationBuilder().in_session("s-1").build()]
-        )
-        payload = _build_server(repos).dispatch(
-            "recommend_action", {"limit": 10}
-        )
+        repos.recommendations.save_all([RecommendationBuilder().in_session("s-1").build()])
+        payload = _build_server(repos).dispatch("recommend_action", {"limit": 10})
         assert len(payload["recommendations"]) == 1
         rec = payload["recommendations"][0]
         assert rec["kind"] == "prune_mcp"
@@ -162,16 +149,12 @@ class TestRecommendAction:
 class TestEstimateBudget:
     def test_insufficient_samples_error(self) -> None:
         repos = InMemoryRepositorySet()
-        payload = _build_server(repos).dispatch(
-            "estimate_budget", {"task_type": "refactor"}
-        )
+        payload = _build_server(repos).dispatch("estimate_budget", {"task_type": "refactor"})
         assert payload["code"] == "insufficient_samples"
 
     def test_returns_envelope_when_enough_successes(self) -> None:
         repos = InMemoryRepositorySet()
-        repos.pricing.add(
-            PricingRateBuilder().for_model("claude-opus-4-6").build()
-        )
+        repos.pricing.add(PricingRateBuilder().for_model("claude-opus-4-6").build())
         for i in range(3):
             sid = f"success-{i}"
             repos.sessions.upsert(SessionBuilder().with_id(sid).build())
@@ -182,16 +165,10 @@ class TestEstimateBudget:
                 .with_task("refactor")
                 .build()
             )
-            repos.tool_calls.append(
-                ToolCallBuilder().in_session(sid).for_tool("Read").build()
-            )
-            repos.tool_defs.bulk_add(
-                SessionId(sid), [ToolDef("Read", TokenCount(500), "system")]
-            )
+            repos.tool_calls.append(ToolCallBuilder().in_session(sid).for_tool("Read").build())
+            repos.tool_defs.bulk_add(SessionId(sid), [ToolDef("Read", TokenCount(500), "system")])
 
-        payload = _build_server(repos).dispatch(
-            "estimate_budget", {"task_type": "refactor"}
-        )
+        payload = _build_server(repos).dispatch("estimate_budget", {"task_type": "refactor"})
         assert "error" not in payload
         assert payload["task_type"] == "refactor"
         assert payload["sample_size"] == 3
@@ -225,9 +202,7 @@ class TestDispatchSafety:
         repos = InMemoryRepositorySet()
         _seed_active_bloat_session(repos)
         _build_server(repos).dispatch("get_current_bloat", {})
-        _build_server(repos).dispatch(
-            "get_phase_breakdown", {"sid": "s-live"}
-        )
+        _build_server(repos).dispatch("get_phase_breakdown", {"sid": "s-live"})
         # Phases are persisted by DetectPhasesUseCase.execute() by design —
         # that's not a new write from MCP, it's upserting derived state.
         # What MUST NOT happen is writing recommendations or outcomes.

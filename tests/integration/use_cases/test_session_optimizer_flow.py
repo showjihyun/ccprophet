@@ -5,6 +5,7 @@ Wires real `InMemoryRepositorySet`, real `JsonFileSettingsStore`, and real
 snapshot → restore` flow as a single sequence. Complements
 `tests/integration/use_cases/test_auto_fix_flow.py` which covers F7 only.
 """
+
 from __future__ import annotations
 
 import json
@@ -34,9 +35,7 @@ from tests.fixtures.builders import (
 FROZEN = datetime(2026, 4, 18, 12, 0, 0, tzinfo=timezone.utc)
 
 
-def _seed_success_cluster(
-    repos: InMemoryRepositorySet, task: str, n: int = 3
-) -> None:
+def _seed_success_cluster(repos: InMemoryRepositorySet, task: str, n: int = 3) -> None:
     """Seed n labelled-success sessions that all used the same tools."""
     mark_uc = MarkOutcomeUseCase(
         sessions=repos.sessions,
@@ -75,9 +74,7 @@ def test_mark_then_reproduce_end_to_end(tmp_path) -> None:  # type: ignore[no-un
     snap_store = FilesystemSnapshotStore(snap_root)
     _seed_success_cluster(repos, "refactor", n=3)
 
-    prune = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    prune = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=prune,
         settings=settings,
@@ -97,9 +94,7 @@ def test_mark_then_reproduce_end_to_end(tmp_path) -> None:  # type: ignore[no-un
 
     # 1. Dry-run — recommendations are created but nothing is written.
     original_bytes = settings_path.read_bytes()
-    outcome = reproduce.execute(
-        TaskType("refactor"), target_path=settings_path, apply=False
-    )
+    outcome = reproduce.execute(TaskType("refactor"), target_path=settings_path, apply=False)
     assert outcome.best_config.cluster_size == 3
     assert settings_path.read_bytes() == original_bytes
     assert outcome.apply_outcome is None
@@ -107,9 +102,7 @@ def test_mark_then_reproduce_end_to_end(tmp_path) -> None:  # type: ignore[no-un
     assert len(outcome.recommendations) >= 0
 
     # 2. Apply — snapshot captured + settings atomically patched.
-    outcome_applied = reproduce.execute(
-        TaskType("refactor"), target_path=settings_path, apply=True
-    )
+    outcome_applied = reproduce.execute(TaskType("refactor"), target_path=settings_path, apply=True)
     if outcome_applied.apply_outcome and outcome_applied.apply_outcome.written:
         # If anything was actually applied, AP-7 must hold.
         assert outcome_applied.apply_outcome.snapshot is not None
@@ -151,9 +144,7 @@ def test_insufficient_samples_blocks_reproduce(tmp_path) -> None:  # type: ignor
     snap_store = FilesystemSnapshotStore(snap_root)
     _seed_success_cluster(repos, "refactor", n=2)  # deliberately < 3
 
-    prune = PruneToolsUseCase(
-        recommendations=repos.recommendations, settings=settings
-    )
+    prune = PruneToolsUseCase(recommendations=repos.recommendations, settings=settings)
     apply = ApplyPruningUseCase(
         prune=prune,
         settings=settings,
@@ -174,6 +165,4 @@ def test_insufficient_samples_blocks_reproduce(tmp_path) -> None:  # type: ignor
     import pytest
 
     with pytest.raises(InsufficientSamples):
-        reproduce.execute(
-            TaskType("refactor"), target_path=settings_path, apply=False
-        )
+        reproduce.execute(TaskType("refactor"), target_path=settings_path, apply=False)

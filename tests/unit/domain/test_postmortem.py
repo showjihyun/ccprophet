@@ -35,8 +35,7 @@ def test_task_overrun_detected() -> None:
     failed = _session("fail")
     successes = tuple(_session(f"ok-{i}") for i in range(3))
     failed_calls = [
-        ToolCallBuilder().in_session(SessionId("fail")).for_tool("Task").build()
-        for _ in range(5)
+        ToolCallBuilder().in_session(SessionId("fail")).for_tool("Task").build() for _ in range(5)
     ]
     inputs = PostmortemInputs(
         failed_session=failed,
@@ -57,12 +56,7 @@ def test_unused_mcp_detected() -> None:
         ToolDef("mcp__linear_y", TokenCount(400), "mcp:linear"),
         ToolDef("mcp__github_x", TokenCount(500), "mcp:github"),
     ]
-    calls = [
-        ToolCallBuilder()
-        .in_session(SessionId("fail"))
-        .for_tool("mcp__github_x")
-        .build()
-    ]
+    calls = [ToolCallBuilder().in_session(SessionId("fail")).for_tool("mcp__github_x").build()]
     inputs = PostmortemInputs(
         failed_session=failed,
         task_type=TaskType("t"),

@@ -38,6 +38,7 @@ def run_live_command(
             print(json_module.dumps({"error": msg}))
         else:
             from rich.console import Console
+
             Console(stderr=True).print(f"[bold red]Error:[/] {msg}")
         return 2
 
@@ -59,17 +60,19 @@ def run_live_command(
             session_cost_usd = None
 
     if as_json:
-        print(json_module.dumps(
-            {
-                "session": _session_dict(session),
-                "phases": [_phase_dict(p) for p in phases],
-                "bloat_ratio": bloat_ratio,
-                "bloat_tokens": bloat_tokens,
-                "session_cost_usd": session_cost_usd,
-            },
-            indent=2,
-            default=str,
-        ))
+        print(
+            json_module.dumps(
+                {
+                    "session": _session_dict(session),
+                    "phases": [_phase_dict(p) for p in phases],
+                    "bloat_ratio": bloat_ratio,
+                    "bloat_tokens": bloat_tokens,
+                    "session_cost_usd": session_cost_usd,
+                },
+                indent=2,
+                default=str,
+            )
+        )
         return 0
 
     _render(session, phases, bloat_ratio, bloat_tokens, session_cost_usd)
@@ -124,9 +127,7 @@ def _render(
         f"Tokens in/out: {session.total_input_tokens.value:,}/"
         f"{session.total_output_tokens.value:,}"
     )
-    bloat_line = (
-        f"Bloat: [bold]{bloat_tokens:,}[/] tokens ({round(bloat_ratio * 100, 1)}%)"
-    )
+    bloat_line = f"Bloat: [bold]{bloat_tokens:,}[/] tokens ({round(bloat_ratio * 100, 1)}%)"
     if session_cost_usd is not None:
         bloat_line += f"   [dim]·[/] Cost: [bold green]${session_cost_usd:.4f}[/]"
     console.print(bloat_line)

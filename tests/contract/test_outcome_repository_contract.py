@@ -32,17 +32,11 @@ class OutcomeRepositoryContract(ABC):
     def test_get_unknown_returns_none(self, repository) -> None:  # type: ignore[no-untyped-def]
         assert repository.get_label(SessionId("nope")) is None
 
-    def test_list_sessions_by_label_and_task(
-        self, repository, sessions_repo
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_list_sessions_by_label_and_task(self, repository, sessions_repo) -> None:  # type: ignore[no-untyped-def]
         for sid in ("s1", "s2", "s3"):
             sessions_repo.upsert(SessionBuilder().with_id(sid).build())
-        repository.set_label(
-            OutcomeLabelBuilder().for_session("s1").with_task("refactor").build()
-        )
-        repository.set_label(
-            OutcomeLabelBuilder().for_session("s2").with_task("refactor").build()
-        )
+        repository.set_label(OutcomeLabelBuilder().for_session("s1").with_task("refactor").build())
+        repository.set_label(OutcomeLabelBuilder().for_session("s2").with_task("refactor").build())
         repository.set_label(
             OutcomeLabelBuilder()
             .for_session("s3")
@@ -52,9 +46,7 @@ class OutcomeRepositoryContract(ABC):
         )
 
         successes = list(
-            repository.list_sessions_by_label(
-                OutcomeLabelValue.SUCCESS, TaskType("refactor")
-            )
+            repository.list_sessions_by_label(OutcomeLabelValue.SUCCESS, TaskType("refactor"))
         )
         assert {s.session_id.value for s in successes} == {"s1", "s2"}
 
@@ -65,6 +57,7 @@ class TestInMemoryOutcomeRepository(OutcomeRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemorySessionRepository,
         )
+
         return InMemorySessionRepository()
 
     @pytest.fixture
@@ -72,4 +65,5 @@ class TestInMemoryOutcomeRepository(OutcomeRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemoryOutcomeRepository,
         )
+
         return InMemoryOutcomeRepository(sessions_repo)

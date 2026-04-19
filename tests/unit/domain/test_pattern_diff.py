@@ -3,6 +3,7 @@
 Each test pins a single rule. Builders are reused from
 ``tests/fixtures/builders.py`` to keep setup light.
 """
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -47,8 +48,7 @@ def _phase(sid: str, ptype: PhaseType, *, minute: int = 0):
     )
 
 
-def _analyze(a, b, *, calls_a=(), calls_b=(), defs_a=(), defs_b=(),
-             phases_a=(), phases_b=()):
+def _analyze(a, b, *, calls_a=(), calls_b=(), defs_a=(), defs_b=(), phases_a=(), phases_b=()):
     return PatternDiffAnalyzer.analyze(
         a=a,
         b=b,
@@ -133,14 +133,11 @@ def test_bloat_delta_warn_when_deterioration():
     # B: heavy unused MCP → high bloat.
     defs_b = [
         ToolDefBuilder().named("Read").with_tokens(100).from_source("system").build(),
-        ToolDefBuilder()
-        .named("mcp__heavy").with_tokens(5000).from_source("mcp:jira").build(),
+        ToolDefBuilder().named("mcp__heavy").with_tokens(5000).from_source("mcp:jira").build(),
     ]
     calls_a = [_tc("sa", "Read")]
     calls_b = [_tc("sb", "Read")]
-    report = _analyze(
-        a, b, calls_a=calls_a, calls_b=calls_b, defs_a=defs_a, defs_b=defs_b
-    )
+    report = _analyze(a, b, calls_a=calls_a, calls_b=calls_b, defs_a=defs_a, defs_b=defs_b)
     bloat = next(f for f in report.findings if f.kind == "bloat_delta")
     assert bloat.severity == "warn"
     assert "pp" in bloat.detail
@@ -162,9 +159,7 @@ def test_mcp_subset_changed_reports_exclusive_servers():
     ]
     calls_a = [_tc("sa", "mcp__gh"), _tc("sa", "Read", seconds=1)]
     calls_b = [_tc("sb", "mcp__jr"), _tc("sb", "Read", seconds=1)]
-    report = _analyze(
-        a, b, calls_a=calls_a, calls_b=calls_b, defs_a=defs_a, defs_b=defs_b
-    )
+    report = _analyze(a, b, calls_a=calls_a, calls_b=calls_b, defs_a=defs_a, defs_b=defs_b)
     subset = next(f for f in report.findings if f.kind == "mcp_subset_changed")
     assert subset.severity == "info"
     assert "github" in subset.detail
@@ -178,9 +173,7 @@ def test_read_loop_delta_fires_when_only_one_side_loops():
     a = _session("sa")
     b = _session("sb")
     # A has 5 reads of same hash.
-    calls_a = [
-        _tc("sa", "Read", input_hash="same", seconds=i) for i in range(5)
-    ]
+    calls_a = [_tc("sa", "Read", input_hash="same", seconds=i) for i in range(5)]
     calls_b = [_tc("sb", "Read", input_hash=f"diff-{i}", seconds=i) for i in range(5)]
     report = _analyze(a, b, calls_a=calls_a, calls_b=calls_b)
     loop = next(f for f in report.findings if f.kind == "read_loop_delta")
@@ -238,9 +231,7 @@ def test_empty_when_identical():
     calls_b = [_tc("sb", "Read")]
     defs_a = [ToolDefBuilder().named("Read").with_tokens(100).build()]
     defs_b = [ToolDefBuilder().named("Read").with_tokens(100).build()]
-    report = _analyze(
-        a, b, calls_a=calls_a, calls_b=calls_b, defs_a=defs_a, defs_b=defs_b
-    )
+    report = _analyze(a, b, calls_a=calls_a, calls_b=calls_b, defs_a=defs_a, defs_b=defs_b)
     assert report.findings == ()
     assert report.headline == "No structural deltas detected."
     assert isinstance(report.session_a_id, SessionId)

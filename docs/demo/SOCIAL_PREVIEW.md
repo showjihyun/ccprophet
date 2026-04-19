@@ -18,7 +18,7 @@ GitHub renders a **1280×640 PNG (≤ 1 MB)** at the top of every Twitter / Disc
 | Logo mark | `>_` prompt + a tiny DuckDB-duck silhouette or stacked bar ("bloat" → "fixed") |
 | Wordmark | **ccprophet** (monospace, lowercase) |
 | Tagline | `Context Efficiency Advisor for Claude Code` |
-| Sub-tagline | `auto-fix bloat · tokens → $ · anti-downgrade · local-first` |
+| Sub-tagline | `auto-fix bloat · tokens → $ · quality regression flag · local-first` |
 | Backdrop | Near-black (`#0B0D10`) with a soft cyan glow behind the wordmark (`#6EE7F2`) — matches the rich-terminal theme users will see in the DAG viewer |
 | Accents | Severity dots: green `#34D399`, yellow `#FBBF24`, red `#F87171` (same palette as DAG nodes) |
 
@@ -58,7 +58,7 @@ GitHub renders a **1280×640 PNG (≤ 1 MB)** at the top of every Twitter / Disc
     <text x="90"  y="470" fill="#34D399">🔧 auto-fix bloat</text>
     <text x="340" y="470" fill="#6EE7F2">🎯 reproduce wins</text>
     <text x="610" y="470" fill="#FBBF24">💰 tokens → $</text>
-    <text x="860" y="470" fill="#F87171">📊 anti-downgrade</text>
+    <text x="860" y="470" fill="#F87171">📊 quality flag</text>
   </g>
 
   <!-- footer strip -->

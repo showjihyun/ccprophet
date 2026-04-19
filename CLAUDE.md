@@ -63,7 +63,7 @@ ccprophet/
     │   ├── ingest_event.py · analyze_bloat.py · detect_phases.py
     │   ├── forecast_compact.py · recommend_action.py · diff_sessions.py
     │   ├── prune_tools.py · apply_pruning.py · restore_snapshot.py · list_snapshots.py
-    │   ├── mark_outcome.py · estimate_budget.py · reproduce_session.py · analyze_postmortem.py
+    │   ├── mark_outcome.py · auto_label_sessions.py · estimate_budget.py · reproduce_session.py · analyze_postmortem.py
     │   ├── compute_session_cost.py · compute_monthly_cost.py · compute_savings.py
     │   ├── assess_quality.py · audit_claude_md.py · rollup_sessions.py
     │   └── list_recommendations.py · list_subagents.py · scan_mcp.py · pattern_diff.py · ...

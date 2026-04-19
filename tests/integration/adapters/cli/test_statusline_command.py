@@ -103,3 +103,76 @@ def test_json_output(capsys) -> None:  # type: ignore[no-untyped-def]
     payload = json.loads(capsys.readouterr().out)
     assert code == 0
     assert payload["session_id"] == "json-ses"  # first 8 chars
+
+
+def _seed_bloat_session(
+    repos: InMemoryRepositorySet,
+    sid: str,
+    *,
+    unused_tokens: int,
+    used_tokens: int = 500,
+) -> None:
+    """Seed a session with `used` Read calls and an unused MCP tool def."""
+    repos.sessions.upsert(SessionBuilder().with_id(sid).build())
+    repos.tool_defs.bulk_add(
+        SessionId(sid),
+        [
+            ToolDef("Read", TokenCount(used_tokens), "system"),
+            ToolDef("mcp__unused", TokenCount(unused_tokens), "mcp:unused"),
+        ],
+    )
+    repos.tool_calls.append(ToolCallBuilder().in_session(SessionId(sid)).for_tool("Read").build())
+
+
+def test_low_bloat_has_no_badge(capsys) -> None:  # type: ignore[no-untyped-def]
+    repos = InMemoryRepositorySet()
+    # 250 / (500 + 250) = 33% → below warn threshold (40%)
+    _seed_bloat_session(repos, "low", unused_tokens=250)
+    run_statusline_command(
+        repos.sessions,
+        tool_defs_for=repos.tool_defs.list_for_session,
+        tool_calls_for=repos.tool_calls.list_for_session,
+    )
+    out = capsys.readouterr().out.strip()
+    assert "!" not in out
+    assert "33%" in out
+
+
+def test_warn_bloat_shows_single_bang(capsys) -> None:  # type: ignore[no-untyped-def]
+    repos = InMemoryRepositorySet()
+    # 500 / (500 + 500) = 50% -> warn band (40-70%)
+    _seed_bloat_session(repos, "warn", unused_tokens=500)
+    run_statusline_command(
+        repos.sessions,
+        tool_defs_for=repos.tool_defs.list_for_session,
+        tool_calls_for=repos.tool_calls.list_for_session,
+    )
+    out = capsys.readouterr().out.strip()
+    assert "! bloat" in out
+    assert "!! bloat" not in out
+
+
+def test_alert_bloat_shows_double_bang(capsys) -> None:  # type: ignore[no-untyped-def]
+    repos = InMemoryRepositorySet()
+    # 4500 / (500 + 4500) = 90% → alert band (≥70%)
+    _seed_bloat_session(repos, "alert", unused_tokens=4500)
+    run_statusline_command(
+        repos.sessions,
+        tool_defs_for=repos.tool_defs.list_for_session,
+        tool_calls_for=repos.tool_calls.list_for_session,
+    )
+    out = capsys.readouterr().out.strip()
+    assert "!! bloat" in out
+
+
+def test_json_carries_bloat_level(capsys) -> None:  # type: ignore[no-untyped-def]
+    repos = InMemoryRepositorySet()
+    _seed_bloat_session(repos, "jsonbloat", unused_tokens=4500)
+    run_statusline_command(
+        repos.sessions,
+        tool_defs_for=repos.tool_defs.list_for_session,
+        tool_calls_for=repos.tool_calls.list_for_session,
+        as_json=True,
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["bloat_level"] == "alert"

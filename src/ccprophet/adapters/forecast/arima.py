@@ -12,6 +12,7 @@ This keeps the base install lightweight (AP-4) and the Clean Architecture
 forbidden-module contract (pyproject.toml [tool.importlinter]) satisfied
 everywhere except inside this single adapter file.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -70,8 +71,10 @@ class ArimaForecastModel:
         # (1) Too few samples — ARIMA(1,1,1) would over-fit noise.
         if len(samples) < self._min_samples:
             return self._relabel_fallback(
-                samples, session_id=session_id,
-                context_window_size=context_window_size, now=now,
+                samples,
+                session_id=session_id,
+                context_window_size=context_window_size,
+                now=now,
             )
 
         # (2) Optional extra not installed — lazy import guard.
@@ -79,8 +82,10 @@ class ArimaForecastModel:
             import statsmodels.tsa.arima.model as _arima_mod
         except ImportError:
             return self._relabel_fallback(
-                samples, session_id=session_id,
-                context_window_size=context_window_size, now=now,
+                samples,
+                session_id=session_id,
+                context_window_size=context_window_size,
+                now=now,
             )
 
         sorted_samples = sorted(samples, key=lambda s: s.ts)
@@ -91,8 +96,10 @@ class ArimaForecastModel:
             fit = _arima_mod.ARIMA(y, order=self._order).fit()
         except Exception:
             return self._relabel_fallback(
-                samples, session_id=session_id,
-                context_window_size=context_window_size, now=now,
+                samples,
+                session_id=session_id,
+                context_window_size=context_window_size,
+                now=now,
             )
 
         # (4) Forecast can fail on numerical blow-up.
@@ -100,8 +107,10 @@ class ArimaForecastModel:
             forecasted = fit.forecast(steps=N_FORECAST_STEPS)
         except Exception:
             return self._relabel_fallback(
-                samples, session_id=session_id,
-                context_window_size=context_window_size, now=now,
+                samples,
+                session_id=session_id,
+                context_window_size=context_window_size,
+                now=now,
             )
 
         threshold = context_window_size * self._compact_threshold_ratio
@@ -130,9 +139,7 @@ class ArimaForecastModel:
         )
         rate = (y[-1] - first_cumulative) / span_seconds
         context_usage = (
-            min(1.0, last_cumulative / context_window_size)
-            if context_window_size > 0
-            else 0.0
+            min(1.0, last_cumulative / context_window_size) if context_window_size > 0 else 0.0
         )
         confidence = min(
             0.95,
@@ -167,9 +174,7 @@ class ArimaForecastModel:
         return replace(base, model_used=FALLBACK_MODEL_NAME)
 
 
-def _estimate_seconds_per_step(
-    samples: Sequence[TokenSample], k: int
-) -> float:
+def _estimate_seconds_per_step(samples: Sequence[TokenSample], k: int) -> float:
     """Average inter-sample gap (in seconds) over the last ``k`` samples.
 
     Defaults to 60s when we cannot estimate (fewer than 2 points or all
@@ -178,10 +183,7 @@ def _estimate_seconds_per_step(
     if len(samples) < 2:
         return 60.0
     recent = samples[-k:] if len(samples) > k else samples
-    gaps = [
-        (recent[i].ts - recent[i - 1].ts).total_seconds()
-        for i in range(1, len(recent))
-    ]
+    gaps = [(recent[i].ts - recent[i - 1].ts).total_seconds() for i in range(1, len(recent))]
     if not gaps:
         return 60.0
     avg = sum(gaps) / len(gaps)

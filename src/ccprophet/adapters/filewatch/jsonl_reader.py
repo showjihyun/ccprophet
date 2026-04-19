@@ -5,6 +5,7 @@ content blocks also emit synthetic `PostToolUse` records so the downstream
 analyses (bloat, phase, recommender) see the same tool_calls they would if
 the hook had captured them live.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -90,9 +91,7 @@ class JsonlReader:
                 "tool_input": tool_input,
                 "parent_uuid": record.uuid,
             }
-            raw_hash = hashlib.sha256(
-                f"{record.raw_hash_hex}::{block_id}".encode()
-            ).hexdigest()
+            raw_hash = hashlib.sha256(f"{record.raw_hash_hex}::{block_id}".encode()).hexdigest()
             yield JsonlRecord(
                 raw_hash_hex=raw_hash,
                 session_id=record.session_id,

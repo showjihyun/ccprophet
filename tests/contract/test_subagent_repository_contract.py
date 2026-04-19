@@ -17,12 +17,7 @@ class SubagentRepositoryContract(ABC):
         ...
 
     def test_upsert_roundtrip(self, repository) -> None:  # type: ignore[no-untyped-def]
-        sub = (
-            SubagentBuilder()
-            .with_id("sub-A")
-            .with_parent("parent-1")
-            .build()
-        )
+        sub = SubagentBuilder().with_id("sub-A").with_parent("parent-1").build()
         repository.upsert(sub)
 
         got = repository.get(SessionId("sub-A"))
@@ -34,31 +29,16 @@ class SubagentRepositoryContract(ABC):
     def test_get_unknown_returns_none(self, repository) -> None:  # type: ignore[no-untyped-def]
         assert repository.get(SessionId("does-not-exist")) is None
 
-    def test_list_for_parent_filters_and_orders(
-        self, repository
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_list_for_parent_filters_and_orders(self, repository) -> None:  # type: ignore[no-untyped-def]
         early = datetime(2026, 4, 17, 9, 0, 0, tzinfo=timezone.utc)
         late = datetime(2026, 4, 17, 9, 5, 0, tzinfo=timezone.utc)
         repository.upsert(
-            SubagentBuilder()
-            .with_id("sub-late")
-            .with_parent("p1")
-            .started(late)
-            .build()
+            SubagentBuilder().with_id("sub-late").with_parent("p1").started(late).build()
         )
         repository.upsert(
-            SubagentBuilder()
-            .with_id("sub-early")
-            .with_parent("p1")
-            .started(early)
-            .build()
+            SubagentBuilder().with_id("sub-early").with_parent("p1").started(early).build()
         )
-        repository.upsert(
-            SubagentBuilder()
-            .with_id("sub-other")
-            .with_parent("p2")
-            .build()
-        )
+        repository.upsert(SubagentBuilder().with_id("sub-other").with_parent("p2").build())
 
         listed = list(repository.list_for_parent(SessionId("p1")))
         assert [s.subagent_id.value for s in listed] == ["sub-early", "sub-late"]
@@ -69,17 +49,11 @@ class SubagentRepositoryContract(ABC):
         empty = list(repository.list_for_parent(SessionId("nope")))
         assert empty == []
 
-    def test_upsert_updates_ended_at_idempotently(
-        self, repository
-    ) -> None:  # type: ignore[no-untyped-def]
+    def test_upsert_updates_ended_at_idempotently(self, repository) -> None:  # type: ignore[no-untyped-def]
         start = datetime(2026, 4, 17, 9, 0, 0, tzinfo=timezone.utc)
         end = datetime(2026, 4, 17, 9, 10, 0, tzinfo=timezone.utc)
         original = (
-            SubagentBuilder()
-            .with_id("sub-end")
-            .with_parent("parent-1")
-            .started(start)
-            .build()
+            SubagentBuilder().with_id("sub-end").with_parent("parent-1").started(start).build()
         )
         repository.upsert(original)
         repository.upsert(replace(original, ended_at=end, tool_call_count=5))
@@ -99,4 +73,5 @@ class TestInMemorySubagentRepository(SubagentRepositoryContract):
         from ccprophet.adapters.persistence.inmemory.repositories import (
             InMemorySubagentRepository,
         )
+
         return InMemorySubagentRepository()

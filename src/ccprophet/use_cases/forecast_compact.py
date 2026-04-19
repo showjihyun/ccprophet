@@ -7,6 +7,7 @@ session's `AssistantResponse` events (usage deltas), feeds them into the
 Same extraction shape as `backfill_from_jsonl._accumulate_usage` — but kept
 per-event here because the forecaster needs the *curve*, not the final total.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -39,9 +40,7 @@ class ForecastCompactUseCase:
         if session is None:
             raise SessionNotFound(session_id)
 
-        samples = _samples_from_events(
-            self.events.list_by_session(session_id)
-        )
+        samples = _samples_from_events(self.events.list_by_session(session_id))
         forecast = self.model.predict(
             samples,
             session_id=session_id,

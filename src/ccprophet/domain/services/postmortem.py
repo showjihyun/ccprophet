@@ -3,6 +3,7 @@
 Pure. The use case is responsible for loading the inputs (OutcomeRepo,
 ToolCallRepo, ToolDefRepo) and converting label metadata.
 """
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -47,17 +48,11 @@ class PostmortemAnalyzer:
         findings.extend(_unused_mcp_findings(inputs))
 
         if any(f.kind == "unused_mcp" for f in findings):
-            suggestions.append(
-                "Apply `ccprophet prune` to drop unused MCPs before next attempt"
-            )
+            suggestions.append("Apply `ccprophet prune` to drop unused MCPs before next attempt")
         if any(f.kind == "repeat_reads" for f in findings):
-            suggestions.append(
-                "Consider summarising frequently-read files into CLAUDE.md"
-            )
+            suggestions.append("Consider summarising frequently-read files into CLAUDE.md")
         if inputs.failed_session.compacted:
-            suggestions.append(
-                "Autocompact hit — consider `/clear` around 80% context usage"
-            )
+            suggestions.append("Autocompact hit — consider `/clear` around 80% context usage")
 
         return PostmortemReport(
             failed_session_id=inputs.failed_session.session_id,
@@ -69,9 +64,7 @@ class PostmortemAnalyzer:
         )
 
 
-def _rationale(
-    findings: Sequence[PostmortemFinding], compacted: bool, sample_size: int
-) -> str:
+def _rationale(findings: Sequence[PostmortemFinding], compacted: bool, sample_size: int) -> str:
     """Compress the worst finding into a 1-line "why it failed" (AP-8)."""
     if sample_size < 3:
         return (
@@ -113,10 +106,7 @@ def _task_overrun_findings(inputs: PostmortemInputs) -> list[PostmortemFinding]:
         return [
             PostmortemFinding(
                 kind="task_overrun",
-                detail=(
-                    f"Task tool called {failed_tasks}x "
-                    f"(success avg {avg:.1f}x)"
-                ),
+                detail=(f"Task tool called {failed_tasks}x (success avg {avg:.1f}x)"),
             )
         ]
     return []
@@ -130,9 +120,7 @@ def _repeat_read_findings(inputs: PostmortemInputs) -> list[PostmortemFinding]:
         path_counts[tc.input_hash] = path_counts.get(tc.input_hash, 0) + 1
 
     repeated = [
-        (hash_, count)
-        for hash_, count in path_counts.items()
-        if count >= REPEAT_READ_THRESHOLD
+        (hash_, count) for hash_, count in path_counts.items() if count >= REPEAT_READ_THRESHOLD
     ]
     if not repeated:
         return []
@@ -140,23 +128,18 @@ def _repeat_read_findings(inputs: PostmortemInputs) -> list[PostmortemFinding]:
     return [
         PostmortemFinding(
             kind="repeat_reads",
-            detail=(
-                f"{len(repeated)} file(s) re-read ≥{REPEAT_READ_THRESHOLD}x "
-                f"(max {worst[1]}x)"
-            ),
+            detail=(f"{len(repeated)} file(s) re-read ≥{REPEAT_READ_THRESHOLD}x (max {worst[1]}x)"),
         )
     ]
 
 
 def _unused_mcp_findings(inputs: PostmortemInputs) -> list[PostmortemFinding]:
     loaded = {
-        td.source[len("mcp:"):]
-        for td in inputs.failed_tool_defs
-        if td.source.startswith("mcp:")
+        td.source[len("mcp:") :] for td in inputs.failed_tool_defs if td.source.startswith("mcp:")
     }
     called_sources: set[str] = set()
     source_lookup = {
-        td.tool_name: td.source[len("mcp:"):]
+        td.tool_name: td.source[len("mcp:") :]
         for td in inputs.failed_tool_defs
         if td.source.startswith("mcp:")
     }
@@ -170,7 +153,6 @@ def _unused_mcp_findings(inputs: PostmortemInputs) -> list[PostmortemFinding]:
     return [
         PostmortemFinding(
             kind="unused_mcp",
-            detail=f"{len(unused)} MCP(s) loaded but unused: "
-                   + ", ".join(sorted(unused)),
+            detail=f"{len(unused)} MCP(s) loaded but unused: " + ", ".join(sorted(unused)),
         )
     ]

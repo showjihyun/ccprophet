@@ -56,19 +56,13 @@ class DiffSessionsUseCase:
         )
 
 
-def _mcps_called(
-    calls: Sequence[ToolCall], defs: Sequence[ToolDef]
-) -> set[str]:
+def _mcps_called(calls: Sequence[ToolCall], defs: Sequence[ToolDef]) -> set[str]:
     _PREFIX = "mcp:"
     source_lookup: dict[str, str] = {}
     for td in defs:
         if not td.source.startswith(_PREFIX):
             continue
-        server = td.source[len(_PREFIX):]
+        server = td.source[len(_PREFIX) :]
         if server:  # drop `mcp:` with no server name — malformed def
             source_lookup[td.tool_name] = server
-    return {
-        server
-        for tc in calls
-        if (server := source_lookup.get(tc.tool_name)) is not None
-    }
+    return {server for tc in calls if (server := source_lookup.get(tc.tool_name)) is not None}

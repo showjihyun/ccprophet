@@ -21,7 +21,13 @@ def _uc(repos: InMemoryRepositorySet) -> AssessQualityUseCase:
     )
 
 
-def _seed_over_days(repos: InMemoryRepositorySet, days: int, baseline_output: int, recent_output: int, recent_window: int = 2) -> None:
+def _seed_over_days(
+    repos: InMemoryRepositorySet,
+    days: int,
+    baseline_output: int,
+    recent_output: int,
+    recent_window: int = 2,
+) -> None:
     for d in range(days):
         day_back = days - d - 1
         started_at = NOW - timedelta(days=day_back, hours=1)
@@ -38,12 +44,8 @@ def _seed_over_days(repos: InMemoryRepositorySet, days: int, baseline_output: in
 
 def test_returns_reports_per_model() -> None:
     repos = InMemoryRepositorySet()
-    _seed_over_days(
-        repos, days=10, baseline_output=1000, recent_output=200, recent_window=2
-    )
-    reports = _uc(repos).execute(
-        window_days=2, baseline_days=8, threshold_sigma=1.5
-    )
+    _seed_over_days(repos, days=10, baseline_output=1000, recent_output=200, recent_window=2)
+    reports = _uc(repos).execute(window_days=2, baseline_days=8, threshold_sigma=1.5)
     assert len(reports) == 1
     r = reports[0]
     assert r.model == "claude-opus-4-7"

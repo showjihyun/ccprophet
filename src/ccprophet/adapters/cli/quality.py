@@ -45,11 +45,7 @@ def run_quality_command(
     )
 
     if as_json:
-        print(
-            json_module.dumps(
-                [_report_dict(r) for r in reports], indent=2, default=str
-            )
-        )
+        print(json_module.dumps([_report_dict(r) for r in reports], indent=2, default=str))
     else:
         _render(reports, ascii_only=ascii_only)
 
@@ -89,9 +85,7 @@ def _report_dict(r: RegressionReport) -> dict[str, object]:
     }
 
 
-def _render(
-    reports: Sequence[RegressionReport], *, ascii_only: bool
-) -> None:
+def _render(reports: Sequence[RegressionReport], *, ascii_only: bool) -> None:
     from rich.console import Console
     from rich.table import Table
 
@@ -99,6 +93,11 @@ def _render(
     if not reports:
         console.print("[dim]No sessions in the selected window.[/]")
         return
+
+    console.print(
+        "[dim]Note: metrics reflect your workload mix as well as model "
+        "behavior — a task-type change can drive a flag.[/]"
+    )
 
     chars = SPARK_CHARS_ASCII if ascii_only else SPARK_CHARS
 
@@ -127,10 +126,7 @@ def _render(
 
         flags_by_metric = {f.metric_name: f for f in report.flags}
         for metric in KEY_METRICS:
-            values = [
-                _metric_value(p, metric)
-                for p in report.series.points
-            ]
+            values = [_metric_value(p, metric) for p in report.series.points]
             sparkline = _sparkline(values, chars)
             flag = flags_by_metric.get(metric)
             if flag is not None:
@@ -143,14 +139,8 @@ def _render(
                     sparkline,
                 ]
             else:
-                recent_val = (
-                    values[-report.window_days:]
-                    if report.window_days > 0 else values
-                )
-                baseline_val = (
-                    values[:-report.window_days]
-                    if report.window_days > 0 else []
-                )
+                recent_val = values[-report.window_days :] if report.window_days > 0 else values
+                baseline_val = values[: -report.window_days] if report.window_days > 0 else []
                 row = [
                     metric,
                     f"{_mean(baseline_val):.3f}" if baseline_val else "-",

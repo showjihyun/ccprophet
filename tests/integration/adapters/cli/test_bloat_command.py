@@ -3,6 +3,7 @@
 Exercises the `run_bloat_command` function with InMemory repos, both `--json`
 and rich-table paths, and the `--cost` flag integration with pricing.
 """
+
 from __future__ import annotations
 
 import json
@@ -29,9 +30,7 @@ def _wire() -> tuple[InMemoryRepositorySet, AnalyzeBloatUseCase]:
     return repos, uc
 
 
-def _seed_session_with_bloat(
-    repos: InMemoryRepositorySet, sid: str = "s-1"
-) -> None:
+def _seed_session_with_bloat(repos: InMemoryRepositorySet, sid: str = "s-1") -> None:
     session = SessionBuilder().with_id(sid).build()
     repos.sessions.upsert(session)
     repos.tool_defs.bulk_add(
@@ -41,9 +40,7 @@ def _seed_session_with_bloat(
             ToolDefBuilder().named("Write").with_tokens(500).build(),
         ],
     )
-    repos.tool_calls.append(
-        ToolCallBuilder().in_session(SessionId(sid)).for_tool("Read").build()
-    )
+    repos.tool_calls.append(ToolCallBuilder().in_session(SessionId(sid)).for_tool("Read").build())
 
 
 def test_bloat_unknown_session_exits_2(capsys) -> None:  # type: ignore[no-untyped-def]

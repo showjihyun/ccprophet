@@ -61,15 +61,11 @@ def _render(d: SessionDiff) -> None:
     from rich.console import Console
 
     console = Console()
-    console.print(
-        f"[bold]{d.session_a_id.value}[/] → [bold]{d.session_b_id.value}[/]"
-    )
+    console.print(f"[bold]{d.session_a_id.value}[/] → [bold]{d.session_b_id.value}[/]")
     console.print(f"  input tokens Δ: {d.input_tokens_delta:+,}")
     console.print(f"  output tokens Δ: {d.output_tokens_delta:+,}")
     console.print(f"  tool calls Δ: {d.tool_call_count_delta:+d}")
-    console.print(
-        f"  bloat ratio Δ: {d.bloat_ratio_delta * 100:+.1f}%"
-    )
+    console.print(f"  bloat ratio Δ: {d.bloat_ratio_delta * 100:+.1f}%")
     if d.compacted_delta != 0:
         console.print(f"  compacted Δ: {d.compacted_delta:+d}")
     if d.tools_added:

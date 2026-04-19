@@ -5,6 +5,7 @@ DuckDB connection) after schema warmup — the one-shot fixed cost of
 `ensure_schema` is excluded because it only runs on first invocation per
 process, not per hook call.
 """
+
 from __future__ import annotations
 
 import statistics

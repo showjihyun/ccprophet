@@ -8,7 +8,7 @@ from ccprophet.harness.commands._shared import DB_PATH, connect_readwrite
 
 
 def register(app: typer.Typer) -> None:
-    @app.command()
+    @app.command(rich_help_panel="Advanced")
     def rollup(
         older_than: str = typer.Option(
             "90d", "--older-than", help="Cutoff age (e.g. 90d, 30d, 0d)"

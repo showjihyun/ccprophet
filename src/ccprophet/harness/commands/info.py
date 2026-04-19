@@ -6,7 +6,7 @@ from ccprophet.harness.commands._shared import connect_readonly
 
 
 def register(app: typer.Typer) -> None:
-    @app.command()
+    @app.command(rich_help_panel="Advanced")
     def sessions(
         limit: int = typer.Option(10, "--limit", "-n", help="Max rows"),
         latest: bool = typer.Option(False, "--latest", help="Show only the latest"),
@@ -33,11 +33,9 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Advanced")
     def subagents(
-        session: str | None = typer.Option(
-            None, "--session", "-s", help="Parent session ID"
-        ),
+        session: str | None = typer.Option(None, "--session", "-s", help="Parent session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """List Task-tool-spawned subagents for a parent session."""
@@ -60,7 +58,7 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command("mcp-scan")
+    @app.command("mcp-scan", rich_help_panel="Advanced")
     def mcp_scan(
         recent: int = typer.Option(20, "--recent", "-n", help="Sessions to check"),
         json: bool = typer.Option(False, "--json"),

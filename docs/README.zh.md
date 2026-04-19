@@ -19,7 +19,7 @@ ccprophet 填补这个空白。**完全本地** · **零网络** · **单一 Duc
 | 1 | **"不要只告诉我,请自动修复"** | 一条 `apply` 命令完成:禁用 MCP、应用 subset 配置、推荐 `/clear`。 |
 | 2 | **"不只看用了多少,更看结果是否变好"** | 学习成功会话的 config 与 phase 模式,在下一次会话中重现最佳配置。 |
 | 3 | **"不是 token 数,而是美元"** | 把节省换算成按月的 \$,让投入产出可见。 |
-| 4 | **"防止 Anthropic 悄悄降级"** | 同一模型同一参数下,质量指标显著下降则**自动标记**。 |
+| 4 | **"逐周质量回归预警"** | 同一模型同一参数下,质量指标显著下降则**自动标记**。对工作负载变化敏感,作为早期信号使用,而非定论。 |
 
 ## 四大核心功能
 
@@ -50,12 +50,12 @@ ccprophet savings --json                   # Auto Fix 累计节省
 ```
 Input · cache_creation · cache_read **分开计费**。每条成本输出都会 stamp 所用的 `pricing_rates.rate_id` —— AP-9 Dollar Transparency。
 
-### 4. 📊 Quality Watch (降级检测)
+### 4. 📊 Quality Watch (逐周回归预警)
 ```bash
 ccprophet quality
 ccprophet quality --export-parquet out.pq
 ```
-七个日粒度指标按 (模型 × task_type) 聚合,默认 2σ 回归阈值。每个被标记指标附带一行"为什么"。
+七个日粒度指标按 (模型 × task_type) 聚合,默认 2σ 回归阈值。每个被标记指标附带一行"为什么"。指标同时受工作负载影响,请作为早期信号使用,而非定论。
 
 ## 安装
 
@@ -63,13 +63,13 @@ ccprophet quality --export-parquet out.pq
 uv tool install ccprophet
 uv tool install "ccprophet[web,mcp,forecast]"
 
-ccprophet install           # hooks · statusLine · DB 初始化
-ccprophet doctor --migrate  # 应用 V1..V5 迁移
+ccprophet install           # hooks · statusLine · DB 初始化 + 模式迁移
 ccprophet ingest            # 回填过去的 Claude Code JSONL
+# 简短别名: `ccp` 同时安装,示例: `ccp bloat`
 ```
 全部数据存放于 `~/.claude-prophet/events.duckdb` 单文件,**不发起任何外部网络请求**。
 
-## 命令总览 (29 条)
+## 命令总览 (30 条)
 
 | 领域 | 命令 |
 |---|---|
@@ -82,7 +82,7 @@ ccprophet ingest            # 回填过去的 Claude Code JSONL
 | MCP | `mcp` (只读 stdio) |
 | 审计 | `claude-md` · `mcp-scan` |
 | 运维 | `doctor` · `query run/tables/schema` · `rollup` |
-| 通用 | `install` · `ingest` · `sessions` · `live` · `statusline` |
+| 通用 | `install` · `uninstall` · `ingest` · `sessions` · `live` · `statusline` |
 
 所有分析类命令支持 `--json`;与成本相关的命令支持 `--cost`。
 

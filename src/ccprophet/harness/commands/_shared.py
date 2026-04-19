@@ -9,8 +9,7 @@ if TYPE_CHECKING:
 
 
 DB_PATH = Path(
-    os.environ.get("CCPROPHET_DB")
-    or (Path.home() / ".claude-prophet" / "events.duckdb")
+    os.environ.get("CCPROPHET_DB") or (Path.home() / ".claude-prophet" / "events.duckdb")
 )
 SNAPSHOT_ROOT = Path.home() / ".claude-prophet" / "snapshots"
 DEFAULT_SETTINGS_PATH = Path.home() / ".claude" / "settings.json"
@@ -22,8 +21,7 @@ def connect_readonly() -> duckdb.DuckDBPyConnection:
 
     if not DB_PATH.exists():
         raise SystemExit(
-            f"ccprophet DB not found at {DB_PATH}\n"
-            f"Run `ccprophet install` or trigger a hook first."
+            f"ccprophet DB not found at {DB_PATH}\nRun `ccprophet install` or trigger a hook first."
         )
     return duckdb.connect(str(DB_PATH), read_only=True)
 
@@ -42,8 +40,7 @@ def connect_readwrite(*, create_if_missing: bool = False) -> duckdb.DuckDBPyConn
 
     if not DB_PATH.exists() and not create_if_missing:
         raise SystemExit(
-            f"ccprophet DB not found at {DB_PATH}\n"
-            f"Run `ccprophet install` or trigger a hook first."
+            f"ccprophet DB not found at {DB_PATH}\nRun `ccprophet install` or trigger a hook first."
         )
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(str(DB_PATH))

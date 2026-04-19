@@ -8,6 +8,7 @@ interface. Use cases depend only on this Protocol.
 Kept in its own module (rather than co-located in `repositories.py`) to keep
 each port file narrowly focused and the import graph shallow.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

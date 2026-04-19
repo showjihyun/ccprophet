@@ -4,6 +4,7 @@ Wires DuckDB repositories behind read-only use cases and hands the resulting
 FastAPI app to uvicorn. Bound to 127.0.0.1 by default and refuses any other
 host (NFR-2, ARCHITECT §9). No business logic lives here.
 """
+
 from __future__ import annotations
 
 import sys
@@ -13,8 +14,7 @@ import webbrowser
 from ccprophet.harness.commands._shared import connect_readonly as _connect_readonly
 
 _WEB_MISSING_HINT = (
-    "ccprophet serve requires the optional `web` extra.\n"
-    "Install with:  uv sync --extra web\n"
+    "ccprophet serve requires the optional `web` extra.\nInstall with:  uv sync --extra web\n"
 )
 
 _ALLOWED_HOSTS = {"127.0.0.1", "localhost", "::1"}
@@ -49,12 +49,8 @@ def _build_app():  # type: ignore[no-untyped-def]
         analyze_bloat=AnalyzeBloatUseCase(
             sessions=sessions, tool_defs=tool_defs, tool_calls=tool_calls
         ),
-        detect_phases=DetectPhasesUseCase(
-            sessions=sessions, events=events, phases=phases
-        ),
-        compute_session_cost=ComputeSessionCostUseCase(
-            sessions=sessions, pricing=pricing
-        ),
+        detect_phases=DetectPhasesUseCase(sessions=sessions, events=events, phases=phases),
+        compute_session_cost=ComputeSessionCostUseCase(sessions=sessions, pricing=pricing),
         sessions=sessions,
         tool_calls=tool_calls,
         phases=phases,
