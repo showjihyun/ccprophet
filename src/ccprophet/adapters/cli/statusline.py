@@ -20,6 +20,12 @@ from ccprophet.domain.errors import UnknownPricingModel
 from ccprophet.domain.services.bloat import BloatCalculator
 from ccprophet.domain.services.cost import CostCalculator
 
+# Bloat thresholds for the passive statusline indicator. Kept deliberately
+# conservative — the point is to nudge users toward `ccprophet prune`, not
+# to cry wolf on every session.
+BLOAT_WARN_PCT = 40.0  # yellow / ⚠ prompt
+BLOAT_ALERT_PCT = 70.0  # red / ❗ prompt
+
 
 def run_statusline_command(
     sessions: SessionRepository,
@@ -56,12 +62,23 @@ def run_statusline_command(
         called = list(tool_calls_for(session.session_id))
         if loaded:
             report = BloatCalculator.calculate(loaded, called)
-            parts["bloat_pct"] = report.bloat_ratio.as_percent()
+            pct = report.bloat_ratio.as_percent()
+            parts["bloat_pct"] = pct
+            parts["bloat_level"] = _bloat_level(pct)
         else:
             parts["bloat_pct"] = None
+            parts["bloat_level"] = "ok"
 
     _emit(parts, _format_line(parts), as_json=as_json)
     return 0
+
+
+def _bloat_level(pct: float) -> str:
+    if pct >= BLOAT_ALERT_PCT:
+        return "alert"
+    if pct >= BLOAT_WARN_PCT:
+        return "warn"
+    return "ok"
 
 
 def _pick_latest_session(sessions: SessionRepository) -> Session | None:
@@ -84,8 +101,20 @@ def _format_line(parts: dict) -> str:  # type: ignore[type-arg]
         segs.append(f"${cost:.2f}")
     bloat = parts.get("bloat_pct")
     if bloat is not None:
-        segs.append(f"bloat {bloat:.0f}%")
+        badge = _bloat_badge(parts.get("bloat_level", "ok"))
+        segs.append(f"{badge}bloat {bloat:.0f}%")
     return " | ".join(segs)
+
+
+def _bloat_badge(level: str) -> str:
+    # Plain ASCII glyphs keep the statusline readable under every terminal
+    # encoding ccprophet supports (macOS, Linux, Windows cp949 / cp1252). A
+    # trailing space separates the badge from the numeric percentage.
+    if level == "alert":
+        return "!! "
+    if level == "warn":
+        return "! "
+    return ""
 
 
 def _fmt_tok(n: int) -> str:

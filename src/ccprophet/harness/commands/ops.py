@@ -42,6 +42,24 @@ def register(app: typer.Typer) -> None:
         raise typer.Exit(code)
 
     @app.command(rich_help_panel="Getting started")
+    def uninstall(
+        dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without writing"),
+        purge: bool = typer.Option(False, "--purge", help="Also delete the DuckDB and log files"),
+        json: bool = typer.Option(False, "--json", help="Output as JSON"),
+    ) -> None:
+        """Remove ccprophet hooks and statusLine; optionally purge the DB."""
+        from ccprophet.adapters.cli.install import run_uninstall_command
+        from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
+
+        code = run_uninstall_command(
+            settings=JsonFileSettingsStore(),
+            dry_run=dry_run,
+            purge=purge,
+            as_json=json,
+        )
+        raise typer.Exit(code)
+
+    @app.command(rich_help_panel="Getting started")
     def ingest(
         root: Path = typer.Option(
             DEFAULT_JSONL_ROOT, "--root", help="Claude Code projects directory"

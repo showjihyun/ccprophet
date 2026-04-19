@@ -189,3 +189,162 @@ def _render(report: dict) -> None:  # type: ignore[type-arg]
         console.print("  1. Restart Claude Code so the new hooks load.")
         console.print("  2. Backfill past sessions:     [cyan]ccprophet ingest[/]")
         console.print("  3. See your first report:      [cyan]ccprophet bloat[/]")
+
+
+# --------------------------------------------------------------------- #
+# Uninstall path                                                         #
+# --------------------------------------------------------------------- #
+
+
+def run_uninstall_command(
+    *,
+    settings: SettingsStore,
+    dry_run: bool = False,
+    purge: bool = False,
+    as_json: bool = False,
+    prophet_dir: Path | None = None,
+    settings_path: Path | None = None,
+) -> int:
+    prophet_dir = prophet_dir or Path.home() / ".claude-prophet"
+    settings_path = settings_path or Path.home() / ".claude" / "settings.json"
+
+    plan = _plan_hook_removal(settings_path)
+    if not dry_run and plan["needs_write"]:
+        _apply_hook_patch(settings, settings_path, plan["new_content"])
+
+    purged: list[str] = []
+    purge_pending: list[str] = []
+    if prophet_dir.exists():
+        # Only list top-level items — we never recurse into user-created files.
+        candidates = [prophet_dir / "events.duckdb", prophet_dir / "logs"]
+        for path in candidates:
+            if not path.exists():
+                continue
+            if purge and not dry_run:
+                _remove_path(path)
+                purged.append(str(path))
+            else:
+                purge_pending.append(str(path))
+
+    report = {
+        "settings_path": str(settings_path),
+        "hooks_removed": plan["removed"],
+        "hooks_not_present": plan["not_present"],
+        "statusline_removed": plan["statusline_removed"],
+        "purge": purge,
+        "purged": purged,
+        "purge_pending": purge_pending,
+        "dry_run": dry_run,
+        "applied": (not dry_run) and (plan["needs_write"] or bool(purged)),
+    }
+    if as_json:
+        print(json_module.dumps(report, indent=2))
+    else:
+        _render_uninstall(report)
+    return 0
+
+
+def _plan_hook_removal(settings_path: Path) -> dict:  # type: ignore[type-arg]
+    if not settings_path.exists():
+        return {
+            "new_content": {},
+            "removed": [],
+            "not_present": list(HOOK_CONFIG.keys()),
+            "statusline_removed": False,
+            "needs_write": False,
+        }
+    raw = settings_path.read_text(encoding="utf-8")
+    settings = json_module.loads(raw) if raw.strip() else {}
+    if not isinstance(settings, dict):
+        return {
+            "new_content": settings,
+            "removed": [],
+            "not_present": list(HOOK_CONFIG.keys()),
+            "statusline_removed": False,
+            "needs_write": False,
+        }
+
+    removed: list[str] = []
+    not_present: list[str] = []
+    hooks = settings.get("hooks")
+    if isinstance(hooks, dict):
+        for event_type in HOOK_CONFIG:
+            existing = hooks.get(event_type, [])
+            if not isinstance(existing, list):
+                continue
+            kept = [
+                h
+                for h in existing
+                if not (isinstance(h, dict) and _command_value(h).startswith(HOOK_COMMAND))
+            ]
+            if len(kept) != len(existing):
+                removed.append(event_type)
+                if kept:
+                    hooks[event_type] = kept
+                else:
+                    hooks.pop(event_type, None)
+            else:
+                not_present.append(event_type)
+        # Drop the `hooks` key entirely when empty so we don't leave residue.
+        if not hooks:
+            settings.pop("hooks", None)
+    else:
+        not_present = list(HOOK_CONFIG.keys())
+
+    statusline_removed = False
+    existing_sl = settings.get("statusLine")
+    if isinstance(existing_sl, dict) and _command_value(existing_sl).startswith(
+        STATUSLINE_COMMAND.split()[0]
+    ):
+        settings.pop("statusLine", None)
+        statusline_removed = True
+
+    return {
+        "new_content": settings,
+        "removed": removed,
+        "not_present": not_present,
+        "statusline_removed": statusline_removed,
+        "needs_write": bool(removed) or statusline_removed,
+    }
+
+
+def _remove_path(path: Path) -> None:
+    if path.is_dir():
+        import shutil
+
+        shutil.rmtree(path, ignore_errors=True)
+    else:
+        with contextlib.suppress(OSError):
+            path.unlink()
+
+
+def _render_uninstall(report: dict) -> None:  # type: ignore[type-arg]
+    from rich.console import Console
+
+    console = Console()
+    if report["dry_run"]:
+        console.print("[bold cyan]Dry-run[/]. Re-run without --dry-run to apply.")
+    elif report["applied"]:
+        console.print("[bold green]Uninstalled[/] ccprophet hooks")
+    else:
+        console.print("[dim]Nothing to uninstall — no ccprophet entries found.[/]")
+
+    console.print(f"  Settings: {report['settings_path']}")
+    if report["hooks_removed"]:
+        console.print("  [yellow]− hooks[/]: " + ", ".join(report["hooks_removed"]))
+    if report["statusline_removed"]:
+        console.print("  [yellow]− statusLine[/]")
+    if report["purge"]:
+        if report["purged"]:
+            console.print("  [red]purged[/]:")
+            for p in report["purged"]:
+                console.print(f"    {p}")
+        else:
+            console.print("  [dim]nothing to purge[/]")
+    elif report["purge_pending"]:
+        console.print("  [dim]DB kept[/]: " + ", ".join(report["purge_pending"]))
+        console.print("    [dim]Add --purge to delete the DB and logs too.[/]")
+
+    if not report["dry_run"] and report["applied"]:
+        console.print()
+        console.print("[dim]Restart Claude Code to unload the hooks.[/]")
