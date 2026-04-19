@@ -8,6 +8,7 @@ Cross-platform: uses pathlib.Path throughout. On POSIX (macOS/Linux) the DB
 file is chmod'd to 0o600 to honor NFR-2; Windows permissions are inherited
 from the parent directory (no-op).
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -22,17 +23,17 @@ if TYPE_CHECKING:
     from ccprophet.ports.settings import SettingsStore
 
 # A harness-provided callable that creates `<prophet_dir>/events.duckdb` and
-# runs migrations. CLI stays ignorant of DuckDB and the persistence adapter.
-DbBootstrap = Callable[[Path], None]
+# runs migrations. Returns the number of migrations actually applied (so the
+# installer can report "Schema up to date" vs "Applied N migrations"). CLI
+# stays ignorant of DuckDB and the persistence adapter.
+DbBootstrap = Callable[[Path], int]
 
 HOOK_COMMAND = "ccprophet-hook"
 STATUSLINE_COMMAND = "ccprophet statusline"
 HOOK_CONFIG = {
     "PostToolUse": [{"type": "command", "command": HOOK_COMMAND, "timeout": 10}],
     "Stop": [{"type": "command", "command": HOOK_COMMAND, "timeout": 10}],
-    "UserPromptSubmit": [
-        {"type": "command", "command": HOOK_COMMAND, "timeout": 5}
-    ],
+    "UserPromptSubmit": [{"type": "command", "command": HOOK_COMMAND, "timeout": 5}],
     "SubagentStop": [{"type": "command", "command": HOOK_COMMAND, "timeout": 10}],
 }
 STATUSLINE_CONFIG = {
@@ -53,10 +54,13 @@ def run_install_command(
     prophet_dir = prophet_dir or Path.home() / ".claude-prophet"
     settings_path = settings_path or Path.home() / ".claude" / "settings.json"
 
+    migrations_applied = 0
     if not dry_run:
         prophet_dir.mkdir(parents=True, exist_ok=True)
         db_path = prophet_dir / "events.duckdb"
-        bootstrap_db(db_path)
+        result = bootstrap_db(db_path)
+        # Older harness wiring returned None; treat that as "unknown" (0).
+        migrations_applied = int(result) if isinstance(result, int) else 0
         _lock_down_permissions(db_path)
 
     plan = _plan_hook_patch(settings_path)
@@ -70,6 +74,7 @@ def run_install_command(
         "hooks_already_present": plan["already"],
         "statusline_added": plan["statusline_added"],
         "statusline_already_present": plan["statusline_already_present"],
+        "migrations_applied": migrations_applied,
         "dry_run": dry_run,
         "applied": (not dry_run) and plan["needs_write"],
     }
@@ -97,9 +102,7 @@ def _plan_hook_patch(settings_path: Path) -> dict:  # type: ignore[type-arg]
     for event_type, entries in HOOK_CONFIG.items():
         existing = hooks.get(event_type, [])
         has_ours = any(
-            isinstance(h, dict)
-            and _command_value(h).startswith(HOOK_COMMAND)
-            for h in existing
+            isinstance(h, dict) and _command_value(h).startswith(HOOK_COMMAND) for h in existing
         )
         if has_ours:
             already.append(event_type)
@@ -167,15 +170,22 @@ def _render(report: dict) -> None:  # type: ignore[type-arg]
     console.print(f"  DB: {report['db_path']}")
     console.print(f"  Settings: {report['settings_path']}")
     if report["hooks_added"]:
-        console.print(
-            "  [green]+ hooks[/]: " + ", ".join(report["hooks_added"])
-        )
+        console.print("  [green]+ hooks[/]: " + ", ".join(report["hooks_added"]))
     if report["hooks_already_present"]:
-        console.print(
-            "  [dim]already registered[/]: "
-            + ", ".join(report["hooks_already_present"])
-        )
+        console.print("  [dim]already registered[/]: " + ", ".join(report["hooks_already_present"]))
     if report.get("statusline_added"):
         console.print("  [green]+ statusLine[/]: " + STATUSLINE_COMMAND)
     elif report.get("statusline_already_present"):
         console.print("  [dim]statusLine already registered[/]")
+    migrated = report.get("migrations_applied", 0)
+    if migrated:
+        console.print(f"  [green]+ schema[/]: applied {migrated} migration(s)")
+    elif not report["dry_run"]:
+        console.print("  [dim]schema up to date[/]")
+
+    if not report["dry_run"]:
+        console.print()
+        console.print("[bold]Next:[/]")
+        console.print("  1. Restart Claude Code so the new hooks load.")
+        console.print("  2. Backfill past sessions:     [cyan]ccprophet ingest[/]")
+        console.print("  3. See your first report:      [cyan]ccprophet bloat[/]")

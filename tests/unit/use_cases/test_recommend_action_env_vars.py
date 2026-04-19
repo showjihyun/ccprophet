@@ -60,20 +60,34 @@ def _seed_session(
     repos.sessions.upsert(session)
 
 
-# ─── Rule 1: thinking_tokens proxy ───────────────────────────────────────────
+# ─── Rule 1: thinking_tokens (gated behind opt-in env var) ───────────────────
 
-def test_opus_model_with_high_output_triggers_thinking_rule() -> None:
+def test_opus_high_output_does_not_trigger_thinking_rule_by_default() -> None:
     repos = InMemoryRepositorySet()
     _seed_session(repos, model=_OPUS_MODEL, total_output_tokens=60_000)
     recs = _use_case(repos).execute(SessionId("s-env"), persist=False)
-    kinds = {r.kind for r in recs}
-    assert RecommendationKind.SET_ENV_VAR in kinds
+    env_recs = [r for r in recs if r.kind == RecommendationKind.SET_ENV_VAR]
+    targets = {r.target for r in env_recs}
+    # Proxy heuristic is OFF by default now — trust eroded by false positives.
+    assert "MAX_THINKING_TOKENS=10000" not in targets
+
+
+def test_opus_high_output_triggers_thinking_rule_when_proxy_enabled(
+    monkeypatch,
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setenv("CCPROPHET_EXPERIMENTAL_THINKING_PROXY", "1")
+    repos = InMemoryRepositorySet()
+    _seed_session(repos, model=_OPUS_MODEL, total_output_tokens=60_000)
+    recs = _use_case(repos).execute(SessionId("s-env"), persist=False)
     env_recs = [r for r in recs if r.kind == RecommendationKind.SET_ENV_VAR]
     targets = {r.target for r in env_recs}
     assert "MAX_THINKING_TOKENS=10000" in targets
 
 
-def test_non_opus_model_does_not_trigger_thinking_rule() -> None:
+def test_non_opus_model_does_not_trigger_thinking_rule(
+    monkeypatch,
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setenv("CCPROPHET_EXPERIMENTAL_THINKING_PROXY", "1")
     repos = InMemoryRepositorySet()
     _seed_session(repos, model=_SONNET_MODEL, total_output_tokens=200_000)
     recs = _use_case(repos).execute(SessionId("s-env"), persist=False)
@@ -82,7 +96,10 @@ def test_non_opus_model_does_not_trigger_thinking_rule() -> None:
     assert "MAX_THINKING_TOKENS=10000" not in targets
 
 
-def test_opus_model_low_output_does_not_trigger_thinking_rule() -> None:
+def test_opus_model_low_output_does_not_trigger_thinking_rule(
+    monkeypatch,
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setenv("CCPROPHET_EXPERIMENTAL_THINKING_PROXY", "1")
     repos = InMemoryRepositorySet()
     # 19_999 < 20_000 threshold
     _seed_session(repos, model=_OPUS_MODEL, total_output_tokens=19_999)
@@ -182,9 +199,12 @@ def test_non_mcp_tool_call_does_not_trigger_cap_rule() -> None:
 
 # ─── All three rules fire together ───────────────────────────────────────────
 
-def test_all_three_env_var_rules_fire_together() -> None:
+def test_all_three_env_var_rules_fire_together(
+    monkeypatch,
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setenv("CCPROPHET_EXPERIMENTAL_THINKING_PROXY", "1")
     repos = InMemoryRepositorySet()
-    # Rule 1: Opus + big output
+    # Rule 1: Opus + big output (requires opt-in env var)
     _seed_session(repos, model=_OPUS_MODEL, total_output_tokens=60_000)
     # Rule 2: big subagent context
     sub = SubagentBuilder().with_parent("s-env").build()

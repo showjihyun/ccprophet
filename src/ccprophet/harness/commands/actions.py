@@ -12,7 +12,7 @@ from ccprophet.harness.commands._shared import (
 
 
 def register(app: typer.Typer) -> None:
-    @app.command()
+    @app.command(rich_help_panel="Auto-fix")
     def recommend(
         session: str | None = typer.Option(None, "--session", "-s", help="Session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -47,12 +47,10 @@ def register(app: typer.Typer) -> None:
             clock=SystemClock(),
             subagents=DuckDBSubagentRepository(conn),
         )
-        code = run_recommend_command(
-            uc, session=session, as_json=json, persist=not no_persist
-        )
+        code = run_recommend_command(uc, session=session, as_json=json, persist=not no_persist)
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Auto-fix")
     def prune(
         target: Path = typer.Option(
             DEFAULT_SETTINGS_PATH,
@@ -63,9 +61,7 @@ def register(app: typer.Typer) -> None:
         apply_changes: bool = typer.Option(
             False, "--apply", help="Actually write changes (default is dry-run)"
         ),
-        assume_yes: bool = typer.Option(
-            False, "--yes", "-y", help="Skip interactive confirmation"
-        ),
+        assume_yes: bool = typer.Option(False, "--yes", "-y", help="Skip interactive confirmation"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Preview or apply Auto Tool Pruning."""
@@ -106,7 +102,7 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Outcome / Quality")
     def reproduce(
         task: str = typer.Argument(..., help="Task type to reproduce"),
         target: Path = typer.Option(
@@ -170,11 +166,13 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Outcome / Quality")
     def mark(
-        session_id: str = typer.Argument(..., help="Session ID to label"),
-        outcome: str = typer.Option(
-            ...,
+        session_id: str | None = typer.Argument(
+            None, help="Session ID to label (omit with --auto)"
+        ),
+        outcome: str | None = typer.Option(
+            None,
             "--outcome",
             "-o",
             help="success | fail | partial | unlabeled",
@@ -185,23 +183,67 @@ def register(app: typer.Typer) -> None:
             "--task",  # v0.5 alias kept for backwards compat
             help="Task type (e.g., refactor-auth) for pattern reproduction",
         ),
-        reason: str | None = typer.Option(
-            None, "--reason", help="Short note (optional)"
+        reason: str | None = typer.Option(None, "--reason", help="Short note (optional)"),
+        auto: bool = typer.Option(
+            False,
+            "--auto",
+            help="Auto-label finished sessions using heuristics",
+        ),
+        lookback: int = typer.Option(
+            30,
+            "--lookback",
+            help="--auto: days of history to scan",
+        ),
+        dry_run: bool = typer.Option(
+            False,
+            "--dry-run",
+            help="--auto: preview without writing labels",
         ),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
-        """Label a session for the Outcome Engine."""
-        from ccprophet.adapters.cli.mark import run_mark_command
+        """Label a session for the Outcome Engine (manual or --auto)."""
         from ccprophet.adapters.clock.system import SystemClock
         from ccprophet.adapters.persistence.duckdb.repositories import (
             DuckDBSessionRepository,
+            DuckDBToolCallRepository,
         )
         from ccprophet.adapters.persistence.duckdb.v2_repositories import (
             DuckDBOutcomeRepository,
         )
-        from ccprophet.use_cases.mark_outcome import MarkOutcomeUseCase
 
         conn = connect_readwrite()
+
+        if auto:
+            from ccprophet.adapters.cli.mark import run_mark_auto_command
+            from ccprophet.use_cases.auto_label_sessions import (
+                AutoLabelSessionsUseCase,
+            )
+
+            auto_uc = AutoLabelSessionsUseCase(
+                sessions=DuckDBSessionRepository(conn),
+                tool_calls=DuckDBToolCallRepository(conn),
+                outcomes=DuckDBOutcomeRepository(conn),
+                clock=SystemClock(),
+            )
+            code = run_mark_auto_command(
+                auto_uc,
+                lookback_days=lookback,
+                dry_run=dry_run,
+                as_json=json,
+            )
+            raise typer.Exit(code)
+
+        from ccprophet.adapters.cli.mark import run_mark_command
+        from ccprophet.use_cases.mark_outcome import MarkOutcomeUseCase
+
+        if session_id is None or outcome is None:
+            typer.secho(
+                "mark: provide SESSION_ID and --outcome, or use --auto",
+                err=True,
+                fg="red",
+            )
+            raise typer.Exit(2)
+
         uc = MarkOutcomeUseCase(
             sessions=DuckDBSessionRepository(conn),
             outcomes=DuckDBOutcomeRepository(conn),

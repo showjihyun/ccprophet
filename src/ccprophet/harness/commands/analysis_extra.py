@@ -8,14 +8,12 @@ from ccprophet.harness.commands._shared import connect_readonly
 
 
 def register(app: typer.Typer) -> None:
-    @app.command()
+    @app.command(rich_help_panel="Cost")
     def cost(
         month: str | None = typer.Option(
             None, "--month", help="YYYY-MM; defaults to current month"
         ),
-        session: str | None = typer.Option(
-            None, "--session", "-s", help="Single session id"
-        ),
+        session: str | None = typer.Option(None, "--session", "-s", help="Single session id"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Cost Dashboard - monthly $ summary and per-session cost."""
@@ -37,15 +35,13 @@ def register(app: typer.Typer) -> None:
         monthly = ComputeMonthlyCostUseCase(
             sessions=sessions_repo, recommendations=recs, pricing=pricing
         )
-        session_cost_uc = ComputeSessionCostUseCase(
-            sessions=sessions_repo, pricing=pricing
-        )
+        session_cost_uc = ComputeSessionCostUseCase(sessions=sessions_repo, pricing=pricing)
         code = run_cost_command(
             monthly, session_cost_uc, month=month, session=session, as_json=json
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Outcome / Quality")
     def diff(
         sid_a: str = typer.Argument(..., help="Session A"),
         sid_b: str = typer.Argument(..., help="Session B"),
@@ -69,13 +65,11 @@ def register(app: typer.Typer) -> None:
         code = run_diff_command(uc, sid_a=sid_a, sid_b=sid_b, as_json=json)
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Outcome / Quality")
     def postmortem(
         session_id: str = typer.Argument(..., help="Failed session ID"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
-        md: Path | None = typer.Option(
-            None, "--md", help="Write Markdown report to this path"
-        ),
+        md: Path | None = typer.Option(None, "--md", help="Write Markdown report to this path"),
     ) -> None:
         """Explain why a session failed vs similar successes."""
         from ccprophet.adapters.cli.postmortem import run_postmortem_command
@@ -96,12 +90,10 @@ def register(app: typer.Typer) -> None:
             tool_calls=DuckDBToolCallRepository(conn),
             tool_defs=DuckDBToolDefRepository(conn),
         )
-        code = run_postmortem_command(
-            uc, session_id=session_id, as_json=json, output_markdown=md
-        )
+        code = run_postmortem_command(uc, session_id=session_id, as_json=json, output_markdown=md)
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Outcome / Quality")
     def budget(
         task: str = typer.Argument(..., help="Task type (e.g., refactor-auth)"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),

@@ -14,11 +14,9 @@ from ccprophet.harness.commands._shared import (
 
 
 def register(app: typer.Typer) -> None:
-    @app.command()
+    @app.command(rich_help_panel="Getting started")
     def install(
-        dry_run: bool = typer.Option(
-            False, "--dry-run", help="Preview changes without writing"
-        ),
+        dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without writing"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Register hooks, create DB, set up ccprophet."""
@@ -28,10 +26,10 @@ def register(app: typer.Typer) -> None:
         from ccprophet.adapters.persistence.duckdb.migrations import ensure_schema
         from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
 
-        def _bootstrap_db(db_path: Path) -> None:
+        def _bootstrap_db(db_path: Path) -> int:
             conn = duckdb.connect(str(db_path))
             try:
-                ensure_schema(conn)
+                return ensure_schema(conn)
             finally:
                 conn.close()
 
@@ -43,7 +41,7 @@ def register(app: typer.Typer) -> None:
         )
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Getting started")
     def ingest(
         root: Path = typer.Option(
             DEFAULT_JSONL_ROOT, "--root", help="Claude Code projects directory"
@@ -86,14 +84,10 @@ def register(app: typer.Typer) -> None:
             code = run_ingest_command(uc, paths=paths, as_json=json)
         raise typer.Exit(code)
 
-    @app.command()
+    @app.command(rich_help_panel="Advanced")
     def doctor(
-        migrate: bool = typer.Option(
-            False, "--migrate", help="Apply pending schema migrations"
-        ),
-        repair: bool = typer.Option(
-            False, "--repair", help="Delete orphan records (destructive)"
-        ),
+        migrate: bool = typer.Option(False, "--migrate", help="Apply pending schema migrations"),
+        repair: bool = typer.Option(False, "--repair", help="Delete orphan records (destructive)"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """DB health checks — schema version, orphans, data quality, disk usage."""
@@ -118,7 +112,7 @@ def register(app: typer.Typer) -> None:
         raise typer.Exit(code)
 
     query_app = typer.Typer(help="Read-only SQL query against events.duckdb")
-    app.add_typer(query_app, name="query")
+    app.add_typer(query_app, name="query", rich_help_panel="Advanced")
 
     def _require_db(as_json: bool = False) -> None:
         if DB_PATH.exists():
@@ -127,8 +121,7 @@ def register(app: typer.Typer) -> None:
         import sys as _sys
 
         msg = (
-            f"ccprophet DB not found at {DB_PATH}\n"
-            "Run `ccprophet install` or trigger a hook first."
+            f"ccprophet DB not found at {DB_PATH}\nRun `ccprophet install` or trigger a hook first."
         )
         if as_json:
             # Stable shape for pipelines: stderr JSON + exit 2.
@@ -173,7 +166,7 @@ def register(app: typer.Typer) -> None:
 
         raise typer.Exit(run_query_schema_command(db_path=DB_PATH, table=table, as_json=json))
 
-    @app.command("claude-md")
+    @app.command("claude-md", rich_help_panel="Advanced")
     def claude_md(
         root: Path = typer.Option(Path.cwd(), "--root", help="Project root to search"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -183,11 +176,9 @@ def register(app: typer.Typer) -> None:
 
         raise typer.Exit(run_claude_md_command(root=root, as_json=json))
 
-    @app.command()
+    @app.command(rich_help_panel="Cost")
     def savings(
-        window: int = typer.Option(
-            30, "--window", help="Days to look back for applied savings"
-        ),
+        window: int = typer.Option(30, "--window", help="Days to look back for applied savings"),
         json: bool = typer.Option(False, "--json", help="Output as JSON"),
     ) -> None:
         """Token-savings dashboard — applied, pending, and opportunity knobs."""

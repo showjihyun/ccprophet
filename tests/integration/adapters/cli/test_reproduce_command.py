@@ -89,7 +89,12 @@ def test_reproduce_insufficient_samples_exits_3(tmp_path, capsys) -> None:  # ty
         uc, task="refactor", target_path=settings_path, apply=False, as_json=True
     )
     assert code == 3
-    assert "error" in json.loads(capsys.readouterr().out)
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["error"] == "insufficient_samples"
+    assert payload["task"] == "refactor"
+    assert payload["needed"] >= 1
+    assert payload["got"] == 0
+    assert "ccprophet mark" in payload["hint"]
 
 
 def test_reproduce_dry_run_json_shape(tmp_path, capsys) -> None:  # type: ignore[no-untyped-def]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from ccprophet.domain.entities import Recommendation
@@ -50,12 +51,18 @@ class RecommendActionUseCase:
 
         # --- env-var signal derivation ---
 
-        # Rule 1: thinking_tokens proxy.
-        # Phase 3 can wire up actual per-event thinking token tracking. For now,
-        # treat total_output_tokens as thinking tokens when the model is Opus
-        # (Opus output tends to be thinking-heavy). This is a conservative proxy.
+        # Rule 1: thinking_tokens.
+        # A real signal requires per-event tracking of the `thinking` block
+        # token count (Phase 3 work). Until that exists we keep this at 0 and
+        # skip the rec — the previous "Opus output_tokens is a proxy" shortcut
+        # over-triggered on any Opus session doing heavy work and eroded trust.
+        # Set CCPROPHET_EXPERIMENTAL_THINKING_PROXY=1 to re-enable the old
+        # heuristic for your own dogfooding.
         thinking_tokens = 0
-        if session.model.startswith("claude-opus"):
+        if (
+            os.environ.get("CCPROPHET_EXPERIMENTAL_THINKING_PROXY") == "1"
+            and session.model.startswith("claude-opus")
+        ):
             thinking_tokens = session.total_output_tokens.value
 
         # Rule 2: subagent_context_tokens — sum across child subagents.

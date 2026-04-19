@@ -41,8 +41,7 @@ I've been using Claude Code daily for the past few months and kept hitting the s
 
 ```bash
 uv tool install "ccprophet[web,mcp,forecast]"
-ccprophet install               # registers hooks + statusLine, initializes DB
-ccprophet doctor --migrate      # applies schema V1..V5
+ccprophet install               # hooks + statusLine + DB + schema migrations
 ccprophet ingest                # backfills past Claude Code JSONL transcripts
 
 # Then the four headline commands

@@ -22,10 +22,10 @@ def _settings_store() -> JsonFileSettingsStore:
     return JsonFileSettingsStore()
 
 
-def _bootstrap_db(db_path) -> None:  # type: ignore[no-untyped-def]
+def _bootstrap_db(db_path) -> int:  # type: ignore[no-untyped-def]
     conn = duckdb.connect(str(db_path))
     try:
-        ensure_schema(conn)
+        return ensure_schema(conn)
     finally:
         conn.close()
 
@@ -69,9 +69,7 @@ def test_install_adds_hooks_atomically(tmp_path) -> None:  # type: ignore[no-unt
     assert loaded["theme"] == "dark"
     for event_type in HOOK_CONFIG:
         commands = [
-            entry.get("command")
-            for entry in loaded["hooks"][event_type]
-            if isinstance(entry, dict)
+            entry.get("command") for entry in loaded["hooks"][event_type] if isinstance(entry, dict)
         ]
         assert any(c == HOOK_COMMAND for c in commands)
     assert loaded["statusLine"]["command"] == STATUSLINE_COMMAND
@@ -81,15 +79,16 @@ def test_install_adds_hooks_atomically(tmp_path) -> None:  # type: ignore[no-unt
 def test_existing_statusline_preserved(tmp_path) -> None:  # type: ignore[no-untyped-def]
     settings = tmp_path / "settings.json"
     settings.write_text(
-        json.dumps({"statusLine": {"type": "command", "command": STATUSLINE_COMMAND}})
-        + "\n",
+        json.dumps({"statusLine": {"type": "command", "command": STATUSLINE_COMMAND}}) + "\n",
         encoding="utf-8",
     )
     prophet_dir = tmp_path / ".ccprophet"
     run_install_command(
         settings=_settings_store(),
         bootstrap_db=_bootstrap_db,
-        as_json=True, prophet_dir=prophet_dir, settings_path=settings
+        as_json=True,
+        prophet_dir=prophet_dir,
+        settings_path=settings,
     )
     loaded = _read(settings)
     assert loaded["statusLine"]["command"] == STATUSLINE_COMMAND
@@ -103,13 +102,17 @@ def test_install_is_idempotent(tmp_path) -> None:  # type: ignore[no-untyped-def
     run_install_command(
         settings=_settings_store(),
         bootstrap_db=_bootstrap_db,
-        as_json=True, prophet_dir=prophet_dir, settings_path=settings
+        as_json=True,
+        prophet_dir=prophet_dir,
+        settings_path=settings,
     )
     first = settings.read_bytes()
     run_install_command(
         settings=_settings_store(),
         bootstrap_db=_bootstrap_db,
-        as_json=True, prophet_dir=prophet_dir, settings_path=settings
+        as_json=True,
+        prophet_dir=prophet_dir,
+        settings_path=settings,
     )
     assert settings.read_bytes() == first
 
@@ -120,7 +123,9 @@ def test_install_on_missing_settings_creates_it(tmp_path) -> None:  # type: igno
     run_install_command(
         settings=_settings_store(),
         bootstrap_db=_bootstrap_db,
-        as_json=True, prophet_dir=prophet_dir, settings_path=settings
+        as_json=True,
+        prophet_dir=prophet_dir,
+        settings_path=settings,
     )
     assert settings.exists()
     loaded = _read(settings)

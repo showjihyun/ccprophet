@@ -100,6 +100,11 @@ def _render(
         console.print("[dim]No sessions in the selected window.[/]")
         return
 
+    console.print(
+        "[dim]Note: metrics reflect your workload mix as well as model "
+        "behavior — a task-type change can drive a flag.[/]"
+    )
+
     chars = SPARK_CHARS_ASCII if ascii_only else SPARK_CHARS
 
     for report in reports:

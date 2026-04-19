@@ -27,7 +27,7 @@ def run_reproduce_command(
             TaskType(task), target_path=target_path, apply=apply
         )
     except InsufficientSamples as e:
-        _err(f"Insufficient samples for task '{task}': {e}", as_json=as_json)
+        _insufficient_samples(task, needed=e.needed, got=e.got, as_json=as_json)
         return 3
     except SnapshotConflict as e:
         _err(f"Aborted: {e}", as_json=as_json)
@@ -64,6 +64,43 @@ def _err(msg: str, *, as_json: bool) -> None:
     from rich.console import Console
 
     Console(stderr=True).print(f"[bold red]Error:[/] {msg}")
+
+
+def _insufficient_samples(
+    task: str, *, needed: int, got: int, as_json: bool
+) -> None:
+    if as_json:
+        print(
+            json_module.dumps(
+                {
+                    "error": "insufficient_samples",
+                    "task": task,
+                    "needed": needed,
+                    "got": got,
+                    "hint": (
+                        f"Label more sessions with `ccprophet mark <SID> "
+                        f"--outcome success --task-type {task}`"
+                    ),
+                }
+            )
+        )
+        return
+    from rich.console import Console
+
+    console = Console(stderr=True)
+    console.print(
+        f"[bold red]Not enough success-labelled sessions[/] for task "
+        f"'[cyan]{task}[/]'."
+    )
+    console.print(f"  Found [bold]{got}[/], need [bold]{needed}[/].")
+    console.print()
+    console.print("[dim]Label more sessions:[/]")
+    console.print(
+        f"  [cyan]ccprophet mark <SID> --outcome success --task-type {task}[/]"
+    )
+    console.print(
+        "  [dim](use `ccprophet sessions` to find recent session IDs)[/]"
+    )
 
 
 def _render(o: ReproduceOutcome, *, applied: bool) -> None:

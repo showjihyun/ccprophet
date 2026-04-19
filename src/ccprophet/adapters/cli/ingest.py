@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json as json_module
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,11 +18,40 @@ def run_ingest_command(
     paths: Iterable[Path],
     as_json: bool = False,
 ) -> int:
-    summary = use_case.execute(paths)
+    path_list = list(paths)
 
-    if as_json:
-        print(json_module.dumps(_summary_dict(summary), indent=2))
+    if as_json or not path_list:
+        summary = use_case.execute(path_list)
+        if as_json:
+            print(json_module.dumps(_summary_dict(summary), indent=2))
+        else:
+            _render(summary)
         return 0 if not summary.errors else 1
+
+    from rich.progress import (
+        BarColumn,
+        MofNCompleteColumn,
+        Progress,
+        TextColumn,
+        TimeRemainingColumn,
+    )
+
+    with Progress(
+        TextColumn("[bold]Ingesting[/]"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("•"),
+        TimeRemainingColumn(),
+        transient=True,
+    ) as progress:
+        task_id = progress.add_task("ingest", total=len(path_list))
+
+        def _tick(iterable: list[Path]) -> Iterator[Path]:
+            for path in iterable:
+                yield path
+                progress.advance(task_id)
+
+        summary = use_case.execute(_tick(path_list))
 
     _render(summary)
     return 0 if not summary.errors else 1

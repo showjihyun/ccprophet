@@ -19,7 +19,7 @@ ccprophet closes this gap. **Fully local** · **zero network** · **single DuckD
 | 1 | **"Don't tell me — fix it"** | Disable MCPs, apply subset config, recommend `/clear` — all in one `apply`. |
 | 2 | **"Not how much you used, but whether the result was better"** | Learn config + phase patterns from successful sessions and reproduce the best config. |
 | 3 | **"Not token counts — dollars"** | Convert savings into monthly \$. |
-| 4 | **"So Anthropic can't quietly downgrade you"** | If quality metrics drop on the same model · same options, **auto-flag it**. |
+| 4 | **"Spot regressions week-over-week"** | If quality metrics drop on the same model · same options, **auto-flag it**. Workload-sensitive: signal, not verdict. |
 
 ## The four killer features
 
@@ -50,12 +50,12 @@ ccprophet savings --json                   # cumulative Auto Fix savings
 ```
 Input · cache_creation · cache_read are **billed separately**. Every cost output stamps the `pricing_rates.rate_id` used — AP-9 Dollar Transparency.
 
-### 4. 📊 Quality Watch (downgrade detection)
+### 4. 📊 Quality Watch (week-over-week regression flag)
 ```bash
 ccprophet quality
 ccprophet quality --export-parquet out.pq
 ```
-Seven daily metrics aggregated per (model × task_type); z-score guard at 2σ by default. Output carries a 1-line "why" per flag.
+Seven daily metrics aggregated per (model × task_type); z-score guard at 2σ by default. Output carries a 1-line "why" per flag. Metrics reflect workload mix as well as model behavior — treat as an early-warning signal, not a verdict.
 
 ## Install
 
@@ -63,8 +63,7 @@ Seven daily metrics aggregated per (model × task_type); z-score guard at 2σ by
 uv tool install ccprophet
 uv tool install "ccprophet[web,mcp,forecast]"
 
-ccprophet install           # hooks · statusLine · DB init
-ccprophet doctor --migrate  # apply V1..V5
+ccprophet install           # hooks · statusLine · DB init + schema migrations
 ccprophet ingest            # backfill past Claude Code JSONL
 ```
 All data lives in one file at `~/.claude-prophet/events.duckdb`. **Zero external network calls.**

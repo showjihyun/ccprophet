@@ -11,7 +11,7 @@ from ccprophet.harness.commands._shared import (
 
 def register(app: typer.Typer) -> None:
     snapshot_app = typer.Typer(help="Manage settings snapshots")
-    app.add_typer(snapshot_app, name="snapshot")
+    app.add_typer(snapshot_app, name="snapshot", rich_help_panel="Auto-fix")
 
     @snapshot_app.command("list")
     def snapshot_list(

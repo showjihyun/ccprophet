@@ -74,9 +74,8 @@ if errorlevel 1 (
     ccprophet --version
     echo.
     echo Next steps:
-    echo     ccprophet install          ^# wire hooks into Claude Code
-    echo     ccprophet doctor --migrate ^# initialize DuckDB
-    echo     ccprophet ingest           ^# backfill past sessions
+    echo     ccprophet install  ^# wire hooks + create DB + migrate schema
+    echo     ccprophet ingest   ^# backfill past sessions
 )
 
 endlocal
