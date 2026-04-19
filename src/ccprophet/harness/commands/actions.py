@@ -120,6 +120,7 @@ def register(app: typer.Typer) -> None:
         from ccprophet.adapters.cli.reproduce import run_reproduce_command
         from ccprophet.adapters.clock.system import SystemClock
         from ccprophet.adapters.persistence.duckdb.repositories import (
+            DuckDBSessionRepository,
             DuckDBToolCallRepository,
             DuckDBToolDefRepository,
         )
@@ -131,6 +132,7 @@ def register(app: typer.Typer) -> None:
         from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
         from ccprophet.adapters.snapshot.filesystem import FilesystemSnapshotStore
         from ccprophet.use_cases.apply_pruning import ApplyPruningUseCase
+        from ccprophet.use_cases.auto_label_sessions import AutoLabelSessionsUseCase
         from ccprophet.use_cases.prune_tools import PruneToolsUseCase
         from ccprophet.use_cases.reproduce_session import ReproduceSessionUseCase
 
@@ -140,6 +142,8 @@ def register(app: typer.Typer) -> None:
         rec_repo = DuckDBRecommendationRepository(conn)
         snap_repo = DuckDBSnapshotRepository(conn)
         snap_store = FilesystemSnapshotStore(SNAPSHOT_ROOT)
+        outcomes_repo = DuckDBOutcomeRepository(conn)
+        tool_calls_repo = DuckDBToolCallRepository(conn)
         preview = PruneToolsUseCase(recommendations=rec_repo, settings=settings)
         apply_uc = ApplyPruningUseCase(
             prune=preview,
@@ -149,13 +153,20 @@ def register(app: typer.Typer) -> None:
             recommendations=rec_repo,
             clock=SystemClock(),
         )
+        auto_label_uc = AutoLabelSessionsUseCase(
+            sessions=DuckDBSessionRepository(conn),
+            tool_calls=tool_calls_repo,
+            outcomes=outcomes_repo,
+            clock=SystemClock(),
+        )
         uc = ReproduceSessionUseCase(
-            outcomes=DuckDBOutcomeRepository(conn),
-            tool_calls=DuckDBToolCallRepository(conn),
+            outcomes=outcomes_repo,
+            tool_calls=tool_calls_repo,
             tool_defs=DuckDBToolDefRepository(conn),
             recommendations=rec_repo,
             apply=apply_uc,
             clock=SystemClock(),
+            auto_label=auto_label_uc,
         )
         code = run_reproduce_command(
             uc,
