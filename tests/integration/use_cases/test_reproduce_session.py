@@ -21,6 +21,7 @@ from ccprophet.domain.values import (
     TokenCount,
 )
 from ccprophet.use_cases.apply_pruning import ApplyPruningUseCase
+from ccprophet.use_cases.auto_label_sessions import AutoLabelSessionsUseCase
 from ccprophet.use_cases.prune_tools import PruneToolsUseCase
 from ccprophet.use_cases.reproduce_session import ReproduceSessionUseCase
 from tests.fixtures.builders import (
@@ -118,3 +119,92 @@ def test_reproduce_insufficient_samples(tmp_path) -> None:  # type: ignore[no-un
     _seed(repos, n=2)
     with pytest.raises(InsufficientSamples):
         reproduce.execute(TaskType("refactor"), target_path=path)
+
+
+def _wire_with_auto_label(tmp_path):  # type: ignore[no-untyped-def]
+    repos, reproduce, path = _wire(tmp_path)
+    auto_label = AutoLabelSessionsUseCase(
+        sessions=repos.sessions,
+        tool_calls=repos.tool_calls,
+        outcomes=repos.outcomes,
+        clock=FrozenClock(FROZEN),
+    )
+    reproduce = replace(reproduce, auto_label=auto_label)
+    return repos, reproduce, path
+
+
+def _seed_finished_unlabeled(repos: InMemoryRepositorySet, n: int = 5) -> None:
+    """Seed sessions that are ended + have ≥5 successful tool calls, but no
+    outcome labels. AutoLabelSessionsUseCase should mark them success."""
+    # Anchor a day before the frozen clock so `list_in_range` (end=now) picks
+    # these up — `started_at < end` is a strict inequality.
+    from datetime import timedelta
+
+    started = FROZEN - timedelta(days=1)
+    ended = started + timedelta(hours=1)
+    for i in range(n):
+        sid = f"auto-{i}"
+        session = replace(
+            SessionBuilder().with_id(sid).ended(ended).build(),
+            started_at=started,
+            model="claude-opus-4-6",
+        )
+        repos.sessions.upsert(session)
+        for _ in range(6):
+            tc = ToolCallBuilder().in_session(SessionId(sid)).for_tool("Bash").build()
+            repos.tool_calls.append(tc)
+
+
+def test_reproduce_lazy_auto_label_populates_labels(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """When the cluster is empty, reproduce fires auto-label and attaches the
+    summary to the InsufficientSamples exception for the CLI hint."""
+    repos, reproduce, path = _wire_with_auto_label(tmp_path)
+    _seed_finished_unlabeled(repos, n=3)
+    # No task_type='refactor' labels exist → empty cluster → auto-label runs.
+    with pytest.raises(InsufficientSamples) as exc:
+        reproduce.execute(TaskType("refactor"), target_path=path)
+    summary = exc.value.auto_label_summary  # type: ignore[attr-defined]
+    assert summary is not None
+    assert summary.labeled_success == 3
+    # Auto-labels carry no task_type, so the cluster is still empty for this
+    # task. The 'got' field reflects that gap — the CLI hint uses both numbers.
+    assert exc.value.got == 0
+    # Follow-up: manual task-type tagging unlocks the cluster.
+    for i in range(3):
+        repos.outcomes.set_label(
+            OutcomeLabel(
+                session_id=SessionId(f"auto-{i}"),
+                label=OutcomeLabelValue.SUCCESS,
+                task_type=TaskType("refactor"),
+                source="manual",
+                reason=None,
+                labeled_at=FROZEN,
+            )
+        )
+        repos.tool_defs.bulk_add(
+            SessionId(f"auto-{i}"),
+            [ToolDef("mcp__linear_y", TokenCount(400), "mcp:linear")],
+        )
+    outcome = reproduce.execute(TaskType("refactor"), target_path=path)
+    assert len(outcome.recommendations) >= 0  # cluster now materialises
+
+
+def test_reproduce_does_not_run_auto_label_when_cluster_exists(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    repos, reproduce, path = _wire_with_auto_label(tmp_path)
+    _seed(repos, n=3)  # manual labels already in place
+    _seed_finished_unlabeled(repos, n=2)  # unlabeled sessions should stay that way
+
+    outcome = reproduce.execute(TaskType("refactor"), target_path=path)
+    assert outcome.auto_label_summary is None
+    # Auto-label was not invoked, so the unlabeled sessions remain unlabeled.
+    assert repos.outcomes.get_label(SessionId("auto-0")) is None
+
+
+def test_reproduce_auto_label_disabled_flag(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    repos, reproduce, path = _wire_with_auto_label(tmp_path)
+    _seed_finished_unlabeled(repos, n=3)
+    with pytest.raises(InsufficientSamples) as exc:
+        reproduce.execute(TaskType("refactor"), target_path=path, enable_auto_label=False)
+    # When disabled, the summary is absent and no auto-labels were written.
+    assert getattr(exc.value, "auto_label_summary", None) is None
+    assert repos.outcomes.get_label(SessionId("auto-0")) is None

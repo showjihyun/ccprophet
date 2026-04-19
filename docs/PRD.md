@@ -321,7 +321,7 @@ risk: 2/7 similar sessions hit autocompact — consider /clear at 80k
 
 **기능 요구사항**
 
-- FR-11.1: 라벨은 수동·자동 병행. `ccprophet mark --auto`가 휴리스틱 자동 라벨링을 수행하며 (compacted / 낮은 성공률 / repeat-read → fail, 성공률 ≥0.9 → success), `outcome_rules.toml` 로 임계치 커스터마이즈 가능. **수동 라벨은 절대 덮어쓰지 않음**.
+- FR-11.1: 라벨은 수동·자동 병행. `ccprophet mark --auto`가 휴리스틱 자동 라벨링을 수행하며 (compacted / 낮은 성공률 / repeat-read → fail, 성공률 ≥0.9 → success), `outcome_rules.toml` 로 임계치 커스터마이즈 가능. **수동 라벨은 절대 덮어쓰지 않음**. `ccprophet reproduce <task>`는 task_type에 해당하는 success 라벨이 0개일 때 내부적으로 auto-label을 1회 실행해 다음 호출에 대비 (lazy auto-label, `enable_auto_label=False` 로 opt-out 가능). auto-label은 task_type를 채우지 않으므로 후속 `mark --task-type` 호출이 필요.
 - FR-11.2: 최소 n≥3의 성공 샘플이 있어야 "best config" 권장. 미만이면 insufficient.
 - FR-11.3: Outcome engine은 결과 **설명 가능성** 필수 — "왜 이 구성이 성공인지" 1줄 근거.
 - FR-11.4: `ccprophet reproduce --apply`는 F7 pruning/subset과 동일하게 snapshot·rollback 연동.

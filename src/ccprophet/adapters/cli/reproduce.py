@@ -25,7 +25,14 @@ def run_reproduce_command(
     try:
         outcome = use_case.execute(TaskType(task), target_path=target_path, apply=apply)
     except InsufficientSamples as e:
-        _insufficient_samples(task, needed=e.needed, got=e.got, as_json=as_json)
+        auto_summary = getattr(e, "auto_label_summary", None)
+        _insufficient_samples(
+            task,
+            needed=e.needed,
+            got=e.got,
+            auto_summary=auto_summary,
+            as_json=as_json,
+        )
         return 3
     except SnapshotConflict as e:
         _err(f"Aborted: {e}", as_json=as_json)
@@ -64,7 +71,15 @@ def _err(msg: str, *, as_json: bool) -> None:
     Console(stderr=True).print(f"[bold red]Error:[/] {msg}")
 
 
-def _insufficient_samples(task: str, *, needed: int, got: int, as_json: bool) -> None:
+def _insufficient_samples(
+    task: str,
+    *,
+    needed: int,
+    got: int,
+    auto_summary: object | None = None,
+    as_json: bool,
+) -> None:
+    auto_success = _auto_success_count(auto_summary)
     if as_json:
         print(
             json_module.dumps(
@@ -73,10 +88,8 @@ def _insufficient_samples(task: str, *, needed: int, got: int, as_json: bool) ->
                     "task": task,
                     "needed": needed,
                     "got": got,
-                    "hint": (
-                        f"Label more sessions with `ccprophet mark <SID> "
-                        f"--outcome success --task-type {task}`"
-                    ),
+                    "auto_labeled_success": auto_success,
+                    "hint": _build_hint(task, auto_success),
                 }
             )
         )
@@ -87,9 +100,38 @@ def _insufficient_samples(task: str, *, needed: int, got: int, as_json: bool) ->
     console.print(f"[bold red]Not enough success-labelled sessions[/] for task '[cyan]{task}[/]'.")
     console.print(f"  Found [bold]{got}[/], need [bold]{needed}[/].")
     console.print()
-    console.print("[dim]Label more sessions:[/]")
-    console.print(f"  [cyan]ccprophet mark <SID> --outcome success --task-type {task}[/]")
-    console.print("  [dim](use `ccprophet sessions` to find recent session IDs)[/]")
+    if auto_success > 0:
+        # The use case already ran `mark --auto` for us, so skip that step in
+        # the hint and go straight to the (still-manual) task-type tagging
+        # stage. Once a real task-type heuristic lands, this branch can drop
+        # to just "try reproduce again".
+        console.print(
+            f"[dim]Auto-labeled[/] [bold]{auto_success}[/] success session(s) just now, "
+            "but none carry a task-type yet."
+        )
+        console.print("[dim]Tag them so reproduce can use them:[/]")
+        console.print(f"  [cyan]ccprophet mark <SID> --task-type {task}[/]")
+        console.print("  [dim](`ccprophet sessions` lists recent IDs)[/]")
+    else:
+        console.print("[dim]Label more sessions:[/]")
+        console.print(f"  [cyan]ccprophet mark <SID> --outcome success --task-type {task}[/]")
+        console.print("  [dim](use `ccprophet sessions` to find recent session IDs)[/]")
+
+
+def _auto_success_count(auto_summary: object | None) -> int:
+    if auto_summary is None:
+        return 0
+    return int(getattr(auto_summary, "labeled_success", 0) or 0)
+
+
+def _build_hint(task: str, auto_success: int) -> str:
+    if auto_success > 0:
+        return (
+            f"{auto_success} success session(s) were auto-labeled. "
+            f"Tag them with `ccprophet mark <SID> --task-type {task}` to include "
+            "them in the next reproduce."
+        )
+    return f"Label more sessions with `ccprophet mark <SID> --outcome success --task-type {task}`"
 
 
 def _render(o: ReproduceOutcome, *, applied: bool) -> None:

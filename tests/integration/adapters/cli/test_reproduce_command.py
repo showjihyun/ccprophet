@@ -19,6 +19,7 @@ from ccprophet.adapters.settings.jsonfile import JsonFileSettingsStore
 from ccprophet.adapters.snapshot.filesystem import FilesystemSnapshotStore
 from ccprophet.domain.values import OutcomeLabelValue, SessionId
 from ccprophet.use_cases.apply_pruning import ApplyPruningUseCase
+from ccprophet.use_cases.auto_label_sessions import AutoLabelSessionsUseCase
 from ccprophet.use_cases.prune_tools import PruneToolsUseCase
 from ccprophet.use_cases.reproduce_session import ReproduceSessionUseCase
 from tests.fixtures.builders import (
@@ -133,3 +134,54 @@ def test_reproduce_apply_writes_snapshot(tmp_path, capsys) -> None:  # type: ign
     # that apply=True NEVER writes without a snapshot.
     if payload["applied"]:
         assert payload["snapshot_id"] is not None
+
+
+def _wire_with_auto_label(tmp_path):  # type: ignore[no-untyped-def]
+    repos, uc, settings = _wire(tmp_path)
+    auto_label = AutoLabelSessionsUseCase(
+        sessions=repos.sessions,
+        tool_calls=repos.tool_calls,
+        outcomes=repos.outcomes,
+        clock=FrozenClock(FROZEN),
+    )
+    from dataclasses import replace as _replace
+
+    uc = _replace(uc, auto_label=auto_label)
+    return repos, uc, settings
+
+
+def test_reproduce_hint_upgrades_after_lazy_auto_label(tmp_path, capsys) -> None:  # type: ignore[no-untyped-def]
+    """When lazy auto-label labels N success sessions but none are tagged with
+    the requested task_type, the hint should redirect to `--task-type` rather
+    than `--outcome success`."""
+    from dataclasses import replace as _replace
+    from datetime import timedelta
+
+    repos, uc, _ = _wire_with_auto_label(tmp_path)
+    started = FROZEN - timedelta(days=1)
+    ended = started + timedelta(hours=1)
+    for i in range(3):
+        sid = f"auto-{i}"
+        session = _replace(
+            SessionBuilder().with_id(sid).ended(ended).build(),
+            started_at=started,
+            model="claude-opus-4-6",
+        )
+        repos.sessions.upsert(session)
+        for _ in range(6):
+            repos.tool_calls.append(
+                ToolCallBuilder().in_session(SessionId(sid)).for_tool("Bash").build()
+            )
+
+    settings_path = tmp_path / "settings.json"
+    settings_path.write_text("{}\n", encoding="utf-8")
+    code = run_reproduce_command(
+        uc, task="refactor", target_path=settings_path, apply=False, as_json=True
+    )
+    assert code == 3
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["error"] == "insufficient_samples"
+    assert payload["auto_labeled_success"] == 3
+    assert "--task-type" in payload["hint"]
+    # Auto-labels actually landed in the outcome store.
+    assert repos.outcomes.get_label(SessionId("auto-0")) is not None
