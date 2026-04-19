@@ -42,6 +42,7 @@ forecast = ["statsmodels>=0.14"]
 
 [project.scripts]
 ccprophet = "ccprophet.harness.cli_main:main"
+ccp = "ccprophet.harness.cli_main:main"  # short alias — same entrypoint
 ccprophet-hook = "ccprophet.harness.hook_main:main"
 ccprophet-mcp = "ccprophet.harness.mcp_main:main"
 

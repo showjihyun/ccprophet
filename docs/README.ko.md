@@ -65,6 +65,7 @@ uv tool install "ccprophet[web,mcp,forecast]"   # Web + MCP + ARIMA
 
 ccprophet install           # hooks · statusLine · DB 초기화 + 스키마 마이그레이션
 ccprophet ingest            # 과거 Claude Code JSONL 백필
+# 짧은 별칭: `ccp` 가 함께 설치됩니다 — 예: `ccp bloat`
 ```
 `~/.claude-prophet/events.duckdb` 한 파일, **외부 네트워크 호출 0회**.
 

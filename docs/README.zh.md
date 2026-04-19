@@ -65,6 +65,7 @@ uv tool install "ccprophet[web,mcp,forecast]"
 
 ccprophet install           # hooks · statusLine · DB 初始化 + 模式迁移
 ccprophet ingest            # 回填过去的 Claude Code JSONL
+# 简短别名: `ccp` 同时安装,示例: `ccp bloat`
 ```
 全部数据存放于 `~/.claude-prophet/events.duckdb` 单文件,**不发起任何外部网络请求**。
 

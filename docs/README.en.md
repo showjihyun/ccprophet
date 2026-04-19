@@ -65,6 +65,7 @@ uv tool install "ccprophet[web,mcp,forecast]"
 
 ccprophet install           # hooks · statusLine · DB init + schema migrations
 ccprophet ingest            # backfill past Claude Code JSONL
+# Short alias: `ccp` is installed alongside `ccprophet` — e.g. `ccp bloat`.
 ```
 All data lives in one file at `~/.claude-prophet/events.duckdb`. **Zero external network calls.**
 

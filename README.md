@@ -35,6 +35,7 @@ uv tool install "ccprophet[web,mcp,forecast] @ git+https://github.com/showjihyun
 
 # 2. Wire into Claude Code + create the local DuckDB
 #    `install` creates the DB and runs all schema migrations — no separate step.
+#    (`ccp` is a shorter alias for `ccprophet` — either one works.)
 ccprophet install
 ccprophet ingest                 # backfill past sessions
 
